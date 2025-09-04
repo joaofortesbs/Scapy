@@ -30,7 +30,7 @@ export default function BottomNavigation({
           <button
             key={id}
             className={`nav-item flex items-center justify-center p-2 transition-colors ${
-              activeSection === id ? 'active' : inactive ? 'inactive' : ''
+              id === 'painel' ? 'active' : inactive ? 'inactive' : ''
             }`}
             onClick={() => onSectionChange(id)}
             data-testid={`nav-${id}`}

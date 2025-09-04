@@ -34,18 +34,16 @@ export default function Dashboard() {
         <WeeklyTracker weeklyProgress={weeklyProgress} />
         
         <section className="text-center">
-          <div className="avatar-container mb-6">
-            <div className="avatar-inner">
-              <img 
-                src="/caveman-avatar.png" 
-                alt="Avatar Caveman" 
-                className="w-full h-full object-cover rounded-full"
-                onError={(e) => {
-                  e.currentTarget.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=caveman&backgroundColor=000515";
-                }}
-                data-testid="avatar-image"
-              />
-            </div>
+          <div className="floating-avatar mb-6">
+            <img 
+              src="/caveman-avatar.png" 
+              alt="Avatar Caveman" 
+              className="w-40 h-40 object-contain mx-auto"
+              onError={(e) => {
+                e.currentTarget.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=caveman&backgroundColor=000515";
+              }}
+              data-testid="avatar-image"
+            />
           </div>
 
           <Timer user={user} />
