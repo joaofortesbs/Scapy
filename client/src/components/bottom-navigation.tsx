@@ -24,19 +24,18 @@ export default function BottomNavigation({
   ];
 
   return (
-    <nav className="bottom-nav fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50">
+    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 bg-transparent">
       <div className="flex justify-around py-3">
         {navItems.map(({ id, label, icon: Icon, inactive }) => (
           <button
             key={id}
-            className={`nav-item flex flex-col items-center space-y-1 p-2 transition-colors ${
+            className={`nav-item flex items-center justify-center p-2 transition-colors ${
               activeSection === id ? 'active' : inactive ? 'inactive' : ''
             }`}
             onClick={() => onSectionChange(id)}
             data-testid={`nav-${id}`}
           >
-            <Icon className="w-5 h-5" />
-            <span className="text-xs">{label}</span>
+            <Icon className="w-6 h-6" />
           </button>
         ))}
       </div>

@@ -40,9 +40,6 @@ export default function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
 
   return (
     <section className="mb-8">
-      <h2 className="text-lg font-semibold mb-4 text-center text-primary">
-        Semana NoFap
-      </h2>
       <div className="flex justify-center space-x-2">
         {weekDays.map((day, index) => (
           <button
