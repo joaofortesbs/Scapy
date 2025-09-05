@@ -24,7 +24,7 @@ export default function BottomNavigation({
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 bg-transparent">
+    <nav className="bg-transparent">
       <div className="flex justify-around py-3">
         {navItems.map(({ id, label, icon: Icon, inactive }) => (
           <button
@@ -35,7 +35,7 @@ export default function BottomNavigation({
             onClick={() => onSectionChange(id)}
             data-testid={`nav-${id}`}
           >
-            <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-secondary/20 border-2 border-scapy-cyan flex items-center justify-center">
               <Icon className="w-5 h-5" />
             </div>
           </button>

@@ -8,11 +8,11 @@ export default function Header() {
 
   return (
     <header className="p-4 flex items-center justify-between">
-      <div className="w-[27px] h-[27px]">
+      <div className="w-6 h-6">
         <img 
           src="/logo-scapy.png" 
           alt="Logo Scapy" 
-          className="w-[27px] h-[27px] object-contain"
+          className="w-6 h-6 object-contain"
           onError={(e) => {
             e.currentTarget.src = "https://api.dicebear.com/7.x/shapes/svg?seed=scapy&backgroundColor=00F6FF&shape1Color=000515";
           }}

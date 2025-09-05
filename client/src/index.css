@@ -132,6 +132,31 @@
     }
   }
 
+  .panic-button {
+    background: linear-gradient(45deg, #dc2626, #ef4444, #f87171);
+    animation: panic-glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes panic-glow {
+    from {
+      box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+    }
+    to {
+      box-shadow: 0 0 20px rgba(220, 38, 38, 0.8), 0 0 30px rgba(220, 38, 38, 0.3);
+    }
+  }
+
+  @keyframes shoot {
+    0% {
+      transform: translateX(0) translateY(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(200px) translateY(200px);
+      opacity: 0;
+    }
+  }
+
   .bottom-nav {
     background: transparent;
   }

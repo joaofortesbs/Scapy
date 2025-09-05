@@ -7,13 +7,13 @@ export default function PanicButton() {
   };
 
   return (
-    <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-40 max-w-md w-full px-4">
+    <div className="px-4 py-3">
       <Button
-        className="w-full bg-red-600 hover:bg-red-700 text-white border-0 h-12 rounded-lg transition-colors shadow-lg"
+        className="w-full panic-button text-white border-0 h-12 rounded-full transition-all duration-300 shadow-lg"
         onClick={handlePanicClick}
         data-testid="panic-button"
       >
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-center space-x-3">
           <AlertTriangle className="w-5 h-5" />
           <span className="font-semibold">Botão de Pânico</span>
         </div>
