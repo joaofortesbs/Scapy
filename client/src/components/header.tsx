@@ -24,7 +24,7 @@ export default function Header() {
         <Button 
           variant="ghost" 
           size="icon"
-          className="w-12 h-12 rounded-full hover:bg-primary/10 transition-colors"
+          className="w-32 h-12 rounded-full hover:bg-primary/10 transition-colors"
           onClick={handleGoalsClick}
           data-testid="button-goals"
         >

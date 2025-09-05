@@ -103,6 +103,7 @@
     font-weight: 600;
     transition: all 0.3s ease;
     cursor: pointer;
+    background-color: rgba(0, 5, 21, 0.73);
   }
 
   .day-circle.completed {
@@ -113,7 +114,7 @@
 
   .timer-display {
     font-family: 'Fira Code', 'Courier New', monospace;
-    font-size: 2rem;
+    font-size: 3rem;
     color: var(--scapy-cyan);
     font-weight: bold;
     text-align: center;
@@ -177,7 +178,7 @@
 
   @media (max-width: 640px) {
     .timer-display {
-      font-size: 1.5rem;
+      font-size: 2.25rem;
     }
     
     .avatar-container {

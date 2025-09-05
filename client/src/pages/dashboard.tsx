@@ -38,7 +38,7 @@ export default function Dashboard() {
       <div className="relative z-10">
         <Header />
       
-      <main className="flex-1 px-4 pb-32 space-y-6">
+      <main className="flex-1 px-4 pb-40 space-y-8">
         <div className="space-y-4">
           <WeeklyTracker weeklyProgress={weeklyProgress} />
           

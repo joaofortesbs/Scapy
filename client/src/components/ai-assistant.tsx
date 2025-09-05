@@ -29,7 +29,7 @@ export default function AIAssistant() {
           <Button
             key={id}
             variant="outline"
-            className={`flex-1 h-12 border ${color} hover:opacity-80 transition-opacity`}
+            className={`flex-1 h-12 border ${color} hover:opacity-80 transition-opacity rounded-full`}
             onClick={() => handleMoodSelect(label)}
             data-testid={`mood-${id}`}
           >
