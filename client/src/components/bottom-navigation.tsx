@@ -29,13 +29,15 @@ export default function BottomNavigation({
         {navItems.map(({ id, label, icon: Icon, inactive }) => (
           <button
             key={id}
-            className={`nav-item flex items-center justify-center p-2 transition-colors ${
+            className={`nav-item transition-colors ${
               id === 'painel' ? 'active' : inactive ? 'inactive' : ''
             }`}
             onClick={() => onSectionChange(id)}
             data-testid={`nav-${id}`}
           >
-            <Icon className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
+              <Icon className="w-5 h-5" />
+            </div>
           </button>
         ))}
       </div>

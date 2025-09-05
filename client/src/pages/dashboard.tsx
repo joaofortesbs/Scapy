@@ -2,6 +2,9 @@ import { useState } from "react";
 import Header from "@/components/header";
 import Timer from "@/components/timer";
 import WeeklyTracker from "@/components/weekly-tracker";
+import AIAssistant from "@/components/ai-assistant";
+import DailyGoals from "@/components/daily-goals";
+import PanicButton from "@/components/panic-button";
 import BottomNavigation from "@/components/bottom-navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
@@ -49,6 +52,10 @@ export default function Dashboard() {
           <Timer user={user} />
         </section>
 
+        <AIAssistant />
+        
+        <DailyGoals />
+
         <section className="space-y-4">
           <Card className="bg-secondary/30 border-border">
             <CardContent className="p-4">
@@ -92,6 +99,8 @@ export default function Dashboard() {
         </section>
       </main>
 
+      <PanicButton />
+      
       <BottomNavigation 
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
