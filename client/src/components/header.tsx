@@ -7,12 +7,12 @@ export default function Header() {
   };
 
   return (
-    <header className="p-4 flex items-start justify-between">
-      <div className="w-6 h-6">
+    <header className="p-4 flex items-center justify-between">
+      <div className="w-34 h-34">
         <img 
           src="/logo-scapy.png" 
           alt="Logo Scapy" 
-          className="w-6 h-6 object-contain"
+          className="w-32 h-16 object-contain"
           onError={(e) => {
             e.currentTarget.src = "https://api.dicebear.com/7.x/shapes/svg?seed=scapy&backgroundColor=00F6FF&shape1Color=000515";
           }}
@@ -20,10 +20,16 @@ export default function Header() {
         />
       </div>
 
-      <div className="flex items-start space-x-3">
-        <div className="w-12 h-12 rounded-full flex items-center justify-center hover:bg-primary/10 transition-colors cursor-pointer">
-          <Target className="w-12 h-12 text-primary" onClick={handleGoalsClick} data-testid="button-goals" />
-        </div>
+      <div className="flex items-center space-x-3">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className="w-12 h-12 rounded-full hover:bg-primary/10 transition-colors"
+          onClick={handleGoalsClick}
+          data-testid="button-goals"
+        >
+          <Target className="w-12 h-12 text-primary" />
+        </Button>
 
         <div className="gradient-border w-12 h-12" data-testid="profile-container">
           <div className="gradient-border-inner flex items-center justify-center">
