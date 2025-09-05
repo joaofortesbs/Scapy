@@ -15,11 +15,11 @@ export default function AIAssistant() {
 
   return (
     <section className="mb-8">
-      <Card className="bg-secondary/30 border-border mb-3">
-        <CardContent className="p-4">
-          <div className="flex items-center space-x-3">
-            <Sparkles className="w-5 h-5 text-primary" />
-            <span className="text-sm text-foreground">Como você está se sentindo hoje?</span>
+      <Card className="border-border mb-3 rounded-full" style={{ backgroundColor: '#000515' }}>
+        <CardContent className="p-3">
+          <div className="flex items-center justify-center space-x-3">
+            <Sparkles className="w-6 h-6 text-primary" />
+            <span className="text-base text-foreground font-medium">Como você está se sentindo hoje?</span>
           </div>
         </CardContent>
       </Card>

@@ -12,12 +12,12 @@ export default function DailyGoals() {
       <div className="relative">
         {/* Ícone de alvo no topo do card */}
         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-            <Target className="w-5 h-5 text-primary-foreground" />
+          <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+            <Target className="w-8 h-8 text-primary-foreground" />
           </div>
         </div>
 
-        <Card className="bg-secondary/30 border-border pt-6 rounded-2xl">
+        <Card className="bg-secondary/30 border-border pt-8 rounded-3xl">
           <CardContent className="p-6">
             <div className="flex flex-col items-center justify-center space-y-2 min-h-[100px]">
               <Button
