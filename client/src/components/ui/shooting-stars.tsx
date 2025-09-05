@@ -41,7 +41,7 @@ export const ShootingStars = () => {
       ref={containerRef}
       className="absolute inset-0 overflow-hidden pointer-events-none"
       style={{
-        background: `linear-gradient(180deg, #00F6FF 0%, #000515 100%)`
+        background: `linear-gradient(180deg, #00F6FF 0%, #00F6FF 17%, #000515 17%, #000515 100%)`
       }}
     />
   );
