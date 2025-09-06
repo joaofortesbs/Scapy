@@ -762,11 +762,6 @@
       rotateY(-1.5deg)
       translateY(-2px)
       translateZ(4px);
-    box-shadow: 
-      0 4px 8px rgba(0, 246, 255, 0.08),
-      0 8px 16px rgba(0, 246, 255, 0.04),
-      0 1px 4px rgba(0, 246, 255, 0.12),
-      inset 0 1px 0 rgba(0, 246, 255, 0.05);
     background: linear-gradient(135deg, 
       rgba(0, 5, 21, 0.8) 0%,
       rgba(0, 246, 255, 0.02) 40%,
@@ -817,11 +812,6 @@
       rotateY(-2deg)
       translateY(-3px)
       translateZ(6px);
-    box-shadow: 
-      0 6px 12px rgba(0, 246, 255, 0.12),
-      0 12px 24px rgba(0, 246, 255, 0.06),
-      0 2px 6px rgba(0, 246, 255, 0.15),
-      inset 0 1px 0 rgba(0, 246, 255, 0.08);
   }
 
   /* Soft 3D effect for sparkles icon */
