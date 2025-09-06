@@ -676,6 +676,18 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
 }) => {
   return (
     <div className={cn("absolute inset-0 z-0", className)}>
+      {/* Gradiente de fundo suave */}
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          background: `linear-gradient(135deg, 
+            #00112D 1%, 
+            #000515 50%, 
+            #000515 100%
+          )`
+        }}
+      />
+      
       {isDarkTheme && (
         <>
           <StarsBackground
@@ -684,18 +696,18 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
             twinkleProbability={0.7}
             minTwinkleSpeed={0.5}
             maxTwinkleSpeed={1}
-            className="z-0"
+            className="z-10"
           />
           <ShootingStars
             minSpeed={10}
             maxSpeed={30}
             minDelay={1200}
             maxDelay={4200}
-            starColor="#f97316"
-            trailColor="#fb923c"
+            starColor="#00F6FF"
+            trailColor="#00F6FF"
             starWidth={10}
             starHeight={1}
-            className="z-0"
+            className="z-10"
           />
         </>
       )}
