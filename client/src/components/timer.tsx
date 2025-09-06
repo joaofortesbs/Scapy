@@ -36,7 +36,7 @@ export default function Timer({ user }: TimerProps) {
 
   return (
     <div className="text-center">
-      <p className="text-sm text-muted-foreground mb-3">
+      <p className="text-sm text-muted-foreground mb-0">
         Você está livre da pornografia há:
       </p>
       <div className="timer-display" data-testid="timer-display">

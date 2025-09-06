@@ -30,6 +30,7 @@ export default function AIAssistant() {
             key={id}
             variant="outline"
             className={`flex-1 h-12 border ${color} hover:opacity-80 transition-opacity rounded-full`}
+            style={{ opacity: 0.73 }}
             onClick={() => handleMoodSelect(label)}
             data-testid={`mood-${id}`}
           >
