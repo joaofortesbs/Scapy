@@ -20,6 +20,7 @@ import AnaliseEvolucaoMental from "@/components/analise-evolucao-mental";
 import FraseDoDia from "@/components/frase-do-dia";
 import DailyGoals from "@/components/daily-goals";
 import AIAssistant from "@/components/ai-assistant";
+import ParticlesBackground from "@/components/particles-background";
 import type { User, WeeklyProgress } from "@shared/schema";
 
 // Header Component
@@ -256,6 +257,7 @@ export default function PainelInterface({
 }: PainelInterfaceProps) {
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
+      <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
       <div className="relative z-10">
         <Header />
 
