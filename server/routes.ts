@@ -2,39 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertWeeklyProgressSchema, insertUserGoalsSchema } from "@shared/schema";
-import { insertUser, getUsers } from "./supabase.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // === ROTAS SUPABASE USERS ===
-  
-  // Criar usuário no Supabase
-  app.post("/api/supabase/users", async (req, res) => {
-    try {
-      const { name } = req.body;
-      if (!name) {
-        return res.status(400).json({ message: "Nome é obrigatório" });
-      }
-      
-      const user = await insertUser(name);
-      res.json({ message: "Usuário criado com sucesso", user });
-    } catch (error) {
-      console.error("Erro ao criar usuário:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
-    }
-  });
-
-  // Listar todos os usuários do Supabase
-  app.get("/api/supabase/users", async (req, res) => {
-    try {
-      const users = await getUsers();
-      res.json({ users });
-    } catch (error) {
-      console.error("Erro ao buscar usuários:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
-    }
-  });
-
-  // === ROTAS EXISTENTES ===
   
   // Get default user (demo user)
   app.get("/api/user", async (req, res) => {

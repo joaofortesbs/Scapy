@@ -1,7 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { supabase, insertUser, getUsers, setupRealtimeSubscription, testConnection } from "./supabase.js";
 
 const app = express();
 app.use(express.json());
@@ -38,29 +37,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Inicializar Supabase
-  console.log('🚀 Inicializando integração com Supabase...');
-  
-  // Testar conexão
-  const connectionOk = await testConnection();
-  if (connectionOk) {
-    // Configurar Realtime
-    setupRealtimeSubscription();
-    
-    // Inserir usuário de exemplo
-    try {
-      await insertUser('Usuário de Teste - ' + new Date().toLocaleString('pt-BR'));
-    } catch (error) {
-      console.log('Nota: Tabela users pode não existir ainda. Crie-a no Supabase Dashboard.');
-    }
-    
-    // Buscar usuários existentes
-    try {
-      await getUsers();
-    } catch (error) {
-      console.log('Nota: Erro ao buscar usuários. Verifique se a tabela existe.');
-    }
-  }
+  console.log('🚀 Starting Scapy NoFap Tracker...');
 
   const server = await registerRoutes(app);
 
