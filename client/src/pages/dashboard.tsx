@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { User, WeeklyProgress } from "@shared/schema";
 import PainelInterface from "@/interface/secao/painel";
+import Header from "@/components/header"; // Assuming Header is imported from a components directory
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("painel");
@@ -14,6 +15,12 @@ export default function Dashboard() {
     queryKey: ["/api/weekly-progress"],
   });
 
+  // Assuming onLogout is a function defined elsewhere or passed down
+  const onLogout = () => {
+    // Implement logout logic here, e.g., clear session, redirect
+    console.log("User logged out");
+  };
+
   const handleSectionChange = (section: string) => {
     if (section !== "painel") {
       alert("Esta seção estará disponível em breve!");
@@ -23,11 +30,14 @@ export default function Dashboard() {
   };
 
   return (
-    <PainelInterface 
-      user={user}
-      weeklyProgress={weeklyProgress}
-      activeSection={activeSection}
-      onSectionChange={handleSectionChange}
-    />
+    <>
+      <Header user={user} onLogout={onLogout} />
+      <PainelInterface
+        user={user}
+        weeklyProgress={weeklyProgress}
+        activeSection={activeSection}
+        onSectionChange={handleSectionChange}
+      />
+    </>
   );
 }
