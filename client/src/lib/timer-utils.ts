@@ -6,8 +6,31 @@ export interface TimeDifference {
   totalSeconds: number;
 }
 
-export function calculateTimeDifference(startDate: Date | string, currentDate: Date): TimeDifference {
+export function calculateTimeDifference(startDate: Date | string | null | undefined, currentDate: Date): TimeDifference {
+  // Handle null/undefined/invalid startDate
+  if (!startDate) {
+    return {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      totalSeconds: 0,
+    };
+  }
+
   const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
+  
+  // Validate that start is a valid Date object
+  if (!start || isNaN(start.getTime())) {
+    return {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      totalSeconds: 0,
+    };
+  }
+
   const diffInMs = currentDate.getTime() - start.getTime();
   const totalSeconds = Math.floor(diffInMs / 1000);
   
