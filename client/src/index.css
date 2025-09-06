@@ -201,6 +201,18 @@
     gap: 4px;
   }
 
+  /* Challenge cards layout */
+  .challenge-cards-container {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+  }
+  
+  .challenge-card {
+    flex: 1;
+    max-width: calc(50% - 0.375rem);
+  }
+
   @media (max-width: 640px) {
     .timer-display {
       font-size: 3rem;
@@ -215,6 +227,14 @@
       width: 35px;
       height: 35px;
       font-size: 0.875rem;
+    }
+    
+    .challenge-cards-container {
+      gap: 0.5rem;
+    }
+    
+    .challenge-card {
+      max-width: calc(50% - 0.25rem);
     }
   }
 }
