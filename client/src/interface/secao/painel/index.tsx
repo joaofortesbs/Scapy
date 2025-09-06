@@ -310,11 +310,11 @@ export default function PainelInterface({
                   {/* Conditionally show caveman avatar */}
                   <div className="floating-avatar mb-6">
                     <img
-                      src="/caveman-avatar.png"
+                      src="/caveman-avatar.webp"
                       alt="Avatar Caveman"
                       className="w-80 h-80 object-contain mx-auto"
                       onError={(e) => {
-                        e.currentTarget.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=caveman&backgroundColor=000515";
+                        e.currentTarget.src = "/caveman-avatar.png";
                       }}
                       data-testid="avatar-image"
                     />
