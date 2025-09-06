@@ -63,36 +63,38 @@ function Router() {
     );
   }
 
-  // Se não estiver autenticado, mostrar página de login
+  // Se não estiver autenticado, mostrar APENAS página de login
   if (!isAuthenticated) {
     return (
-      <TooltipProvider>
-        <Toaster />
-        <AuthPage onLoginSuccess={handleLoginSuccess} />
-      </TooltipProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <AuthPage onLoginSuccess={handleLoginSuccess} />
+        </TooltipProvider>
+      </QueryClientProvider>
     );
   }
 
   // Se estiver autenticado, mostrar aplicação principal
   return (
-    <Switch>
-      <Route path="/" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
-      <Route path="/dashboard" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
-      <Route component={NotFound} />
-    </Switch>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Switch>
+          <Route path="/" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
+          <Route path="/dashboard" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
+          <Route component={NotFound} />
+        </Switch>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <div className="bg-background text-foreground min-h-screen">
-          <Router />
-        </div>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <div className="bg-background text-foreground min-h-screen">
+      <Router />
+    </div>
   );
 }
 

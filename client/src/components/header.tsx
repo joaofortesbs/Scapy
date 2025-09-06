@@ -9,7 +9,7 @@ interface HeaderProps {
   onLogout?: () => void;
 }
 
-export function Header({ user, onLogout }: HeaderProps) {
+export default function Header({ user, onLogout }: HeaderProps) {
 
   return (
     <header className="w-full bg-transparent backdrop-blur-sm relative z-10">

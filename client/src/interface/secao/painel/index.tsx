@@ -288,14 +288,14 @@ export default function PainelInterface({
 
           <div className="mt-6 flex flex-col space-y-6">
             <AnaliseEvolucaoMental />
-            
+
             <FraseDoDia />
-            
+
             <div className="challenge-cards-container mt-8">
               <DesafioPlanoBeamEstar />
               <DesafioDuplaDinamica />
             </div>
-            
+
             <div className="daily-goals-section">
               <DailyGoals />
             </div>
