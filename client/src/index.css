@@ -136,7 +136,7 @@
 
   /* Garantir espaçamento adequado entre componentes */
   .daily-goals-section {
-    margin-top: 2.5rem !important;
+    margin-top: 1.5rem !important;
     padding-top: 1rem;
   }
 
@@ -247,6 +247,10 @@
     
     .challenge-card .p-4 {
       padding: 0.75rem;
+    }
+    
+    .daily-goals-section {
+      margin-top: 1rem !important;
     }
   }
 }
