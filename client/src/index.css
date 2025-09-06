@@ -6,15 +6,15 @@
   --background: hsl(221, 100%, 3%); /* #000515 */
   --foreground: hsl(190, 100%, 50%); /* #00F6FF */
   --card: hsl(221, 50%, 8%);
-  --card-foreground: #F7F7F7;
+  --card-foreground: hsl(190, 100%, 50%);
   --popover: hsl(221, 100%, 3%);
-  --popover-foreground: #F7F7F7;
+  --popover-foreground: hsl(190, 100%, 50%);
   --primary: hsl(190, 100%, 50%); /* #00F6FF */
   --primary-foreground: hsl(221, 100%, 3%);
   --secondary: hsl(221, 50%, 15%);
-  --secondary-foreground: #F7F7F7;
+  --secondary-foreground: hsl(190, 100%, 50%);
   --muted: hsl(221, 50%, 10%);
-  --muted-foreground: #F7F7F7;
+  --muted-foreground: hsl(190, 50%, 70%);
   --accent: hsl(190, 100%, 50%);
   --accent-foreground: hsl(221, 100%, 3%);
   --destructive: hsl(0, 84%, 60%);
@@ -32,7 +32,7 @@
   --sidebar-primary: hsl(190, 100%, 50%);
   --sidebar-primary-foreground: hsl(221, 100%, 3%);
   --sidebar-accent: hsl(221, 50%, 15%);
-  --sidebar-accent-foreground: #F7F7F7;
+  --sidebar-accent-foreground: hsl(190, 100%, 50%);
   --sidebar-border: hsl(190, 30%, 30%);
   --sidebar-ring: hsl(190, 100%, 50%);
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -48,15 +48,15 @@
   --background: hsl(221, 100%, 3%);
   --foreground: hsl(190, 100%, 50%);
   --card: hsl(221, 50%, 8%);
-  --card-foreground: #F7F7F7;
+  --card-foreground: hsl(190, 100%, 50%);
   --popover: hsl(221, 100%, 3%);
-  --popover-foreground: #F7F7F7;
+  --popover-foreground: hsl(190, 100%, 50%);
   --primary: hsl(190, 100%, 50%);
   --primary-foreground: hsl(221, 100%, 3%);
   --secondary: hsl(221, 50%, 15%);
-  --secondary-foreground: #F7F7F7;
+  --secondary-foreground: hsl(190, 100%, 50%);
   --muted: hsl(221, 50%, 10%);
-  --muted-foreground: #F7F7F7;
+  --muted-foreground: hsl(190, 50%, 70%);
   --accent: hsl(190, 100%, 50%);
   --accent-foreground: hsl(221, 100%, 3%);
   --destructive: hsl(0, 84%, 60%);
@@ -136,7 +136,7 @@
 
   /* Garantir espaçamento adequado entre componentes */
   .daily-goals-section {
-    margin-top: 1.5rem !important;
+    margin-top: 0rem !important;
     padding-top: 1rem;
   }
 
@@ -180,7 +180,7 @@
     justify-content: center;
     transition: all 0.2s ease;
   }
-
+  
   .nav-item svg {
     stroke-width: 3;
     font-weight: 900;
@@ -207,34 +207,14 @@
     gap: 1.2rem;
     width: 100%;
   }
-
+  
   .challenge-cards-container.mt-8 {
     margin-top: 2.5rem !important;
   }
-
+  
   .challenge-card {
     flex: 1;
     max-width: calc(50% - 0.375rem);
-  }
-
-  /* Wellness challenge image styles */
-  .wellness-challenge-image {
-    width: 80px;
-    height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  .wellness-challenge-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    aspect-ratio: 1/1;
-    border-radius: 8px;
-    content: url('/assets/icons/wellness-challenge.svg');
   }
 
   @media (max-width: 640px) {
@@ -252,23 +232,23 @@
       height: 35px;
       font-size: 0.875rem;
     }
-
+    
     .challenge-cards-container {
       gap: 1rem;
     }
-
+    
     .challenge-card {
       max-width: calc(50% - 0.25rem);
     }
-
+    
     .challenge-card .min-h-\[84px\] {
       min-height: 70px;
     }
-
+    
     .challenge-card .p-4 {
       padding: 0.75rem;
     }
-
+    
     .daily-goals-section {
       margin-top: 1rem !important;
     }
