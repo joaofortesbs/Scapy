@@ -1,17 +1,16 @@
-
 import { useState, useEffect } from "react";
-import { 
-  Bot, 
-  BookOpen, 
-  Home, 
-  BarChart3, 
+import {
+  Bot,
+  BookOpen,
+  Home,
+  BarChart3,
   Users,
   Target,
   Plus,
-  Sparkles, 
-  Frown, 
-  Meh, 
-  Smile 
+  Sparkles,
+  Frown,
+  Meh,
+  Smile
 } from "lucide-react";
 import { ScapyIcon } from "@/components/ui/scapy-icon";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
+import DesafioPlanoBeamEstar from "@/components/desafio-plano-bem-estar";
 import type { User, WeeklyProgress } from "@shared/schema";
 
 // Header Component
@@ -26,9 +26,9 @@ function Header() {
   return (
     <header className="p-4 flex items-center justify-between">
       <div className="w-34 h-34">
-        <img 
-          src="/logo-scapy.png" 
-          alt="Logo Scapy" 
+        <img
+          src="/logo-scapy.png"
+          alt="Logo Scapy"
           className="w-32 h-16 object-contain"
           onError={(e) => {
             e.currentTarget.src = "https://api.dicebear.com/7.x/shapes/svg?seed=scapy&backgroundColor=00F6FF&shape1Color=000515";
@@ -46,9 +46,9 @@ function Header() {
 
         <div className="gradient-border w-12 h-12" data-testid="profile-container">
           <div className="gradient-border-inner flex items-center justify-center">
-            <img 
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=user&backgroundColor=000515" 
-              alt="Profile Picture" 
+            <img
+              src="https://api.dicebear.com/7.x/avataaars/svg?seed=user&backgroundColor=000515"
+              alt="Profile Picture"
               className="w-10 h-10 rounded-full object-cover"
               data-testid="profile-image"
             />
@@ -68,7 +68,7 @@ function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
   const queryClient = useQueryClient();
   const weekDays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
   const dayNames = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
-  
+
   const updateProgressMutation = useMutation({
     mutationFn: async (updatedDays: boolean[]) => {
       const startOfWeek = new Date();
@@ -89,10 +89,10 @@ function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
 
   const handleDayClick = (dayIndex: number) => {
     if (!weeklyProgress) return;
-    
+
     const updatedDays = [...weeklyProgress.dayCompleted];
     updatedDays[dayIndex] = !updatedDays[dayIndex];
-    
+
     updateProgressMutation.mutate(updatedDays);
   };
 
@@ -114,7 +114,7 @@ function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
           </button>
         ))}
       </div>
-      
+
       {updateProgressMutation.isPending && (
         <div className="text-center mt-2 text-sm text-muted-foreground">
           Atualizando...
@@ -131,7 +131,7 @@ interface TimerProps {
 
 function Timer({ user }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -166,7 +166,7 @@ function Timer({ user }: TimerProps) {
         <span data-testid="timer-minutes">{String(timeDiff.minutes).padStart(2, '0')}</span>:
         <span data-testid="timer-seconds">{String(timeDiff.seconds).padStart(2, '0')}</span>
       </div>
-      
+
       {timeDiff.days > 0 && (
         <div className="mt-4">
           <div className="text-sm font-semibold text-primary">
@@ -270,7 +270,7 @@ function PanicButton() {
 
   return (
     <div className="p-4 pb-2">
-      <Button 
+      <Button
         onClick={handlePanicClick}
         className="w-full panic-button text-white border-0 h-14 rounded-full transition-all duration-300 shadow-lg font-bold text-lg"
         data-testid="panic-button"
@@ -287,9 +287,9 @@ interface BottomNavigationProps {
   onSectionChange: (section: string) => void;
 }
 
-function BottomNavigation({ 
-  activeSection, 
-  onSectionChange 
+function BottomNavigation({
+  activeSection,
+  onSectionChange
 }: BottomNavigationProps) {
   const navItems = [
     { id: 'scapy-ia', label: 'Scapy IA', icon: Bot, inactive: true },
@@ -329,26 +329,26 @@ interface PainelInterfaceProps {
   onSectionChange: (section: string) => void;
 }
 
-export default function PainelInterface({ 
-  user, 
-  weeklyProgress, 
-  activeSection, 
-  onSectionChange 
+export default function PainelInterface({
+  user,
+  weeklyProgress,
+  activeSection,
+  onSectionChange
 }: PainelInterfaceProps) {
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
       <div className="relative z-10">
         <Header />
-      
+
         <main className="flex-1 px-4 pb-48">
           <div className="space-y-6">
             <WeeklyTracker weeklyProgress={weeklyProgress} />
-            
+
             <section className="text-center">
               <div className="floating-avatar mb-6">
-                <img 
-                  src="/caveman-avatar.png" 
-                  alt="Avatar Caveman" 
+                <img
+                  src="/caveman-avatar.png"
+                  alt="Avatar Caveman"
                   className="w-80 h-80 object-contain mx-auto"
                   onError={(e) => {
                     e.currentTarget.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=caveman&backgroundColor=000515";
@@ -364,7 +364,11 @@ export default function PainelInterface({
           <div className="mt-6">
             <AIAssistant />
           </div>
-          
+
+          <div className="mt-6">
+            <DesafioPlanoBeamEstar />
+          </div>
+
           <div className="daily-goals-section">
             <DailyGoals />
           </div>
@@ -373,7 +377,7 @@ export default function PainelInterface({
 
       <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50" style={{ backgroundColor: '#000515' }}>
         <PanicButton />
-        <BottomNavigation 
+        <BottomNavigation
           activeSection={activeSection}
           onSectionChange={onSectionChange}
         />
