@@ -241,6 +241,26 @@ function BottomNavigation({
   );
 }
 
+// Journey Start Component
+function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div 
+        className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
+        onClick={onStartJourney}
+        data-testid="journey-start-image"
+      >
+        <img
+          src="/Imagem-inicio-jornada-painel.png"
+          alt="Comece sua jornada agora"
+          className="w-80 h-80 object-contain mx-auto"
+          style={{ aspectRatio: '1/1' }}
+        />
+      </div>
+    </div>
+  );
+}
+
 // Main Panel Interface Component
 interface PainelInterfaceProps {
   user?: User;
@@ -255,6 +275,15 @@ export default function PainelInterface({
   activeSection,
   onSectionChange
 }: PainelInterfaceProps) {
+  // Journey state - check if user has started their journey
+  const [hasStartedJourney, setHasStartedJourney] = useState(() => {
+    return localStorage.getItem('hasStartedJourney') === 'true';
+  });
+
+  const handleStartJourney = () => {
+    setHasStartedJourney(true);
+    localStorage.setItem('hasStartedJourney', 'true');
+  };
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
       <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
@@ -262,44 +291,50 @@ export default function PainelInterface({
         <Header />
 
         <main className="flex-1 px-4 pb-48">
-          <div className="space-y-6">
-            <WeeklyTracker weeklyProgress={weeklyProgress} />
+          {!hasStartedJourney ? (
+            <JourneyStart onStartJourney={handleStartJourney} />
+          ) : (
+            <>
+              <div className="space-y-6">
+                <WeeklyTracker weeklyProgress={weeklyProgress} />
 
-            <section className="text-center">
-              <div className="floating-avatar mb-6">
-                <img
-                  src="/caveman-avatar.png"
-                  alt="Avatar Caveman"
-                  className="w-80 h-80 object-contain mx-auto"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=caveman&backgroundColor=000515";
-                  }}
-                  data-testid="avatar-image"
-                />
+                <section className="text-center">
+                  <div className="floating-avatar mb-6">
+                    <img
+                      src="/caveman-avatar.png"
+                      alt="Avatar Caveman"
+                      className="w-80 h-80 object-contain mx-auto"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=caveman&backgroundColor=000515";
+                      }}
+                      data-testid="avatar-image"
+                    />
+                  </div>
+
+                  <Timer user={user} />
+                </section>
               </div>
 
-              <Timer user={user} />
-            </section>
-          </div>
+              <div className="mt-6">
+                <AIAssistant />
+              </div>
 
-          <div className="mt-6">
-            <AIAssistant />
-          </div>
+              <div className="mt-6 flex flex-col space-y-6">
+                <AnaliseEvolucaoMental />
 
-          <div className="mt-6 flex flex-col space-y-6">
-            <AnaliseEvolucaoMental />
+                <FraseDoDia />
 
-            <FraseDoDia />
+                <div className="challenge-cards-container mt-8">
+                  <DesafioPlanoBeamEstar />
+                  <DesafioDuplaDinamica />
+                </div>
 
-            <div className="challenge-cards-container mt-8">
-              <DesafioPlanoBeamEstar />
-              <DesafioDuplaDinamica />
-            </div>
-
-            <div className="daily-goals-section">
-              <DailyGoals />
-            </div>
-          </div>
+                <div className="daily-goals-section">
+                  <DailyGoals />
+                </div>
+              </div>
+            </>
+          )}
         </main>
       </div>
 
