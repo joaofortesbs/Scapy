@@ -255,6 +255,10 @@ function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
           alt="Comece sua jornada agora"
           className="w-96 h-96 object-contain mx-auto"
           style={{ aspectRatio: '1/1' }}
+          loading="eager"
+          fetchPriority="high"
+          width={384}
+          height={384}
         />
       </div>
     </div>
@@ -279,6 +283,19 @@ export default function PainelInterface({
   const [hasStartedJourney, setHasStartedJourney] = useState(() => {
     return localStorage.getItem('hasStartedJourney') === 'true';
   });
+
+  // Preload the journey start image immediately
+  useEffect(() => {
+    const img = new Image();
+    img.src = "/Imagem-inicio-jornada-painel.png";
+    // Preload the image to cache it
+    img.onload = () => {
+      console.log("Journey start image preloaded successfully");
+    };
+    img.onerror = () => {
+      console.warn("Failed to preload journey start image");
+    };
+  }, []);
 
   const handleStartJourney = () => {
     setHasStartedJourney(true);
