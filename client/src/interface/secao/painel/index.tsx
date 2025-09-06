@@ -289,7 +289,7 @@ export default function PainelInterface({
             
             <FraseDoDia />
             
-            <div className="challenge-cards-container">
+            <div className="challenge-cards-container mt-8">
               <DesafioPlanoBeamEstar />
               <DesafioDuplaDinamica />
             </div>
