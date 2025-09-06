@@ -27,7 +27,14 @@ export default function DesafioPlanoBeamEstar() {
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-center min-h-[84px]">
-              {/* Conteúdo do card pode ser adicionado aqui futuramente */}
+              <div className="w-16 h-16 flex items-center justify-center">
+                <img 
+                  src="/7-dias-desafio-bem-estar.png" 
+                  alt="7 Dias Desafio Bem-estar" 
+                  className="w-full h-full object-cover rounded-lg"
+                  style={{ aspectRatio: '1/1' }}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
