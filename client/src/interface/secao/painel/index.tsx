@@ -253,7 +253,7 @@ function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
         <img
           src="/Imagem-inicio-jornada-painel.png"
           alt="Comece sua jornada agora"
-          className="w-80 h-80 object-contain mx-auto"
+          className="w-96 h-96 object-contain mx-auto"
           style={{ aspectRatio: '1/1' }}
         />
       </div>
@@ -291,14 +291,16 @@ export default function PainelInterface({
         <Header />
 
         <main className="flex-1 px-4 pb-48">
-          {!hasStartedJourney ? (
-            <JourneyStart onStartJourney={handleStartJourney} />
-          ) : (
-            <>
-              <div className="space-y-6">
-                <WeeklyTracker weeklyProgress={weeklyProgress} />
+          <div className="space-y-6">
+            {/* Conditionally show WeeklyTracker */}
+            {hasStartedJourney && <WeeklyTracker weeklyProgress={weeklyProgress} />}
 
-                <section className="text-center">
+            <section className="text-center">
+              {!hasStartedJourney ? (
+                <JourneyStart onStartJourney={handleStartJourney} />
+              ) : (
+                <>
+                  {/* Conditionally show caveman avatar */}
                   <div className="floating-avatar mb-6">
                     <img
                       src="/caveman-avatar.png"
@@ -311,30 +313,32 @@ export default function PainelInterface({
                     />
                   </div>
 
+                  {/* Conditionally show Timer */}
                   <Timer user={user} />
-                </section>
-              </div>
+                </>
+              )}
+            </section>
+          </div>
 
-              <div className="mt-6">
-                <AIAssistant />
-              </div>
+          {/* These components always show regardless of journey state */}
+          <div className="mt-6">
+            <AIAssistant />
+          </div>
 
-              <div className="mt-6 flex flex-col space-y-6">
-                <AnaliseEvolucaoMental />
+          <div className="mt-6 flex flex-col space-y-6">
+            <AnaliseEvolucaoMental />
 
-                <FraseDoDia />
+            <FraseDoDia />
 
-                <div className="challenge-cards-container mt-8">
-                  <DesafioPlanoBeamEstar />
-                  <DesafioDuplaDinamica />
-                </div>
+            <div className="challenge-cards-container mt-8">
+              <DesafioPlanoBeamEstar />
+              <DesafioDuplaDinamica />
+            </div>
 
-                <div className="daily-goals-section">
-                  <DailyGoals />
-                </div>
-              </div>
-            </>
-          )}
+            <div className="daily-goals-section">
+              <DailyGoals />
+            </div>
+          </div>
         </main>
       </div>
 
