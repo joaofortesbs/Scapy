@@ -312,7 +312,7 @@ export const SparklesCore = (props: any) => {
                   enable: false,
                   mode: "repulse",
                 },
-                resize: true,
+                resize: {}
               },
               modes: {
                 push: {
@@ -389,7 +389,7 @@ export const SparklesCore = (props: any) => {
                 close: true,
                 fill: true,
                 options: {},
-                type: {},
+                type: undefined,
               },
               groups: {},
               move: {
