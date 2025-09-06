@@ -1,4 +1,3 @@
-
 import { Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -20,19 +19,18 @@ export default function DesafioPlanoBeamEstar() {
         </div>
 
         <Card 
-          className="border-border cursor-pointer hover:bg-primary/5 transition-colors duration-200 rounded-3xl pt-6" 
+          className="border-border cursor-pointer hover:bg-primary/5 transition-all duration-500 rounded-3xl pt-6 wellness-card-natural-3d" 
           style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}
           onClick={handleChallengeClick}
           data-testid="wellness-challenge-card"
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-center min-h-[84px]">
-              <div className="w-16 h-16 flex items-center justify-center">
+              <div className="w-full aspect-square max-w-[80px] flex items-center justify-center">
                 <img 
-                  src="/7-dias-desafio-bem-estar.png" 
+                  src="/desafio-bem-estar-7dias.png" 
                   alt="7 Dias Desafio Bem-estar" 
-                  className="w-full h-full object-cover rounded-lg"
-                  style={{ aspectRatio: '1/1' }}
+                  className="w-full h-full object-contain rounded-lg"
                 />
               </div>
             </div>
