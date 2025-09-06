@@ -29,6 +29,13 @@ export const userGoals = pgTable("user_goals", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const timer = pgTable("timer", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  startTime: timestamp("start_time").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   startDate: true,
@@ -44,9 +51,16 @@ export const insertUserGoalsSchema = createInsertSchema(userGoals).omit({
   createdAt: true,
 });
 
+export const insertTimerSchema = createInsertSchema(timer).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type WeeklyProgress = typeof weeklyProgress.$inferSelect;
 export type InsertWeeklyProgress = z.infer<typeof insertWeeklyProgressSchema>;
 export type UserGoals = typeof userGoals.$inferSelect;
 export type InsertUserGoals = z.infer<typeof insertUserGoalsSchema>;
+export type Timer = typeof timer.$inferSelect;
+export type InsertTimer = z.infer<typeof insertTimerSchema>;

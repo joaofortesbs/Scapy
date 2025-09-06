@@ -22,7 +22,6 @@ import { DailyGoals } from "@/components/daily-goals";
 import AIAssistant from "@/components/ai-assistant";
 import ParticlesBackground from "@/components/particles-background";
 import type { User, WeeklyProgress } from "@shared/schema";
-import { supabase } from "@/lib/supabaseClient";
 
 // Header Component
 function Header() {
@@ -294,6 +293,7 @@ export default function PainelInterface({
   activeSection,
   onSectionChange
 }: PainelInterfaceProps) {
+  const queryClient = useQueryClient();
   const [hasStartedJourney, setHasStartedJourney] = useState(() => {
     const storedValue = localStorage.getItem('hasStartedJourney');
     return storedValue === 'true';
@@ -302,27 +302,28 @@ export default function PainelInterface({
   const [isLoadingTimer, setIsLoadingTimer] = useState(false);
 
   const { data: timerData, isLoading: isLoadingTimerQuery } = useQuery({
-    queryKey: ['timer', user?.id],
+    queryKey: ['/api/timer'],
     queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from('timer')
-        .select('start_time')
-        .eq('user_id', user.id)
-        .single();
+      const response = await fetch('/api/timer', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
       
-      if (error) {
-        console.error("Error fetching timer:", error);
+      if (!response.ok) {
+        console.error("Error fetching timer:", response.statusText);
         return null;
       }
-      return data;
+      
+      const result = await response.json();
+      return result.timer;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!localStorage.getItem('authToken'),
   });
 
   useEffect(() => {
-    if (timerData && timerData.start_time) {
-      setTimerStartTime(timerData.start_time);
+    if (timerData && timerData.startTime) {
+      setTimerStartTime(timerData.startTime);
       setHasStartedJourney(true);
       localStorage.setItem('hasStartedJourney', 'true');
     }
@@ -332,24 +333,29 @@ export default function PainelInterface({
     mutationFn: async () => {
       if (!user?.id) throw new Error("User ID is required");
       setIsLoadingTimer(true);
-      const { data, error } = await supabase
-        .from('timer')
-        .insert([{ user_id: user.id, start_time: new Date().toISOString() }])
-        .select('start_time')
-        .single();
+      
+      const response = await fetch('/api/timer/start', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-      if (error) {
-        console.error("Error starting timer:", error);
+      if (!response.ok) {
         setIsLoadingTimer(false);
-        throw error;
+        throw new Error('Failed to start timer');
       }
-      return data.start_time;
+      
+      const result = await response.json();
+      return result.timer.startTime;
     },
     onSuccess: (startTime) => {
       setTimerStartTime(startTime);
       setHasStartedJourney(true);
       localStorage.setItem('hasStartedJourney', 'true');
       setIsLoadingTimer(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/timer'] });
     },
     onError: () => {
       setIsLoadingTimer(false);
