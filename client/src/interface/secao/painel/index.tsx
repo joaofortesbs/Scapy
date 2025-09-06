@@ -244,7 +244,7 @@ function BottomNavigation({
 // Journey Start Component
 function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
   return (
-    <div className="flex items-start justify-center pt-8 min-h-[60vh]">
+    <div className="flex items-start justify-center pt-1 min-h-[60vh]">
       <div
         className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
         onClick={onStartJourney}
@@ -253,7 +253,7 @@ function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
         <img
           src="/Imagem-inicio-jornada-painel.webp"
           alt="Comece sua jornada agora"
-          className="w-[500px] h-[500px] object-contain mx-auto"
+          className="w-[500px] h-[350px] object-contain mx-auto"
           style={{ aspectRatio: '1/1' }}
           loading="eager"
           fetchpriority="high"
