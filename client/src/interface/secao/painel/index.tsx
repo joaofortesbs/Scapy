@@ -245,17 +245,24 @@ function BottomNavigation({
 function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <div 
+      <div
         className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
         onClick={onStartJourney}
         data-testid="journey-start-image"
       >
         <img
-          src="/Imagem-inicio-jornada-painel.png"
+          src="/Imagem-inicio-jornada-painel.webp"
           alt="Comece sua jornada agora"
-          className="w-96 h-96 object-contain mx-auto"
+          className="w-[500px] h-[500px] object-contain mx-auto"
           style={{ aspectRatio: '1/1' }}
-          data-testid="journey-start-image"
+          loading="eager"
+          fetchpriority="high"
+          width={500}
+          height={500}
+          onError={(e) => {
+            console.error("Erro ao carregar imagem:", e);
+            e.currentTarget.src = "/Imagem-inicio-jornada-painel.png";
+          }}
         />
       </div>
     </div>
