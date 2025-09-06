@@ -31,6 +31,38 @@ export type Database = {
           created_at?: string
         }
       }
+      auth_users: {
+        Row: {
+          id: number
+          email: string
+          password_hash: string
+          full_name: string
+          created_at: string
+          updated_at: string
+          is_active: boolean
+          last_login: string | null
+        }
+        Insert: {
+          id?: number
+          email: string
+          password_hash: string
+          full_name: string
+          created_at?: string
+          updated_at?: string
+          is_active?: boolean
+          last_login?: string | null
+        }
+        Update: {
+          id?: number
+          email?: string
+          password_hash?: string
+          full_name?: string
+          created_at?: string
+          updated_at?: string
+          is_active?: boolean
+          last_login?: string | null
+        }
+      }
     }
     Views: {
       [_ in never]: never

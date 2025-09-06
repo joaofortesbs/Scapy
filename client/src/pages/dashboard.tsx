@@ -1,14 +1,17 @@
 import { useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { User, WeeklyProgress } from "@shared/schema";
 import PainelInterface from "@/interface/secao/painel";
+import Header from "@/components/header";
 
-export default function Dashboard() {
+interface DashboardProps {
+  user?: any;
+  onLogout?: () => void;
+}
+
+export default function Dashboard({ user, onLogout }: DashboardProps) {
   const [activeSection, setActiveSection] = useState("painel");
-
-  const { data: user } = useQuery<User>({
-    queryKey: ["/api/user"],
-  });
 
   const { data: weeklyProgress } = useQuery<WeeklyProgress>({
     queryKey: ["/api/weekly-progress"],
@@ -23,11 +26,14 @@ export default function Dashboard() {
   };
 
   return (
-    <PainelInterface 
-      user={user}
-      weeklyProgress={weeklyProgress}
-      activeSection={activeSection}
-      onSectionChange={handleSectionChange}
-    />
+    <>
+      <Header user={user} onLogout={onLogout} />
+      <PainelInterface
+        user={user}
+        weeklyProgress={weeklyProgress}
+        activeSection={activeSection}
+        onSectionChange={handleSectionChange}
+      />
+    </>
   );
 }
