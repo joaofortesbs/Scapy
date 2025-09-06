@@ -16,6 +16,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
 import DesafioPlanoBeamEstar from "@/components/desafio-plano-bem-estar";
 import DesafioDuplaDinamica from "@/components/desafio-dupla-dinamica";
+import AnaliseEvolucaoMental from "@/components/analise-evolucao-mental";
 import DailyGoals from "@/components/daily-goals";
 import AIAssistant from "@/components/ai-assistant";
 import type { User, WeeklyProgress } from "@shared/schema";
@@ -283,6 +284,8 @@ export default function PainelInterface({
           </div>
 
           <div className="mt-6 flex flex-col space-y-6">
+            <AnaliseEvolucaoMental />
+            
             <div className="flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
               <div className="flex-1">
                 <DesafioPlanoBeamEstar />
