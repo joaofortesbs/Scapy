@@ -244,7 +244,7 @@ function BottomNavigation({
 // Journey Start Component
 function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
   return (
-    <div className="flex items-start justify-center -mt-1 min-h-[60vh]">
+    <div className="flex items-start justify-center mt-8 min-h-[60vh]">
       <div
         className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
         onClick={onStartJourney}
@@ -253,7 +253,7 @@ function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
         <img
           src="/Imagem-inicio-jornada-painel.webp"
           alt="Comece sua jornada agora - Bloqueador avançado de apps e sites"
-          className="w-[600px] h-[450px] object-contain mx-auto"
+          className="w-[770px] h-[527px] object-contain mx-auto"
           loading="eager"
           fetchpriority="high"
           width={600}
@@ -310,11 +310,11 @@ export default function PainelInterface({
                   {/* Conditionally show caveman avatar */}
                   <div className="floating-avatar mb-6">
                     <img
-                      src="/caveman-avatar.png"
+                      src="/caveman-avatar.webp"
                       alt="Avatar Caveman"
                       className="w-80 h-80 object-contain mx-auto"
                       onError={(e) => {
-                        e.currentTarget.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=caveman&backgroundColor=000515";
+                        e.currentTarget.src = "/caveman-avatar.png";
                       }}
                       data-testid="avatar-image"
                     />
