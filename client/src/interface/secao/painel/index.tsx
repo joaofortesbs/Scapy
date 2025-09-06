@@ -253,7 +253,7 @@ function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
         <img
           src="/Imagem-inicio-jornada-painel.webp"
           alt="Comece sua jornada agora - Bloqueador avançado de apps e sites"
-          className="w-[600px] h-[450px] object-contain mx-auto"
+          className="w-[770px] h-[527px] object-contain mx-auto"
           loading="eager"
           fetchpriority="high"
           width={600}
