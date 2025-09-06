@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertWeeklyProgressSchema, insertUserGoalsSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
   // Get default user (demo user)
   app.get("/api/user", async (req, res) => {
     try {
