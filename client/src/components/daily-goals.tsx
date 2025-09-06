@@ -11,13 +11,15 @@ export default function DailyGoals() {
     <section className="mb-8 relative">
       <div className="relative">
         {/* Ícone de alvo no topo do card */}
-        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-          <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-            <Target className="w-8 h-8 text-primary-foreground" />
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-[30%] z-10">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)', border: '2px solid rgba(0, 5, 21, 0.73)' }}>
+            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+              <Target className="w-6 h-6 text-primary-foreground" />
+            </div>
           </div>
         </div>
 
-        <Card className="border-border pt-8 rounded-3xl" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
+        <Card className="border-border pt-4 rounded-3xl" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
           <CardContent className="p-6">
             <div className="flex flex-col items-center justify-center space-y-2 min-h-[120px]">
               <Button
