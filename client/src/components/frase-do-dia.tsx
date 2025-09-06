@@ -23,7 +23,7 @@ export default function FraseDoDia() {
         </div>
 
         <Card 
-          className="border-border cursor-pointer hover:bg-primary/5 transition-colors duration-200 rounded-3xl pt-6" 
+          className="border-border cursor-pointer hover:bg-primary/5 transition-all duration-500 rounded-3xl pt-6 frase-do-dia-card-natural-3d" 
           style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}
           onClick={handleFraseClick}
           data-testid="frase-do-dia-card"
