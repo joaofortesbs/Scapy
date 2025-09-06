@@ -1,4 +1,3 @@
-
 import { Target, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,12 +19,7 @@ export default function DailyGoals() {
           </div>
         </div>
 
-        <Card 
-          className="border-border cursor-pointer hover:bg-primary/5 transition-colors duration-200 rounded-3xl pt-6" 
-          style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}
-          onClick={handleAddGoal}
-          data-testid="daily-goals-card"
-        >
+        <Card className="border-border pt-6 rounded-3xl" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
           <CardContent className="p-6">
             <div className="flex flex-col items-center justify-center space-y-2 min-h-[120px]">
               <Button
