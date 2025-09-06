@@ -251,7 +251,7 @@ function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
         data-testid="journey-start-image"
       >
         <img
-          src="/Imagem-inicio-jornada-painel.png"
+          src="/Imagem-inicio-jornada-painel.webp"
           alt="Comece sua jornada agora"
           className="w-96 h-96 object-contain mx-auto"
           style={{ aspectRatio: '1/1' }}
@@ -287,7 +287,7 @@ export default function PainelInterface({
   // Preload the journey start image immediately
   useEffect(() => {
     const img = new Image();
-    img.src = "/Imagem-inicio-jornada-painel.png";
+    img.src = "/Imagem-inicio-jornada-painel.webp";
     // Preload the image to cache it
     img.onload = () => {
       console.log("Journey start image preloaded successfully");
