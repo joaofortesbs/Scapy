@@ -122,6 +122,7 @@
 
   .floating-avatar {
     animation: float 3s ease-in-out infinite;
+    margin-bottom: 1.5rem;
   }
 
   @keyframes float {
@@ -131,6 +132,12 @@
     50% {
       transform: translateY(-10px);
     }
+  }
+
+  /* Garantir espaçamento adequado entre componentes */
+  .daily-goals-section {
+    margin-top: 2.5rem !important;
+    padding-top: 1rem;
   }
 
   .panic-button {
