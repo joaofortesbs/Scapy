@@ -281,28 +281,6 @@ export default function PainelInterface({
     return localStorage.getItem('hasStartedJourney') === 'true';
   });
 
-  // Preload the journey start image immediately
-  useEffect(() => {
-    const imgWebp = new Image();
-    imgWebp.src = "/Imagem-inicio-jornada-painel.webp";
-    
-    imgWebp.onload = () => {
-      console.log("Journey start WebP image preloaded successfully");
-    };
-    
-    imgWebp.onerror = () => {
-      console.warn("Failed to preload WebP image, trying PNG fallback");
-      const imgPng = new Image();
-      imgPng.src = "/Imagem-inicio-jornada-painel.png";
-      imgPng.onload = () => {
-        console.log("Journey start PNG fallback loaded successfully");
-      };
-      imgPng.onerror = () => {
-        console.error("Failed to preload both WebP and PNG images");
-      };
-    };
-  }, []);
-
   const handleStartJourney = () => {
     setHasStartedJourney(true);
     localStorage.setItem('hasStartedJourney', 'true');
