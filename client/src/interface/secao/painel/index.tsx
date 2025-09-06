@@ -244,7 +244,7 @@ function BottomNavigation({
 // Journey Start Component
 function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
   return (
-    <div className="flex items-start justify-center pt-1 min-h-[60vh]">
+    <div className="flex items-start justify-center -mt-8 min-h-[60vh]">
       <div
         className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
         onClick={onStartJourney}
