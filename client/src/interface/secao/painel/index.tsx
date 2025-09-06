@@ -22,7 +22,7 @@ import { DailyGoals } from "@/components/daily-goals";
 import AIAssistant from "@/components/ai-assistant";
 import ParticlesBackground from "@/components/particles-background";
 import type { User, WeeklyProgress } from "@shared/schema";
-import { supabase } from "@/lib/supabaseClient"; // Assuming you have initialized Supabase client
+import { supabase } from "@/integrations/supabase/client";
 
 // Header Component
 function Header() {
@@ -267,7 +267,7 @@ function JourneyStart({ onStartJourney, onStartTimer }: JourneyStartProps) {
           alt="Comece sua jornada agora - Bloqueador avançado de apps e sites"
           className="w-[770px] h-[527px] object-contain mx-auto"
           loading="eager"
-          fetchpriority="high"
+          fetchPriority="high"
           width={600}
           height={450}
           onError={(e) => {
