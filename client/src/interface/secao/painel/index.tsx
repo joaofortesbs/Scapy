@@ -19,6 +19,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
 import DesafioPlanoBeamEstar from "@/components/desafio-plano-bem-estar";
+import DesafioDuplaDinamica from "@/components/desafio-dupla-dinamica";
+import DailyGoals from "@/components/daily-goals";
+import AIAssistant from "@/components/ai-assistant";
 import type { User, WeeklyProgress } from "@shared/schema";
 
 // Header Component
@@ -365,8 +368,13 @@ export default function PainelInterface({
             <AIAssistant />
           </div>
 
-          <div className="mt-6">
-            <DesafioPlanoBeamEstar />
+          <div className="mt-6 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
+            <div className="flex-1">
+              <DesafioPlanoBeamEstar />
+            </div>
+            <div className="flex-1">
+              <DesafioDuplaDinamica />
+            </div>
           </div>
 
           <div className="daily-goals-section">
