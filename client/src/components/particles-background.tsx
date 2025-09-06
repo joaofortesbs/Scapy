@@ -681,9 +681,8 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
         className="absolute inset-0 z-0"
         style={{
           background: `linear-gradient(135deg, 
-            #00183E 0%, 
-            #000E29 25%, 
-            #000E32 60%, 
+            #00112D 1%, 
+            #000515 50%, 
             #000515 100%
           )`
         }}
