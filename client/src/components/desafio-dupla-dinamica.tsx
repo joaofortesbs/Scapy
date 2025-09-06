@@ -20,13 +20,13 @@ export default function DesafioDuplaDinamica() {
         </div>
 
         <Card 
-          className="border-border cursor-pointer hover:bg-primary/5 transition-colors duration-200 rounded-3xl pt-3" 
+          className="border-border cursor-pointer hover:bg-primary/5 transition-colors duration-200 rounded-3xl pt-6" 
           style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}
           onClick={handleChallengeClick}
           data-testid="dupla-dinamica-challenge-card"
         >
-          <CardContent className="p-3">
-            <div className="flex items-center justify-center min-h-[30px]">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center min-h-[120px]">
               {/* Conteúdo do card pode ser adicionado aqui futuramente */}
             </div>
           </CardContent>
