@@ -17,6 +17,7 @@ import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
 import DesafioPlanoBeamEstar from "@/components/desafio-plano-bem-estar";
 import DesafioDuplaDinamica from "@/components/desafio-dupla-dinamica";
 import AnaliseEvolucaoMental from "@/components/analise-evolucao-mental";
+import FraseDoDia from "@/components/frase-do-dia";
 import DailyGoals from "@/components/daily-goals";
 import AIAssistant from "@/components/ai-assistant";
 import type { User, WeeklyProgress } from "@shared/schema";
@@ -294,6 +295,8 @@ export default function PainelInterface({
                 <DesafioDuplaDinamica />
               </div>
             </div>
+            
+            <FraseDoDia />
             
             <div className="daily-goals-section">
               <DailyGoals />
