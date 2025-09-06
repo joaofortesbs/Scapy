@@ -2,6 +2,10 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { User, WeeklyProgress } from "@shared/schema";
 import PainelInterface from "@/interface/secao/painel";
+import { DailyGoals } from "@/components/daily-goals";
+import { PanicButton } from "@/components/panic-button";
+import { ParticlesBackground } from "@/components/particles-background";
+import { SupabaseUsers } from "@/components/supabase-users";
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("painel");
@@ -28,6 +32,12 @@ export default function Dashboard() {
       weeklyProgress={weeklyProgress}
       activeSection={activeSection}
       onSectionChange={handleSectionChange}
-    />
+    >
+      <div className="space-y-6">
+            <DailyGoals />
+            <PanicButton />
+            <SupabaseUsers />
+          </div>
+    </PainelInterface>
   );
 }
