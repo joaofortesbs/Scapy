@@ -12,7 +12,9 @@ export default function FraseDoDia() {
       <div className="relative">
         {/* Ícone de salvamento no canto direito superior */}
         <div className="absolute top-0 right-10 transform translate-x-[30%] -translate-y-[30%] z-10">
-          <Bookmark className="w-7 h-7 text-primary" />
+          <div className="p-1 rounded border-2" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)', borderColor: 'rgba(0, 5, 21, 0.73)' }}>
+            <Bookmark className="w-7 h-7 text-primary" fill="rgba(0, 5, 21, 0.73)" />
+          </div>
         </div>
 
         <Card 
