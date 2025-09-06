@@ -19,7 +19,7 @@ export function calculateTimeDifference(startDate: Date | string | null | undefi
   }
 
   const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
-  
+
   // Validate that start is a valid Date object
   if (!start || isNaN(start.getTime())) {
     return {
@@ -33,12 +33,12 @@ export function calculateTimeDifference(startDate: Date | string | null | undefi
 
   const diffInMs = currentDate.getTime() - start.getTime();
   const totalSeconds = Math.floor(diffInMs / 1000);
-  
+
   const days = Math.floor(totalSeconds / (24 * 60 * 60));
   const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
   const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
   const seconds = totalSeconds % 60;
-  
+
   return {
     days: Math.max(0, days),
     hours: Math.max(0, hours),

@@ -11,7 +11,7 @@ import {
 import { ScapyIcon } from "@/components/ui/scapy-icon";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
 import DesafioPlanoBeamEstar from "@/components/desafio-plano-bem-estar";
@@ -22,6 +22,7 @@ import { DailyGoals } from "@/components/daily-goals";
 import AIAssistant from "@/components/ai-assistant";
 import ParticlesBackground from "@/components/particles-background";
 import type { User, WeeklyProgress } from "@shared/schema";
+import { supabase } from "@/lib/supabaseClient"; // Assuming you have initialized Supabase client
 
 // Header Component
 function Header() {
@@ -128,25 +129,27 @@ function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
 
 // Timer Component
 interface TimerProps {
-  user?: User;
+  startTime: string | null;
 }
 
-function Timer({ user }: TimerProps) {
+function Timer({ startTime }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
+    if (!startTime) return;
+
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [startTime]);
 
-  if (!user) {
+  if (!startTime) {
     return (
       <div className="text-center">
         <p className="text-sm text-muted-foreground mb-3">
-          Carregando...
+          Iniciando cronômetro...
         </p>
         <div className="timer-display">
           00:00:00
@@ -155,9 +158,8 @@ function Timer({ user }: TimerProps) {
     );
   }
 
-  const timeDiff = calculateTimeDifference(user.startDate, currentTime);
-  const formattedTime = formatTimer(timeDiff);
-
+  const timeDiff = calculateTimeDifference(new Date(startTime), currentTime);
+  
   return (
     <div className="text-center">
       <p className="text-sm text-muted-foreground mb-0">
@@ -242,12 +244,22 @@ function BottomNavigation({
 }
 
 // Journey Start Component
-function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
+interface JourneyStartProps {
+  onStartJourney: () => void;
+  onStartTimer: () => void;
+}
+
+function JourneyStart({ onStartJourney, onStartTimer }: JourneyStartProps) {
+  const handleClick = () => {
+    onStartJourney();
+    onStartTimer();
+  };
+
   return (
     <div className="flex items-start justify-center mt-8 min-h-[60vh]">
       <div
         className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
-        onClick={onStartJourney}
+        onClick={handleClick}
         data-testid="journey-start-image"
       >
         <img
@@ -282,15 +294,77 @@ export default function PainelInterface({
   activeSection,
   onSectionChange
 }: PainelInterfaceProps) {
-  // Journey state - check if user has started their journey
   const [hasStartedJourney, setHasStartedJourney] = useState(() => {
-    return localStorage.getItem('hasStartedJourney') === 'true';
+    const storedValue = localStorage.getItem('hasStartedJourney');
+    return storedValue === 'true';
+  });
+  const [timerStartTime, setTimerStartTime] = useState<string | null>(null);
+  const [isLoadingTimer, setIsLoadingTimer] = useState(false);
+
+  const { data: timerData, isLoading: isLoadingTimerQuery } = useQuery({
+    queryKey: ['timer', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('timer')
+        .select('start_time')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) {
+        console.error("Error fetching timer:", error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  useEffect(() => {
+    if (timerData && timerData.start_time) {
+      setTimerStartTime(timerData.start_time);
+      setHasStartedJourney(true);
+      localStorage.setItem('hasStartedJourney', 'true');
+    }
+  }, [timerData]);
+
+  const startTimerMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error("User ID is required");
+      setIsLoadingTimer(true);
+      const { data, error } = await supabase
+        .from('timer')
+        .insert([{ user_id: user.id, start_time: new Date().toISOString() }])
+        .select('start_time')
+        .single();
+
+      if (error) {
+        console.error("Error starting timer:", error);
+        setIsLoadingTimer(false);
+        throw error;
+      }
+      return data.start_time;
+    },
+    onSuccess: (startTime) => {
+      setTimerStartTime(startTime);
+      setHasStartedJourney(true);
+      localStorage.setItem('hasStartedJourney', 'true');
+      setIsLoadingTimer(false);
+    },
+    onError: () => {
+      setIsLoadingTimer(false);
+    }
   });
 
   const handleStartJourney = () => {
     setHasStartedJourney(true);
     localStorage.setItem('hasStartedJourney', 'true');
   };
+
+  const handleStartTimer = () => {
+    startTimerMutation.mutate();
+  };
+
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
       <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
@@ -304,24 +378,38 @@ export default function PainelInterface({
 
             <section className="text-center">
               {!hasStartedJourney ? (
-                <JourneyStart onStartJourney={handleStartJourney} />
+                <JourneyStart 
+                  onStartJourney={handleStartJourney}
+                  onStartTimer={handleStartTimer}
+                />
               ) : (
                 <>
                   {/* Conditionally show caveman avatar */}
                   <div className="floating-avatar mb-6">
                     <img
-                      src="/caveman-avatar.webp"
+                      src="/caveman-avatar.png"
                       alt="Avatar Caveman"
                       className="w-80 h-80 object-contain mx-auto"
                       onError={(e) => {
-                        e.currentTarget.src = "/caveman-avatar.png";
+                        e.currentTarget.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=caveman&backgroundColor=000515";
                       }}
                       data-testid="avatar-image"
                     />
                   </div>
 
                   {/* Conditionally show Timer */}
-                  <Timer user={user} />
+                  {isLoadingTimer || isLoadingTimerQuery ? (
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {isLoadingTimer ? "Iniciando cronômetro..." : "Carregando dados do cronômetro..."}
+                      </p>
+                      <div className="timer-display">
+                        00:00:00
+                      </div>
+                    </div>
+                  ) : (
+                    <Timer startTime={timerStartTime} />
+                  )}
                 </>
               )}
             </section>
