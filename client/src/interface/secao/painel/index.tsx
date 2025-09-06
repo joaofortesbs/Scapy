@@ -282,17 +282,19 @@ export default function PainelInterface({
             <AIAssistant />
           </div>
 
-          <div className="mt-6 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
-            <div className="flex-1">
-              <DesafioPlanoBeamEstar />
+          <div className="mt-6 flex flex-col space-y-6">
+            <div className="flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
+              <div className="flex-1">
+                <DesafioPlanoBeamEstar />
+              </div>
+              <div className="flex-1">
+                <DesafioDuplaDinamica />
+              </div>
             </div>
-            <div className="flex-1">
-              <DesafioDuplaDinamica />
+            
+            <div className="daily-goals-section">
+              <DailyGoals />
             </div>
-          </div>
-
-          <div className="daily-goals-section">
-            <DailyGoals />
           </div>
         </main>
       </div>

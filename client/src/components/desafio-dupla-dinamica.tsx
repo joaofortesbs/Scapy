@@ -9,7 +9,7 @@ export default function DesafioDuplaDinamica() {
 
   return (
     <section className="mb-8 relative">
-      <div className="w-1/2 relative">
+      <div className="relative">
         {/* Ícone de dupla no topo do card */}
         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-[30%] z-10">
           <div className="w-16 h-16 rounded-full flex items-center justify-center border-4" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)', borderColor: 'rgba(0, 5, 21, 0.73)' }}>
