@@ -251,18 +251,11 @@ function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
         data-testid="journey-start-image"
       >
         <img
-          src="/Imagem-inicio-jornada-painel.webp"
+          src="/Imagem-inicio-jornada-painel.png"
           alt="Comece sua jornada agora"
           className="w-96 h-96 object-contain mx-auto"
           style={{ aspectRatio: '1/1' }}
-          loading="eager"
-          fetchpriority="high"
-          width={384}
-          height={384}
-          onError={(e) => {
-            console.error("Erro ao carregar imagem:", e);
-            e.currentTarget.src = "/Imagem-inicio-jornada-painel.png";
-          }}
+          data-testid="journey-start-image"
         />
       </div>
     </div>
