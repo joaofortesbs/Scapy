@@ -10,7 +10,7 @@ export default function FraseDoDia() {
   return (
     <section className="mb-8 relative">
       {/* Título acima do card */}
-      <h2 className="text-lg font-semibold text-primary mb-4 text-left">
+      <h2 className="text-lg font-semibold text-primary mb-3 text-left">
         Frase do vencedor
       </h2>
       
