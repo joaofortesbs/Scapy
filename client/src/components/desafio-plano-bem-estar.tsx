@@ -8,7 +8,7 @@ export default function DesafioPlanoBeamEstar() {
   };
 
   return (
-    <section className="mb-8 relative">
+    <section className="mb-8 relative challenge-card">
       <div className="relative">
         {/* Ícone de calendário no topo do card */}
         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-[30%] z-10">

@@ -287,19 +287,15 @@ export default function PainelInterface({
           <div className="mt-6 flex flex-col space-y-6">
             <AnaliseEvolucaoMental />
             
-            <div className="flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
-              <div className="flex-1">
-                <DesafioPlanoBeamEstar />
-              </div>
-              <div className="flex-1">
-                <DesafioDuplaDinamica />
-              </div>
-            </div>
-            
             <FraseDoDia />
             
             <div className="daily-goals-section">
               <DailyGoals />
+            </div>
+            
+            <div className="challenge-cards-container">
+              <DesafioPlanoBeamEstar />
+              <DesafioDuplaDinamica />
             </div>
           </div>
         </main>
