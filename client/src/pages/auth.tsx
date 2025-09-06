@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
-import { ParticlesBackground } from '@/components/particles-background';
+import ParticlesBackground from '@/components/particles-background';
 
 interface AuthPageProps {
   onLoginSuccess: (user: any) => void;

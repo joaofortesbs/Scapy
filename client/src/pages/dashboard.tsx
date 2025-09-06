@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { User, WeeklyProgress } from "@shared/schema";
 import PainelInterface from "@/interface/secao/painel";
