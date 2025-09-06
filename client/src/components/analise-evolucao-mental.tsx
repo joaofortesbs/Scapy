@@ -9,12 +9,12 @@ export default function AnaliseEvolucaoMental() {
 
   return (
     <section className="mb-6">
-      <Card className="border-border rounded-3xl" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
+      <Card className="border-border rounded-full" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
         <CardContent className="p-4">
           <div className="flex items-center space-x-4">
             {/* Ícone de cérebro no canto esquerdo */}
             <div className="flex-shrink-0">
-              <Brain className="w-8 h-8 text-primary" />
+              <Brain className="w-6 h-6 text-primary" />
             </div>
             
             {/* Texto "Evolução Mental" */}
@@ -26,7 +26,7 @@ export default function AnaliseEvolucaoMental() {
             <div className="flex-1 mx-3">
               <Progress 
                 value={evolutionPercentage} 
-                className="h-2 bg-secondary/30"
+                className="h-2 bg-secondary/30 border border-border"
               />
             </div>
             
