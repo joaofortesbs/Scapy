@@ -252,13 +252,12 @@ function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
       >
         <img
           src="/Imagem-inicio-jornada-painel.webp"
-          alt="Comece sua jornada agora"
+          alt="Comece sua jornada agora - Bloqueador avançado de apps e sites"
           className="w-[500px] h-[350px] object-contain mx-auto"
-          style={{ aspectRatio: '1/1' }}
           loading="eager"
           fetchpriority="high"
           width={500}
-          height={500}
+          height={350}
           onError={(e) => {
             console.error("Erro ao carregar imagem:", e);
             e.currentTarget.src = "/Imagem-inicio-jornada-painel.png";
