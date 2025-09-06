@@ -298,69 +298,20 @@ export default function PainelInterface({
     const storedValue = localStorage.getItem('hasStartedJourney');
     return storedValue === 'true';
   });
-  const [timerStartTime, setTimerStartTime] = useState<string | null>(null);
+  const [timerStartTime, setTimerStartTime] = useState<string | null>(() => {
+    return localStorage.getItem('timerStartTime');
+  });
   const [isLoadingTimer, setIsLoadingTimer] = useState(false);
 
-  const { data: timerData, isLoading: isLoadingTimerQuery } = useQuery({
-    queryKey: ['/api/timer'],
-    queryFn: async () => {
-      const response = await fetch('/api/timer', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
-      });
-      
-      if (!response.ok) {
-        console.error("Error fetching timer:", response.statusText);
-        return null;
-      }
-      
-      const result = await response.json();
-      return result.timer;
-    },
-    enabled: !!user?.id && !!localStorage.getItem('authToken'),
-  });
-
+  // Check for existing timer on component mount
   useEffect(() => {
-    if (timerData && timerData.startTime) {
-      setTimerStartTime(timerData.startTime);
+    const storedStartTime = localStorage.getItem('timerStartTime');
+    if (storedStartTime) {
+      setTimerStartTime(storedStartTime);
       setHasStartedJourney(true);
       localStorage.setItem('hasStartedJourney', 'true');
     }
-  }, [timerData]);
-
-  const startTimerMutation = useMutation({
-    mutationFn: async () => {
-      if (!user?.id) throw new Error("User ID is required");
-      setIsLoadingTimer(true);
-      
-      const response = await fetch('/api/timer/start', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        setIsLoadingTimer(false);
-        throw new Error('Failed to start timer');
-      }
-      
-      const result = await response.json();
-      return result.timer.startTime;
-    },
-    onSuccess: (startTime) => {
-      setTimerStartTime(startTime);
-      setHasStartedJourney(true);
-      localStorage.setItem('hasStartedJourney', 'true');
-      setIsLoadingTimer(false);
-      queryClient.invalidateQueries({ queryKey: ['/api/timer'] });
-    },
-    onError: () => {
-      setIsLoadingTimer(false);
-    }
-  });
+  }, []);
 
   const handleStartJourney = () => {
     setHasStartedJourney(true);
@@ -368,7 +319,11 @@ export default function PainelInterface({
   };
 
   const handleStartTimer = () => {
-    startTimerMutation.mutate();
+    const startTime = new Date().toISOString();
+    setTimerStartTime(startTime);
+    setHasStartedJourney(true);
+    localStorage.setItem('timerStartTime', startTime);
+    localStorage.setItem('hasStartedJourney', 'true');
   };
 
   return (
@@ -404,10 +359,10 @@ export default function PainelInterface({
                   </div>
 
                   {/* Conditionally show Timer */}
-                  {isLoadingTimer || isLoadingTimerQuery ? (
+                  {isLoadingTimer ? (
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground mb-3">
-                        {isLoadingTimer ? "Iniciando cronômetro..." : "Carregando dados do cronômetro..."}
+                        Iniciando cronômetro...
                       </p>
                       <div className="timer-display">
                         00:00:00
