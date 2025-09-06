@@ -9,7 +9,7 @@ export default function AnaliseEvolucaoMental() {
 
   return (
     <section className="mb-6">
-      <Card className="border-border rounded-full" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
+      <Card className="border-border rounded-full evolucao-mental-card-natural-3d" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
         <CardContent className="p-4">
           <div className="flex items-center space-x-4">
             {/* Ícone de cérebro no canto esquerdo */}

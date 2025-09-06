@@ -15,7 +15,7 @@ export default function AIAssistant() {
 
   return (
     <section className="mb-8">
-      <Card className="border-border mb-3 rounded-full" style={{ backgroundColor: '#000515' }}>
+      <Card className="border-border mb-3 rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
         <CardContent className="p-3">
           <div className="flex items-center justify-center space-x-3">
             <Sparkles className="w-6 h-6 text-primary" />
