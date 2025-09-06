@@ -289,13 +289,13 @@ export default function PainelInterface({
             
             <FraseDoDia />
             
-            <div className="daily-goals-section">
-              <DailyGoals />
-            </div>
-            
             <div className="challenge-cards-container">
               <DesafioPlanoBeamEstar />
               <DesafioDuplaDinamica />
+            </div>
+            
+            <div className="daily-goals-section">
+              <DailyGoals />
             </div>
           </div>
         </main>
