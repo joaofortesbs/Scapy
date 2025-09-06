@@ -236,5 +236,13 @@
     .challenge-card {
       max-width: calc(50% - 0.25rem);
     }
+    
+    .challenge-card .min-h-\[84px\] {
+      min-height: 70px;
+    }
+    
+    .challenge-card .p-4 {
+      padding: 0.75rem;
+    }
   }
 }

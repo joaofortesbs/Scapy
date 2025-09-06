@@ -25,8 +25,8 @@ export default function DesafioPlanoBeamEstar() {
           onClick={handleChallengeClick}
           data-testid="wellness-challenge-card"
         >
-          <CardContent className="p-6">
-            <div className="flex items-center justify-center min-h-[120px]">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-center min-h-[84px]">
               {/* Conteúdo do card pode ser adicionado aqui futuramente */}
             </div>
           </CardContent>
