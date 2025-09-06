@@ -27,12 +27,15 @@ export default function DesafioPlanoBeamEstar() {
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-center min-h-[84px]">
-              <div className="w-20 h-20 flex items-center justify-center">
+              <div className="w-20 h-20 aspect-square overflow-hidden rounded-lg">
                 <img 
-                  src="/desafio-bem-estar-7dias.png" 
+                  src="./desafio-bem-estar-7dias.png" 
                   alt="Desafio Bem-estar" 
-                  className="w-full h-full object-cover rounded-lg"
-                  style={{ aspectRatio: '1/1' }}
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    console.log('Erro ao carregar imagem:', e);
+                    e.currentTarget.src = "https://via.placeholder.com/80x80/00F6FF/000515?text=7+DIAS";
+                  }}
                 />
               </div>
             </div>

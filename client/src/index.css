@@ -173,6 +173,30 @@
     background: transparent;
   }
 
+  /* Estilos específicos para os cards de desafio */
+  .challenge-card img {
+    width: 80px !important;
+    height: 80px !important;
+    aspect-ratio: 1/1 !important;
+    object-fit: cover !important;
+    border-radius: 8px;
+  }
+
+  .challenge-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  /* Garantir que a imagem seja carregada corretamente */
+  .challenge-card .aspect-square {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .nav-item {
     display: flex;
     flex-direction: column;

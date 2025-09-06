@@ -289,7 +289,7 @@ export default function PainelInterface({
             
             <FraseDoDia />
             
-            <div className="challenge-cards-container mt-8">
+            <div className="challenge-cards-container" style={{ marginTop: '2rem' }}>
               <DesafioPlanoBeamEstar />
               <DesafioDuplaDinamica />
             </div>
