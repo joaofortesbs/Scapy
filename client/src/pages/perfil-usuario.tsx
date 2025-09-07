@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react"; // Added useEffect import
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Camera, Eye, Trophy, RefreshCw, User, BarChart3 } from "lucide-react"; // Added User and BarChart3
+import { ArrowLeft, Camera, Eye, Trophy, RefreshCw, User, BarChart3, Clock, CheckCircle, Mountain } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 
@@ -363,63 +363,117 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
             >
               <Card className="rounded-3xl border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-blue-500/10">
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-center mb-4">
+                  <div className="flex items-center justify-center mb-6">
                     <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
                       <BarChart3 className="w-6 h-6 text-blue-500" />
                     </div>
                   </div>
 
-                  <h3 className="text-xl font-bold text-center text-foreground mb-4">
+                  <h3 className="text-xl font-bold text-center text-foreground mb-6">
                     Dados Quiz de Personalização
                   </h3>
 
                   {quizData ? (
-                    <div className="space-y-4">
-                      {/* Display quiz information */}
-                      {quizData.genero && (
-                        <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
-                          <span className="text-sm font-medium text-muted-foreground">Gênero</span>
-                          <span className="text-lg font-bold text-primary">{quizData.genero}</span>
+                    <div className="space-y-3">
+                      {/* Campo Gênero */}
+                      <div className="bg-background/50 rounded-xl p-4 border border-blue-500/20">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+                              <User className="w-4 h-4 text-blue-500" />
+                            </div>
+                            <span className="text-sm font-medium text-muted-foreground">Gênero</span>
+                          </div>
+                          <span className="text-sm font-bold text-primary">
+                            {quizData.genero || 'Não informado'}
+                          </span>
                         </div>
-                      )}
-                      {quizData.frequencia && (
-                        <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
-                          <span className="text-sm font-medium text-muted-foreground">Frequência</span>
-                          <span className="text-lg font-bold text-primary">{quizData.frequencia}</span>
+                      </div>
+
+                      {/* Campo Frequência */}
+                      <div className="bg-background/50 rounded-xl p-4 border border-blue-500/20">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center">
+                              <Clock className="w-4 h-4 text-orange-500" />
+                            </div>
+                            <span className="text-sm font-medium text-muted-foreground">Frequência</span>
+                          </div>
+                          <span className="text-sm font-bold text-primary">
+                            {quizData.frequencia || 'Não informado'}
+                          </span>
                         </div>
-                      )}
-                      {quizData.motivacao && (
-                        <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
-                          <span className="text-sm font-medium text-muted-foreground">Motivação</span>
-                          <span className="text-lg font-bold text-primary">{quizData.motivacao}</span>
+                      </div>
+
+                      {/* Campo Motivação */}
+                      <div className="bg-background/50 rounded-xl p-4 border border-blue-500/20">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
+                              <Trophy className="w-4 h-4 text-green-500" />
+                            </div>
+                            <span className="text-sm font-medium text-muted-foreground">Motivação</span>
+                          </div>
+                          <span className="text-sm font-bold text-primary">
+                            {quizData.motivacao || 'Não informado'}
+                          </span>
                         </div>
-                      )}
-                      {quizData.gatilhos && (
-                        <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
-                          <span className="text-sm font-medium text-muted-foreground">Gatilhos</span>
-                          <span className="text-lg font-bold text-primary">{quizData.gatilhos}</span>
+                      </div>
+
+                      {/* Campo Gatilhos */}
+                      <div className="bg-background/50 rounded-xl p-4 border border-blue-500/20">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-red-500/20 rounded-full flex items-center justify-center">
+                              <Eye className="w-4 h-4 text-red-500" />
+                            </div>
+                            <span className="text-sm font-medium text-muted-foreground">Gatilhos</span>
+                          </div>
+                          <span className="text-sm font-bold text-primary">
+                            {quizData.gatilhos || 'Não informado'}
+                          </span>
                         </div>
-                      )}
-                      {quizData.religiao && (
-                        <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
-                          <span className="text-sm font-medium text-muted-foreground">Religião</span>
-                          <span className="text-lg font-bold text-primary">{quizData.religiao}</span>
+                      </div>
+
+                      {/* Campo Religião */}
+                      <div className="bg-background/50 rounded-xl p-4 border border-blue-500/20">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-purple-500/20 rounded-full flex items-center justify-center">
+                              <Mountain className="w-4 h-4 text-purple-500" />
+                            </div>
+                            <span className="text-sm font-medium text-muted-foreground">Religião</span>
+                          </div>
+                          <span className="text-sm font-bold text-primary">
+                            {quizData.religiao || 'Não informado'}
+                          </span>
                         </div>
-                      )}
+                      </div>
                       
-                      {quizData.completed && (
-                        <div className="flex justify-between items-center p-3 bg-green-500/10 rounded-xl border border-green-500/20">
-                          <span className="text-sm font-medium text-muted-foreground">Status</span>
-                          <span className="text-lg font-bold text-green-500">Completado</span>
+                      {/* Status do Quiz */}
+                      <div className="bg-green-500/10 rounded-xl p-4 border border-green-500/30 mt-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                            </div>
+                            <span className="text-sm font-medium text-muted-foreground">Status</span>
+                          </div>
+                          <span className="text-sm font-bold text-green-500">
+                            {quizData.completed ? 'Completado' : 'Em andamento'}
+                          </span>
                         </div>
-                      )}
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center space-y-4">
-                      <div className="p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
-                        <p className="text-yellow-600 font-medium">Quiz não respondido</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Complete o Quiz de Personalização para ver seus dados aqui.
+                      <div className="p-6 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                        <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <BarChart3 className="w-8 h-8 text-yellow-500" />
+                        </div>
+                        <p className="text-yellow-600 font-medium text-lg">Quiz não respondido</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Complete o Quiz de Personalização para ver todos os seus dados organizados aqui.
                         </p>
                       </div>
                     </div>
@@ -429,7 +483,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   <div className="mt-6 flex justify-center">
                     <Button 
                       onClick={handleRefazerQuiz}
-                      className="rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3"
+                      className="rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 transition-all duration-300 transform hover:scale-105"
                     >
                       <RefreshCw className="w-4 h-4 mr-2" />
                       {quizData ? 'Refazer Quiz' : 'Fazer Quiz'}
