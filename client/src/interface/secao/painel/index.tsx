@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
+import { supabase } from "@/lib/supabaseClient";
 import DesafioPlanoBeamEstar from "@/components/desafio-plano-bem-estar";
 import DesafioDuplaDinamica from "@/components/desafio-dupla-dinamica";
 import AnaliseEvolucaoMental from "@/components/analise-evolucao-mental";
@@ -298,20 +299,75 @@ export default function PainelInterface({
     const storedValue = localStorage.getItem('hasStartedJourney');
     return storedValue === 'true';
   });
-  const [timerStartTime, setTimerStartTime] = useState<string | null>(() => {
-    return localStorage.getItem('timerStartTime');
-  });
+  const [timerStartTime, setTimerStartTime] = useState<string | null>(null);
   const [isLoadingTimer, setIsLoadingTimer] = useState(false);
 
-  // Check for existing timer on component mount
+  // Fetch existing timer from Supabase
+  const { data: timerData, isLoading: isLoadingTimerQuery, refetch: refetchTimer } = useQuery({
+    queryKey: ['timer', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('timer')
+        .select('start_time')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error('Erro ao buscar timer:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Update timer state when data is fetched
   useEffect(() => {
-    const storedStartTime = localStorage.getItem('timerStartTime');
-    if (storedStartTime) {
-      setTimerStartTime(storedStartTime);
+    if (timerData && timerData.start_time) {
+      setTimerStartTime(timerData.start_time);
       setHasStartedJourney(true);
       localStorage.setItem('hasStartedJourney', 'true');
     }
-  }, []);
+  }, [timerData]);
+
+  // Start timer mutation
+  const startTimerMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error('User ID is required');
+      
+      const startTime = new Date().toISOString();
+      
+      const { data, error } = await supabase
+        .from('timer')
+        .insert({
+          user_id: user.id,
+          start_time: startTime
+        })
+        .select('start_time')
+        .single();
+      
+      if (error) {
+        console.error('Erro ao salvar timer:', error);
+        throw error;
+      }
+      
+      return data.start_time;
+    },
+    onSuccess: (startTime) => {
+      setTimerStartTime(startTime);
+      setHasStartedJourney(true);
+      localStorage.setItem('hasStartedJourney', 'true');
+      queryClient.invalidateQueries({ queryKey: ['timer', user?.id] });
+    },
+    onError: (error) => {
+      console.error('Erro ao iniciar timer:', error);
+    }
+  });
 
   const handleStartJourney = () => {
     setHasStartedJourney(true);
@@ -319,11 +375,8 @@ export default function PainelInterface({
   };
 
   const handleStartTimer = () => {
-    const startTime = new Date().toISOString();
-    setTimerStartTime(startTime);
-    setHasStartedJourney(true);
-    localStorage.setItem('timerStartTime', startTime);
-    localStorage.setItem('hasStartedJourney', 'true');
+    setIsLoadingTimer(true);
+    startTimerMutation.mutate();
   };
 
   return (
@@ -359,10 +412,10 @@ export default function PainelInterface({
                   </div>
 
                   {/* Conditionally show Timer */}
-                  {isLoadingTimer ? (
+                  {isLoadingTimer || isLoadingTimerQuery || startTimerMutation.isPending ? (
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground mb-3">
-                        Iniciando cronômetro...
+                        {startTimerMutation.isPending ? "Salvando no Supabase..." : isLoadingTimerQuery ? "Carregando dados do cronômetro..." : "Iniciando cronômetro..."}
                       </p>
                       <div className="timer-display">
                         00:00:00
