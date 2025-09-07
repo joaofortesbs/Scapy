@@ -11,7 +11,7 @@ import {
 import { ScapyIcon } from "@/components/ui/scapy-icon";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
 import DesafioPlanoBeamEstar from "@/components/desafio-plano-bem-estar";
@@ -22,7 +22,6 @@ import { DailyGoals } from "@/components/daily-goals";
 import AIAssistant from "@/components/ai-assistant";
 import ParticlesBackground from "@/components/particles-background";
 import type { User, WeeklyProgress } from "@shared/schema";
-import { supabase } from "@/lib/supabaseClient";
 
 // Header Component
 function Header() {
@@ -129,15 +128,13 @@ function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
 
 // Timer Component
 interface TimerProps {
-  startTime: string | null;
+  user?: User;
 }
 
-function Timer({ startTime }: TimerProps) {
+function Timer({ user }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    console.log("Timer component - startTime:", startTime);
-    
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
@@ -145,15 +142,11 @@ function Timer({ startTime }: TimerProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Calculate time difference with proper error handling
-  const timeDiff = calculateTimeDifference(startTime, currentTime);
-  console.log("Timer calculation - timeDiff:", timeDiff, "startTime:", startTime);
-
-  if (!startTime || timeDiff.totalSeconds === 0) {
+  if (!user) {
     return (
       <div className="text-center">
         <p className="text-sm text-muted-foreground mb-3">
-          Cronômetro não iniciado
+          Carregando...
         </p>
         <div className="timer-display">
           00:00:00
@@ -161,7 +154,10 @@ function Timer({ startTime }: TimerProps) {
       </div>
     );
   }
-  
+
+  const timeDiff = calculateTimeDifference(user.startDate, currentTime);
+  const formattedTime = formatTimer(timeDiff);
+
   return (
     <div className="text-center">
       <p className="text-sm text-muted-foreground mb-0">
@@ -176,7 +172,7 @@ function Timer({ startTime }: TimerProps) {
       {timeDiff.days > 0 && (
         <div className="mt-4">
           <div className="text-sm font-semibold text-primary">
-            {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'} LIMPO{timeDiff.days > 1 ? 'S' : ''}
+            {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'} LIMPO
           </div>
         </div>
       )}
@@ -246,22 +242,12 @@ function BottomNavigation({
 }
 
 // Journey Start Component
-interface JourneyStartProps {
-  onStartJourney: () => void;
-  onStartTimer: () => void;
-}
-
-function JourneyStart({ onStartJourney, onStartTimer }: JourneyStartProps) {
-  const handleClick = () => {
-    onStartJourney();
-    onStartTimer();
-  };
-
+function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
   return (
     <div className="flex items-start justify-center mt-8 min-h-[60vh]">
       <div
         className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
-        onClick={handleClick}
+        onClick={onStartJourney}
         data-testid="journey-start-image"
       >
         <img
@@ -296,159 +282,15 @@ export default function PainelInterface({
   activeSection,
   onSectionChange
 }: PainelInterfaceProps) {
+  // Journey state - check if user has started their journey
   const [hasStartedJourney, setHasStartedJourney] = useState(() => {
-    const storedValue = localStorage.getItem('hasStartedJourney');
-    return storedValue === 'true';
-  });
-  const [timerStartTime, setTimerStartTime] = useState<string | null>(null);
-  const [isLoadingTimer, setIsLoadingTimer] = useState(false);
-
-  const { data: timerData, isLoading: isLoadingTimerQuery, refetch: refetchTimer } = useQuery({
-    queryKey: ['timer', user?.id],
-    queryFn: async () => {
-      console.log("Starting timer query...");
-      console.log("User from props:", user);
-      
-      if (!user?.id) {
-        console.log("No authenticated user found");
-        return null;
-      }
-
-      console.log("Fetching timer for user:", user.id);
-
-      const { data, error } = await supabase
-        .from('timer')
-        .select('start_time, created_at, id')
-        .eq('user_id', user.id.toString())
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if (error) {
-        console.error("Error fetching timer:", error);
-        return null;
-      }
-
-      console.log("Timer data fetched:", data);
-      
-      if (data && data.length > 0) {
-        return {
-          start_time: data[0].start_time,
-          created_at: data[0].created_at,
-          id: data[0].id
-        };
-      }
-      
-      return null;
-    },
-    enabled: true, // Always enabled to check for existing timers
-    refetchInterval: 5000, // Refetch every 5 seconds to check for updates
-    retry: 3,
-    retryDelay: 1000,
-  });
-
-  useEffect(() => {
-    console.log("useEffect - timerData changed:", timerData);
-    
-    if (timerData && timerData.start_time) {
-      console.log("Setting timer start time:", timerData.start_time);
-      setTimerStartTime(timerData.start_time);
-      
-      if (!hasStartedJourney) {
-        console.log("Journey not started, setting to true");
-        setHasStartedJourney(true);
-        localStorage.setItem('hasStartedJourney', 'true');
-      }
-    } else if (timerData === null && hasStartedJourney) {
-      // If no timer data but journey was started, reset the timer
-      console.log("No timer data found, resetting timer");
-      setTimerStartTime(null);
-    }
-  }, [timerData, hasStartedJourney]);
-
-  const startTimerMutation = useMutation({
-    mutationFn: async () => {
-      try {
-        console.log("Starting timer mutation...");
-        
-        if (!user?.id) {
-          throw new Error("User must be authenticated to start timer");
-        }
-
-        console.log("Starting timer for user:", user.id);
-        setIsLoadingTimer(true);
-
-        // Check if timer already exists
-        const { data: existingTimer, error: fetchError } = await supabase
-          .from('timer')
-          .select('start_time, id')
-          .eq('user_id', user.id.toString())
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (fetchError) {
-          console.error("Error fetching existing timer:", fetchError);
-          throw fetchError;
-        }
-
-        if (existingTimer && existingTimer.length > 0) {
-          console.log("Timer already exists:", existingTimer[0]);
-          return existingTimer[0].start_time;
-        }
-
-        // Create new timer
-        const startTime = new Date().toISOString();
-        console.log("Creating new timer with start_time:", startTime);
-        
-        const { data, error } = await supabase
-          .from('timer')
-          .insert([{ 
-            user_id: user.id.toString(), 
-            start_time: startTime 
-          }])
-          .select('start_time, id')
-          .single();
-
-        if (error) {
-          console.error("Error creating timer:", error);
-          throw error;
-        }
-
-        console.log("Timer created successfully:", data);
-        return data.start_time;
-      } catch (error) {
-        console.error("Error in startTimerMutation:", error);
-        setIsLoadingTimer(false);
-        throw error;
-      }
-    },
-    onSuccess: (startTime) => {
-      console.log("Timer started successfully:", startTime);
-      setTimerStartTime(startTime);
-      setHasStartedJourney(true);
-      localStorage.setItem('hasStartedJourney', 'true');
-      setIsLoadingTimer(false);
-      
-      // Refetch timer data after short delay
-      setTimeout(() => {
-        refetchTimer();
-      }, 500);
-    },
-    onError: (error) => {
-      console.error("Timer start failed:", error);
-      setIsLoadingTimer(false);
-      alert(`Erro ao iniciar cronômetro: ${error.message}`);
-    }
+    return localStorage.getItem('hasStartedJourney') === 'true';
   });
 
   const handleStartJourney = () => {
     setHasStartedJourney(true);
     localStorage.setItem('hasStartedJourney', 'true');
   };
-
-  const handleStartTimer = () => {
-    startTimerMutation.mutate();
-  };
-
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
       <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
@@ -462,10 +304,7 @@ export default function PainelInterface({
 
             <section className="text-center">
               {!hasStartedJourney ? (
-                <JourneyStart 
-                  onStartJourney={handleStartJourney}
-                  onStartTimer={handleStartTimer}
-                />
+                <JourneyStart onStartJourney={handleStartJourney} />
               ) : (
                 <>
                   {/* Conditionally show caveman avatar */}
@@ -482,18 +321,7 @@ export default function PainelInterface({
                   </div>
 
                   {/* Conditionally show Timer */}
-                  {isLoadingTimer || isLoadingTimerQuery ? (
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground mb-3">
-                        {isLoadingTimer ? "Iniciando cronômetro..." : "Carregando cronômetro..."}
-                      </p>
-                      <div className="timer-display">
-                        00:00:00
-                      </div>
-                    </div>
-                  ) : (
-                    <Timer startTime={timerStartTime} />
-                  )}
+                  <Timer user={user} />
                 </>
               )}
             </section>
