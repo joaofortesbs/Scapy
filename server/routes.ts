@@ -468,7 +468,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verificar se já existe um quiz para este usuário
       const existingQuiz = await sql`
         SELECT * FROM quiz_contextualizacao 
-        WHERE user_id = ${userId}
+        WHERE user_id = ${userId.toString()}
       `;
 
       if (existingQuiz.length > 0) {
@@ -478,7 +478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Criar novo quiz
       const newQuiz = await sql`
         INSERT INTO quiz_contextualizacao (user_id, user_full_name)
-        VALUES (${userId}, ${userFullName})
+        VALUES (${userId.toString()}, ${userFullName})
         RETURNING *
       `;
 
@@ -493,35 +493,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Salvar resposta de uma etapa específica
   app.put("/api/quiz/save-step", async (req, res) => {
     try {
-      const { userId, stepName, stepValue, currentStep } = req.body;
+      const { userId, stepName, stepValue } = req.body;
 
       if (!userId || !stepName || stepValue === undefined) {
         return res.status(400).json({ message: 'User ID, nome da etapa e valor são obrigatórios' });
       }
 
-      console.log('Save-step chamado:', { userId, stepName, stepValue, currentStep });
+      console.log('Save-step chamado:', { userId, stepName, stepValue });
 
-      // Mapeamento correto de etapas para colunas
-      const stepColumnMap: Record<string, string> = {
-        'gender': 'genero',
-        'frequency': 'frequencia', 
-        'age': 'idade',
-        'motivation': 'motivacao',
-        'triggers': 'gatilhos',
-        'religion': 'religiao'
+      // Mapeamento correto de etapas para colunas e current_step
+      const stepColumnMap: Record<string, { column: string, step: number }> = {
+        'gender': { column: 'genero', step: 3 },
+        'frequency': { column: 'frequencia', step: 4 }, 
+        'motivation': { column: 'motivacao', step: 5 },
+        'triggers': { column: 'gatilhos', step: 6 },
+        'religion': { column: 'religiao', step: 7 }
       };
 
-      const columnName = stepColumnMap[stepName] || stepName;
+      const stepInfo = stepColumnMap[stepName];
+      if (!stepInfo) {
+        return res.status(400).json({ message: `Nome da etapa inválido: ${stepName}` });
+      }
 
       // Usar query SQL direta para atualizar
       const updateQuery = `
         UPDATE quiz_contextualizacao 
-        SET ${columnName} = $1, current_step = $2, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = $3
+        SET ${stepInfo.column} = $1, current_step = $2, updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $3::text
         RETURNING *
       `;
 
-      const updatedQuiz = await sql(updateQuery, [stepValue, currentStep || 1, userId]);
+      const updatedQuiz = await sql(updateQuery, [stepValue, stepInfo.step, userId.toString()]);
 
       console.log('Quiz atualizado via save-step:', updatedQuiz);
 
@@ -546,143 +548,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'User ID é obrigatório' });
       }
 
-      const completedQuiz = await sql`
-        UPDATE quiz_contextualizacao 
-        SET completed = true, current_step = 8, updated_at = NOW()
-        WHERE user_id = ${userId}
-        RETURNING *
-      `;
-
-      if (completedQuiz.length === 0) {
-        return res.status(404).json({ message: 'Quiz não encontrado' });
-      }
-
-      res.json({ quiz: completedQuiz[0] });
-
-    } catch (error) {
-      console.error('Erro ao finalizar quiz:', error);
-      res.status(500).json({ message: 'Erro interno do servidor' });
-    }
-  });
-
-  // Obter quiz do usuário
-  app.get("/api/quiz/:userId", async (req, res) => {
-    try {
-      const { userId } = req.params;
-
-      if (!userId) {
-        return res.status(400).json({ message: 'User ID é obrigatório' });
-      }
-
-      const quiz = await sql`
-        SELECT * FROM quiz_contextualizacao 
-        WHERE user_id = ${userId}
-      `;
-
-      if (quiz.length === 0) {
-        return res.status(404).json({ message: 'Quiz não encontrado' });
-      }
-
-      res.json({ quiz: quiz[0] });
-
-    } catch (error) {
-      console.error('Erro ao buscar quiz:', error);
-      res.status(500).json({ message: 'Erro interno do servidor' });
-    }
-  });
-
-  // Resetar quiz
-  app.delete("/api/quiz/:userId", async (req, res) => {
-    try {
-      const { userId } = req.params;
-
-      if (!userId) {
-        return res.status(400).json({ message: 'User ID é obrigatório' });
-      }
-
-      const deletedQuiz = await sql`
-        DELETE FROM quiz_contextualizacao 
-        WHERE user_id = ${userId}
-        RETURNING *
-      `;
-
-      if (deletedQuiz.length === 0) {
-        return res.status(404).json({ message: 'Quiz não encontrado' });
-      }
-
-      res.json({ message: 'Quiz resetado com sucesso' });
-
-    } catch (error) {
-      console.error('Erro ao resetar quiz:', error);
-      res.status(500).json({ message: 'Erro interno do servidor' });
-    }
-  });
-
-  // Salvar etapa do quiz
-  app.put("/api/quiz/step", async (req, res) => {
-    try {
-      const { userId, stepName, stepValue } = req.body;
-
-      if (!userId || !stepName || stepValue === undefined || stepValue === null) {
-        return res.status(400).json({ message: 'User ID, nome da etapa e valor são obrigatórios' });
-      }
-
-      console.log('Salvando etapa:', { userId, stepName, stepValue });
-
-      // Mapeamento correto de etapas para colunas
-      const stepColumnMap: Record<string, string> = {
-        'gender': 'genero',
-        'frequency': 'frequencia', 
-        'age': 'idade',
-        'motivation': 'motivacao',
-        'triggers': 'gatilhos',
-        'religion': 'religiao'
-      };
-
-      const columnName = stepColumnMap[stepName];
-      if (!columnName) {
-        return res.status(400).json({ message: `Nome da etapa inválido: ${stepName}` });
-      }
-
-      // Usar query SQL direta para atualizar
-      const updateQuery = `
-        UPDATE quiz_contextualizacao 
-        SET ${columnName} = $1, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = $2
-        RETURNING *
-      `;
-
-      const updatedQuiz = await sql(updateQuery, [stepValue, userId]);
-
-      console.log('Quiz atualizado:', updatedQuiz);
-
-      if (updatedQuiz.length === 0) {
-        return res.status(404).json({ message: 'Quiz não encontrado para este usuário' });
-      }
-
-      res.json({ quiz: updatedQuiz[0], message: `${stepName} salvo com sucesso!` });
-
-    } catch (error) {
-      console.error('Erro ao salvar etapa do quiz:', error);
-      res.status(500).json({ message: 'Erro interno do servidor', error: error.message });
-    }
-  });
-
-  // Marcar quiz como completo
-  app.put("/api/quiz/complete", async (req, res) => {
-    try {
-      const { userId } = req.body;
-
-      if (!userId) {
-        return res.status(400).json({ message: 'User ID é obrigatório' });
-      }
-
       console.log('Completando quiz para usuário:', userId);
 
       const completedQuiz = await sql`
         UPDATE quiz_contextualizacao 
         SET completed = true, current_step = 8, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = ${userId}
+        WHERE user_id = ${userId.toString()}
         RETURNING *
       `;
 
@@ -718,6 +589,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('Erro ao buscar quiz:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Resetar quiz
+  app.delete("/api/quiz/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID é obrigatório' });
+      }
+
+      const deletedQuiz = await sql`
+        DELETE FROM quiz_contextualizacao 
+        WHERE user_id = ${userId}
+        RETURNING *
+      `;
+
+      if (deletedQuiz.length === 0) {
+        return res.status(404).json({ message: 'Quiz não encontrado' });
+      }
+
+      res.json({ message: 'Quiz resetado com sucesso' });
+
+    } catch (error) {
+      console.error('Erro ao resetar quiz:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   });
