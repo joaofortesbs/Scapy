@@ -31,7 +31,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
       try {
         // Use server API instead of direct Supabase query
         const response = await fetch(`/api/quiz/${user.id}`);
-        
+
         if (response.ok) {
           const result = await response.json();
           setQuizData(result.quiz);
@@ -207,7 +207,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
         <main className="flex-1 px-4 pb-8">
           <div className="space-y-8">
             {/* Seção da imagem de perfil */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1, duration: 0.3 }}
@@ -357,7 +357,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
               </Card>
             </motion.div>
 
-            {/* Card Dados Quiz de Personalização */}
+            {/* Card Dados Quiz de Personalização - Estilo AI Assistant */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -373,138 +373,89 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                 </CardContent>
               </Card>
 
-                  {quizData ? (
+              {quizData ? (
                 <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                  className="space-y-2"
                 >
-                  <Card className="gradient-border-card">
-                    <CardContent className="p-6">
-                      <div className="text-center">
-                        <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <BarChart3 className="w-8 h-8 text-primary" />
+                  {quizData.genero && (
+                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between space-x-3">
+                          <span className="text-sm text-muted-foreground font-medium">Gênero:</span>
+                          <span className="text-sm text-foreground font-medium">{quizData.genero}</span>
                         </div>
+                      </CardContent>
+                    </Card>
+                  )}
 
-                        <h3 className="text-xl font-bold text-primary mb-2">
-                          Suas Respostas do Quiz
-                        </h3>
-
-                        <p className="text-muted-foreground mb-4">
-                          Informações da sua personalização
-                        </p>
-
-                        <div className="space-y-3">
-                          {/* Campo Gênero */}
-                          <div className="bg-primary/10 rounded-lg p-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <User className="w-4 h-4 text-primary" />
-                                <span className="text-sm text-muted-foreground">Gênero</span>
-                              </div>
-                              <span className="text-sm font-bold text-primary">
-                                {quizData.genero || 'Não informado'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Campo Frequência */}
-                          <div className="bg-primary/10 rounded-lg p-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <Clock className="w-4 h-4 text-primary" />
-                                <span className="text-sm text-muted-foreground">Frequência</span>
-                              </div>
-                              <span className="text-sm font-bold text-primary">
-                                {quizData.frequencia || 'Não informado'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Campo Motivação */}
-                          <div className="bg-primary/10 rounded-lg p-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <Trophy className="w-4 h-4 text-primary" />
-                                <span className="text-sm text-muted-foreground">Motivação</span>
-                              </div>
-                              <span className="text-sm font-bold text-primary">
-                                {quizData.motivacao || 'Não informado'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Campo Gatilhos */}
-                          <div className="bg-primary/10 rounded-lg p-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <Eye className="w-4 h-4 text-primary" />
-                                <span className="text-sm text-muted-foreground">Gatilhos</span>
-                              </div>
-                              <span className="text-sm font-bold text-primary">
-                                {quizData.gatilhos || 'Não informado'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Campo Religião */}
-                          <div className="bg-primary/10 rounded-lg p-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <Mountain className="w-4 h-4 text-primary" />
-                                <span className="text-sm text-muted-foreground">Religião</span>
-                              </div>
-                              <span className="text-sm font-bold text-primary">
-                                {quizData.religiao || 'Não informado'}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {/* Status do Quiz */}
-                          <div className="bg-green-500/20 rounded-lg p-3 mt-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                <span className="text-sm text-muted-foreground">Status</span>
-                              </div>
-                              <span className="text-sm font-bold text-green-500">
-                                {quizData.completed ? 'Completado' : 'Em andamento'}
-                              </span>
-                            </div>
-                          </div>
+                  {quizData.idade && (
+                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between space-x-3">
+                          <span className="text-sm text-muted-foreground font-medium">Idade:</span>
+                          <span className="text-sm text-foreground font-medium">{quizData.idade}</span>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {quizData.motivacao && (
+                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between space-x-3">
+                          <span className="text-sm text-muted-foreground font-medium">Motivação:</span>
+                          <span className="text-sm text-foreground font-medium">{quizData.motivacao}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {quizData.frequencia && (
+                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between space-x-3">
+                          <span className="text-sm text-muted-foreground font-medium">Frequência:</span>
+                          <span className="text-sm text-foreground font-medium">{quizData.frequencia}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {quizData.gatilhos && (
+                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between space-x-3">
+                          <span className="text-sm text-muted-foreground font-medium">Gatilhos:</span>
+                          <span className="text-sm text-foreground font-medium">{quizData.gatilhos}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {quizData.religiao && (
+                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between space-x-3">
+                          <span className="text-sm text-muted-foreground font-medium">Religião:</span>
+                          <span className="text-sm text-foreground font-medium">{quizData.religiao}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </motion.div>
               ) : (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden"
-                >
-                  <Card className="gradient-border-card">
-                    <CardContent className="p-6">
-                      <div className="text-center">
-                        <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <BarChart3 className="w-8 h-8 text-yellow-500" />
-                        </div>
-
-                        <h3 className="text-xl font-bold text-yellow-500 mb-2">
-                          Quiz Não Respondido
-                        </h3>
-
-                        <p className="text-muted-foreground mb-4">
-                          Complete o Quiz de Personalização para ver todos os seus dados organizados aqui.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-center space-x-3">
+                      <span className="text-sm text-muted-foreground font-medium">
+                        Nenhum dado de quiz encontrado
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </motion.div>
           </div>
