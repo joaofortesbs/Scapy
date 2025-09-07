@@ -56,7 +56,7 @@ export const insertUserGoalsSchema = createInsertSchema(userGoals).omit({
 
 export const quizContextualizacao = pgTable("quiz_contextualizacao", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").notNull(),
   userFullName: text("user_full_name").notNull(),
   genero: varchar("genero", { length: 50 }),
   frequencia: varchar("frequencia", { length: 100 }),
