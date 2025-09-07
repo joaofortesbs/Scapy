@@ -304,53 +304,41 @@ export default function PainelInterface({
   const [isLoadingTimer, setIsLoadingTimer] = useState(false);
 
   const { data: timerData, isLoading: isLoadingTimerQuery, refetch: refetchTimer } = useQuery({
-    queryKey: ['timer'],
+    queryKey: ['timer', user?.id],
     queryFn: async () => {
-      try {
-        console.log("Starting timer query...");
-        
-        // Get current user session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error("Session error:", sessionError);
-          return null;
-        }
-        
-        if (!session?.user?.id) {
-          console.log("No authenticated user found");
-          return null;
-        }
-
-        console.log("Fetching timer for user:", session.user.id);
-
-        const { data, error } = await supabase
-          .from('timer')
-          .select('start_time, created_at, id')
-          .eq('user_id', session.user.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
-        
-        if (error) {
-          console.error("Error fetching timer:", error);
-          throw error;
-        }
-
-        console.log("Timer data fetched:", data);
-        
-        if (data && data.length > 0) {
-          return {
-            start_time: data[0].start_time,
-            created_at: data[0].created_at,
-            id: data[0].id
-          };
-        }
-        
+      console.log("Starting timer query...");
+      console.log("User from props:", user);
+      
+      if (!user?.id) {
+        console.log("No authenticated user found");
         return null;
-      } catch (error) {
-        console.error("Error in timer query:", error);
-        throw error;
       }
+
+      console.log("Fetching timer for user:", user.id);
+
+      const { data, error } = await supabase
+        .from('timer')
+        .select('start_time, created_at, id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (error) {
+        console.error("Error fetching timer:", error);
+        return null;
+      }
+
+      console.log("Timer data fetched:", data);
+      
+      if (data && data.length > 0) {
+        return {
+          start_time: data[0].start_time,
+          created_at: data[0].created_at,
+          id: data[0].id
+        };
+      }
+      
+      return null;
     },
     enabled: true, // Always enabled to check for existing timers
     refetchInterval: 5000, // Refetch every 5 seconds to check for updates
@@ -382,26 +370,18 @@ export default function PainelInterface({
       try {
         console.log("Starting timer mutation...");
         
-        // Get current user session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error("Session error:", sessionError);
-          throw new Error("Failed to get user session");
-        }
-        
-        if (!session?.user?.id) {
+        if (!user?.id) {
           throw new Error("User must be authenticated to start timer");
         }
 
-        console.log("Starting timer for user:", session.user.id);
+        console.log("Starting timer for user:", user.id);
         setIsLoadingTimer(true);
 
         // Check if timer already exists
         const { data: existingTimer, error: fetchError } = await supabase
           .from('timer')
           .select('start_time, id')
-          .eq('user_id', session.user.id)
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(1);
 
@@ -422,7 +402,7 @@ export default function PainelInterface({
         const { data, error } = await supabase
           .from('timer')
           .insert([{ 
-            user_id: session.user.id, 
+            user_id: user.id, 
             start_time: startTime 
           }])
           .select('start_time, id')
