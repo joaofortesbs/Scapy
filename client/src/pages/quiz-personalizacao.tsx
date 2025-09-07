@@ -235,7 +235,7 @@ function QuizEtapa2({ onNext }: { onNext: () => void }) {
           transformStyle: "preserve-3d"
         }}
       >
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30 shadow-2xl relative overflow-hidden h-64">
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30 shadow-2xl relative overflow-hidden h-80">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-pulse" />
           
           <CardContent className="p-6 space-y-4 relative z-10 h-full flex flex-col justify-between">
