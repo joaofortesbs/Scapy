@@ -10,7 +10,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Inicializar Supabase cliente
   const supabaseUrl = process.env.SUPABASE_URL || 'https://ddatgvruplfcutjwores.supabase.co';
   const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkYXRndnJ1cGxmY3V0andvcmVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxMzQ3NjcsImV4cCI6MjA3MjcxMDc2N30.gkE2EWLU7gvxonWptK_bbiRuAm1d6xIxLVeCYegA5es';
+  const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkYXRndnJ1cGxmY3V0andvcmVzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzEzNDc2NywiZXhwIjoyMDcyNzEwNzY3fQ.MWY548tNrRJsr-uIxSwWz4Vd6q9YE58bf9XQrKvhAZE';
+  
   const supabase = createClient(supabaseUrl, supabaseKey);
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole);
 
   // ========== ROTAS DE AUTENTICAÇÃO ==========
 
@@ -209,6 +212,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create timer start time
       const timerStartDate = new Date().toISOString();
 
+      // Save timer to Supabase timers table using service role for write permissions
+      const { data: timerData, error: timerError } = await supabaseAdmin
+        .from('timers')
+        .insert({
+          userId: userId,
+          startDate: timerStartDate,
+          isActive: true
+        })
+        .select()
+        .single();
+
+      if (timerError) {
+        console.error('Erro ao salvar timer no Supabase:', timerError);
+        return res.status(500).json({ message: 'Erro ao salvar timer no banco de dados' });
+      }
+
+      console.log('Timer salvo no Supabase:', timerData);
+
       // Return user data with timer start date
       const userData = {
         id: user.id,
@@ -222,7 +243,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         message: 'Cronômetro iniciado com sucesso!',
         user: userData,
-        timerStarted: true
+        timerStarted: true,
+        timerId: timerData.id
       });
 
     } catch (error) {
