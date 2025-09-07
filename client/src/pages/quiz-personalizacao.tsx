@@ -3,7 +3,9 @@ import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { CheckCircle, Clock, Mountain, Trees } from "lucide-react";
+import ParticlesBackground from "@/components/particles-background";
 
 interface QuizPersonalizacaoProps {
   user?: any;
@@ -12,20 +14,36 @@ interface QuizPersonalizacaoProps {
 
 export default function QuizPersonalizacao({ user, onCompleteQuiz }: QuizPersonalizacaoProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [quizData, setQuizData] = useState({
+    gender: '',
+    frequency: '',
+    motivation: ''
+  });
   const [, setLocation] = useLocation();
 
   const handleNextStep = () => {
-    if (currentStep === 1) {
-      setCurrentStep(2);
-    } else if (currentStep === 2) {
+    if (currentStep < 5) {
+      setCurrentStep(currentStep + 1);
+    } else {
       // Completar quiz e redirecionar para o painel principal
       onCompleteQuiz();
       setLocation('/dashboard');
     }
   };
 
+  const handleOptionSelect = (field: keyof typeof quizData, value: string) => {
+    setQuizData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const getProgressPercentage = () => {
+    return ((currentStep - 1) / 4) * 100; // 5 etapas total, então dividir por 4
+  };
+
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
+      {/* Fundo com partículas igual ao painel */}
+      <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
+      
       <div className="relative z-10 flex-1 px-4 py-8">
         <AnimatePresence mode="wait">
           {currentStep === 1 && (
@@ -33,6 +51,33 @@ export default function QuizPersonalizacao({ user, onCompleteQuiz }: QuizPersona
           )}
           {currentStep === 2 && (
             <QuizEtapa2 key="step2" onNext={handleNextStep} />
+          )}
+          {currentStep === 3 && (
+            <QuizEtapa3 
+              key="step3" 
+              onNext={handleNextStep} 
+              selectedValue={quizData.gender}
+              onSelect={(value) => handleOptionSelect('gender', value)}
+              progress={getProgressPercentage()}
+            />
+          )}
+          {currentStep === 4 && (
+            <QuizEtapa4 
+              key="step4" 
+              onNext={handleNextStep} 
+              selectedValue={quizData.frequency}
+              onSelect={(value) => handleOptionSelect('frequency', value)}
+              progress={getProgressPercentage()}
+            />
+          )}
+          {currentStep === 5 && (
+            <QuizEtapa5 
+              key="step5" 
+              onNext={handleNextStep} 
+              selectedValue={quizData.motivation}
+              onSelect={(value) => handleOptionSelect('motivation', value)}
+              progress={getProgressPercentage()}
+            />
           )}
         </AnimatePresence>
       </div>
@@ -48,76 +93,68 @@ function QuizEtapa1({ onNext }: { onNext: () => void }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.5 }}
-      className="flex flex-col items-center text-center h-full justify-center space-y-8"
+      className="flex flex-col h-full justify-center space-y-8"
     >
-      {/* Título principal */}
-      <motion.h1 
+      {/* Título principal - alinhado à esquerda */}
+      <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.6 }}
-        className="text-lg font-medium text-muted-foreground leading-relaxed px-4"
-      >
-        Um app envolvente e feito com uma abordagem baseada na ciência para derrotar o vício na pornografia para sempre.
-      </motion.h1>
-
-      {/* Estatística principal */}
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.4, duration: 0.6 }}
-        className="space-y-2"
+        className="text-left space-y-2"
       >
-        <div className="text-6xl font-bold text-primary">
-          7 bilhões de horas
+        <div className="flex items-baseline space-x-2">
+          <span className="text-6xl font-bold text-primary">7</span>
+          <span className="text-2xl text-primary">bilhões de horas</span>
         </div>
-        <p className="text-lg text-muted-foreground">
+        <p className="text-lg text-muted-foreground text-left">
           são desperdiçadas todos os anos assistindo pornografia somente no Brasil!
         </p>
       </motion.div>
 
-      {/* Lista de comparações */}
+      {/* Lista de comparações - alinhadas à esquerda */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 0.6 }}
-        className="space-y-4 w-full max-w-sm"
+        className="space-y-4 w-full"
       >
         <div className="flex items-center space-x-3 p-3 bg-primary/5 rounded-lg">
           <CheckCircle className="w-6 h-6 text-primary flex-shrink-0" />
-          <span className="text-sm text-foreground">
+          <span className="text-sm text-foreground text-left">
             Tempo suficiente para construir 700.000 Cristos Redentores
           </span>
         </div>
 
         <div className="flex items-center space-x-3 p-3 bg-primary/5 rounded-lg">
           <Trees className="w-6 h-6 text-primary flex-shrink-0" />
-          <span className="text-sm text-foreground">
+          <span className="text-sm text-foreground text-left">
             Tempo suficiente para explorar a floresta amazônica inteira 800.000 vezes!
           </span>
         </div>
 
         <div className="flex items-center space-x-3 p-3 bg-primary/5 rounded-lg">
           <Mountain className="w-6 h-6 text-primary flex-shrink-0" />
-          <span className="text-sm text-foreground">
+          <span className="text-sm text-foreground text-left">
             Tempo suficiente para escalar o monte Pão de Açúcar 3.5 bilhões de vezes!
           </span>
         </div>
       </motion.div>
 
-      {/* Botão Continue */}
+      {/* Botão Continue - estilo AI Assistant */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8, duration: 0.6 }}
-        className="w-full max-w-sm"
+        className="w-full"
       >
-        <Button
+        <button
           onClick={onNext}
-          className="w-full h-16 rounded-2xl bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 hover:from-primary/30 hover:to-primary/20 transition-all duration-300 text-primary font-semibold text-lg"
+          className="w-full h-16 rounded-full ai-assistant-card-natural-3d text-primary font-semibold text-lg border-border"
+          style={{ backgroundColor: '#000515' }}
           data-testid="continue-step1-button"
         >
           Continue
-        </Button>
+        </button>
       </motion.div>
     </motion.div>
   );
@@ -125,7 +162,7 @@ function QuizEtapa1({ onNext }: { onNext: () => void }) {
 
 // Etapa 2: Comunidade de soldados
 function QuizEtapa2({ onNext }: { onNext: () => void }) {
-  const [counter, setCounter] = useState(317);
+  const [counter, setCounter] = useState(3773);
 
   // Animação do contador crescente
   useState(() => {
@@ -142,14 +179,14 @@ function QuizEtapa2({ onNext }: { onNext: () => void }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.5 }}
-      className="flex flex-col items-center text-center h-full justify-center space-y-8"
+      className="flex flex-col h-full justify-center space-y-8"
     >
-      {/* Títulos */}
+      {/* Títulos - alinhados à esquerda */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.6 }}
-        className="space-y-3"
+        className="space-y-3 text-left"
       >
         <h1 className="text-3xl font-bold text-foreground">
           Você não está sozinho!
@@ -159,36 +196,40 @@ function QuizEtapa2({ onNext }: { onNext: () => void }) {
         </h2>
       </motion.div>
 
-      {/* Card 3D flutuante */}
+      {/* Card 3D flutuante - 47° virado para esquerda e maior altura */}
       <motion.div
-        initial={{ opacity: 0, rotateY: -15, x: -20 }}
-        animate={{ opacity: 1, rotateY: -5, x: 0 }}
+        initial={{ opacity: 0, rotateY: -47, x: -20 }}
+        animate={{ opacity: 1, rotateY: -47, x: 0 }}
         transition={{ delay: 0.4, duration: 0.8 }}
-        className="w-full max-w-sm"
+        className="w-full"
         style={{
-          transform: "perspective(1000px) rotateY(-5deg)",
+          transform: "perspective(1000px) rotateY(-47deg)",
           transformStyle: "preserve-3d"
         }}
       >
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30 shadow-2xl relative overflow-hidden">
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30 shadow-2xl relative overflow-hidden h-48">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-pulse" />
           
-          <CardContent className="p-6 space-y-6 relative z-10">
-            {/* Título com contador */}
-            <div className="space-y-2">
+          <CardContent className="p-6 space-y-6 relative z-10 h-full flex flex-col justify-between">
+            {/* Emoji e título */}
+            <div className="space-y-2 text-left">
+              <div className="text-2xl">🫡</div>
               <h3 className="text-lg font-semibold text-foreground">
-                Só hoje já salvamos{' '}
-                <motion.span 
-                  key={counter}
-                  initial={{ scale: 1.2, color: "#00F6FF" }}
-                  animate={{ scale: 1, color: "inherit" }}
-                  transition={{ duration: 0.3 }}
-                  className="text-primary font-bold"
-                >
-                  {counter}
-                </motion.span>
-                {' '}pessoas do vício maldito.
+                Só hoje já salvamos pessoas do vício maldito.
               </h3>
+            </div>
+
+            {/* Contador crescente - maior e alinhado à esquerda */}
+            <div className="text-left">
+              <motion.span 
+                key={counter}
+                initial={{ scale: 1.2, color: "#00F6FF" }}
+                animate={{ scale: 1, color: "#00F6FF" }}
+                transition={{ duration: 0.3 }}
+                className="text-6xl font-bold text-primary"
+              >
+                {counter.toLocaleString()}
+              </motion.span>
             </div>
 
             {/* Círculos para futuras imagens */}
@@ -210,20 +251,303 @@ function QuizEtapa2({ onNext }: { onNext: () => void }) {
         </Card>
       </motion.div>
 
-      {/* Botão Continue */}
+      {/* Botão Continue - estilo AI Assistant */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8, duration: 0.6 }}
-        className="w-full max-w-sm"
+        className="w-full"
       >
-        <Button
+        <button
           onClick={onNext}
-          className="w-full h-16 rounded-2xl bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 hover:from-primary/30 hover:to-primary/20 transition-all duration-300 text-primary font-semibold text-lg"
+          className="w-full h-16 rounded-full ai-assistant-card-natural-3d text-primary font-semibold text-lg border-border"
+          style={{ backgroundColor: '#000515' }}
           data-testid="continue-step2-button"
         >
           Continue
-        </Button>
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// Etapa 3: Seleção de gênero
+function QuizEtapa3({ 
+  onNext, 
+  selectedValue, 
+  onSelect, 
+  progress 
+}: { 
+  onNext: () => void; 
+  selectedValue: string; 
+  onSelect: (value: string) => void;
+  progress: number;
+}) {
+  const options = ['Homem', 'Mulher', 'Outro'];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.5 }}
+      className="flex flex-col h-full justify-start space-y-8 pt-8"
+    >
+      {/* Barra de progresso */}
+      <motion.div
+        initial={{ opacity: 0, width: 0 }}
+        animate={{ opacity: 1, width: "100%" }}
+        transition={{ delay: 0.2, duration: 0.6 }}
+      >
+        <Progress value={progress} className="h-2" />
+      </motion.div>
+
+      {/* Título */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.6 }}
+        className="text-left"
+      >
+        <h1 className="text-2xl font-bold text-foreground">
+          Qual é o seu gênero?
+        </h1>
+      </motion.div>
+
+      {/* Opções */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.6 }}
+        className="space-y-3 flex-1"
+      >
+        {options.map((option, index) => (
+          <motion.button
+            key={option}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.7 + (index * 0.1), duration: 0.4 }}
+            onClick={() => onSelect(option)}
+            className={`w-full p-4 rounded-lg border-2 text-left transition-all duration-300 ${
+              selectedValue === option
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border bg-background hover:border-primary/50'
+            }`}
+            data-testid={`option-${option.toLowerCase()}`}
+          >
+            {option}
+          </motion.button>
+        ))}
+      </motion.div>
+
+      {/* Botão Continue */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1, duration: 0.6 }}
+        className="w-full"
+      >
+        <button
+          onClick={onNext}
+          disabled={!selectedValue}
+          className="w-full h-16 rounded-full ai-assistant-card-natural-3d text-primary font-semibold text-lg border-border disabled:opacity-50"
+          style={{ backgroundColor: '#000515' }}
+          data-testid="continue-step3-button"
+        >
+          Continue
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// Etapa 4: Frequência de consumo
+function QuizEtapa4({ 
+  onNext, 
+  selectedValue, 
+  onSelect, 
+  progress 
+}: { 
+  onNext: () => void; 
+  selectedValue: string; 
+  onSelect: (value: string) => void;
+  progress: number;
+}) {
+  const options = [
+    '+3 vezes por dia',
+    '2 vezes por dia', 
+    '1 vez por dia',
+    'Algumas vezes por semana',
+    'Menos de uma vez por semana'
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.5 }}
+      className="flex flex-col h-full justify-start space-y-8 pt-8"
+    >
+      {/* Barra de progresso */}
+      <motion.div
+        initial={{ opacity: 0, width: 0 }}
+        animate={{ opacity: 1, width: "100%" }}
+        transition={{ delay: 0.2, duration: 0.6 }}
+      >
+        <Progress value={progress} className="h-2" />
+      </motion.div>
+
+      {/* Título */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.6 }}
+        className="text-left"
+      >
+        <h1 className="text-2xl font-bold text-foreground">
+          Com que frequência você assiste pornografia?
+        </h1>
+      </motion.div>
+
+      {/* Opções */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.6 }}
+        className="space-y-3 flex-1"
+      >
+        {options.map((option, index) => (
+          <motion.button
+            key={option}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.7 + (index * 0.1), duration: 0.4 }}
+            onClick={() => onSelect(option)}
+            className={`w-full p-4 rounded-lg border-2 text-left transition-all duration-300 ${
+              selectedValue === option
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border bg-background hover:border-primary/50'
+            }`}
+            data-testid={`option-${index}`}
+          >
+            {option}
+          </motion.button>
+        ))}
+      </motion.div>
+
+      {/* Botão Continue */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.2, duration: 0.6 }}
+        className="w-full"
+      >
+        <button
+          onClick={onNext}
+          disabled={!selectedValue}
+          className="w-full h-16 rounded-full ai-assistant-card-natural-3d text-primary font-semibold text-lg border-border disabled:opacity-50"
+          style={{ backgroundColor: '#000515' }}
+          data-testid="continue-step4-button"
+        >
+          Continue
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// Etapa 5: Motivação para parar
+function QuizEtapa5({ 
+  onNext, 
+  selectedValue, 
+  onSelect, 
+  progress 
+}: { 
+  onNext: () => void; 
+  selectedValue: string; 
+  onSelect: (value: string) => void;
+  progress: number;
+}) {
+  const options = [
+    'Retomar o controle da minha vida',
+    'Melhorar relacionamentos',
+    'Ter mais foco',
+    'Aumentar minha clareza mental',
+    'Me aproximar de Deus'
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.5 }}
+      className="flex flex-col h-full justify-start space-y-8 pt-8"
+    >
+      {/* Barra de progresso */}
+      <motion.div
+        initial={{ opacity: 0, width: 0 }}
+        animate={{ opacity: 1, width: "100%" }}
+        transition={{ delay: 0.2, duration: 0.6 }}
+      >
+        <Progress value={100} className="h-2" />
+      </motion.div>
+
+      {/* Título */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.6 }}
+        className="text-left"
+      >
+        <h1 className="text-2xl font-bold text-foreground">
+          Qual é a sua maior motivação para parar com a pornografia ou masturbação?
+        </h1>
+      </motion.div>
+
+      {/* Opções */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.6 }}
+        className="space-y-3 flex-1"
+      >
+        {options.map((option, index) => (
+          <motion.button
+            key={option}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.7 + (index * 0.1), duration: 0.4 }}
+            onClick={() => onSelect(option)}
+            className={`w-full p-4 rounded-lg border-2 text-left transition-all duration-300 ${
+              selectedValue === option
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border bg-background hover:border-primary/50'
+            }`}
+            data-testid={`option-${index}`}
+          >
+            {option}
+          </motion.button>
+        ))}
+      </motion.div>
+
+      {/* Botão Continue */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.2, duration: 0.6 }}
+        className="w-full"
+      >
+        <button
+          onClick={onNext}
+          disabled={!selectedValue}
+          className="w-full h-16 rounded-full ai-assistant-card-natural-3d text-primary font-semibold text-lg border-border disabled:opacity-50"
+          style={{ backgroundColor: '#000515' }}
+          data-testid="continue-step5-button"
+        >
+          Finalizar
+        </button>
       </motion.div>
     </motion.div>
   );
