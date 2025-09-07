@@ -253,6 +253,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check if user has active timer
+  app.get("/api/timer/status/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+
+      // Check if user has an active timer
+      const { data: timerData, error: timerError } = await supabase
+        .from('timers')
+        .select('*')
+        .eq('userId', userId)
+        .eq('isActive', true)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (timerError) {
+        console.error('Erro ao verificar timer:', timerError);
+        return res.status(500).json({ message: 'Erro ao verificar timer' });
+      }
+
+      const hasActiveTimer = timerData && timerData.length > 0;
+      const latestTimer = hasActiveTimer ? timerData[0] : null;
+
+      res.json({
+        hasActiveTimer,
+        timer: latestTimer,
+        startDate: latestTimer ? latestTimer.startDate : null
+      });
+
+    } catch (error) {
+      console.error('Erro ao verificar status do timer:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
   // Get timer data for user
   app.get("/api/timer/:userId", async (req, res) => {
     try {
