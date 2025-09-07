@@ -499,15 +499,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'User ID, nome da etapa e valor são obrigatórios' });
       }
 
-      // Atualizar a etapa específica
-      const updateQuery = `
+      // Atualizar a etapa específica usando template literal
+      const updatedQuiz = await sql`
         UPDATE quiz_contextualizacao 
-        SET ${stepName} = $1, current_step = $2, updated_at = NOW()
-        WHERE user_id = $3
+        SET ${sql(stepName)} = ${stepValue}, current_step = ${currentStep || 1}, updated_at = NOW()
+        WHERE user_id = ${userId}
         RETURNING *
       `;
-
-      const updatedQuiz = await sql.unsafe(updateQuery, [stepValue, currentStep || 1, userId]);
 
       if (updatedQuiz.length === 0) {
         return res.status(404).json({ message: 'Quiz não encontrado' });
@@ -600,7 +598,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Erro ao resetar quiz:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
-  });erId, nome da etapa e valor são obrigatórios' });
+  });
+
+  // Salvar etapa do quiz
+  app.put("/api/quiz/step", async (req, res) => {
+    try {
+      const { userId, stepName, stepValue } = req.body;
+
+      if (!userId || !stepName || stepValue === undefined || stepValue === null) {
+        return res.status(400).json({ message: 'User ID, nome da etapa e valor são obrigatórios' });
       }
 
       // Mapeamento de etapas para colunas
