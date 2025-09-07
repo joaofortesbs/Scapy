@@ -469,16 +469,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       <Card
                         className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                         style={{ backgroundColor: 'transparent' }}
-                        onClick={() => handleEditField('genero', quizData.genero)}
                       >
-                        <CardContent className="p-3">
-                          <div className="flex items-center space-x-3">
+                        <CardContent 
+                          className="p-3 cursor-pointer"
+                          onClick={() => handleEditField('genero', quizData.genero)}
+                        >
+                          <div className="flex items-center space-x-3 cursor-pointer">
                             <Users className="w-4 h-4 text-primary flex-shrink-0" />
-                            <div className="flex items-center justify-between flex-1">
-                              <span className="text-sm text-muted-foreground font-medium">Gênero:</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-foreground font-medium">{quizData.genero}</span>
-                                <Edit className="w-3 h-3 text-muted-foreground" />
+                            <div className="flex items-center justify-between flex-1 cursor-pointer">
+                              <span className="text-sm text-muted-foreground font-medium cursor-pointer">Gênero:</span>
+                              <div className="flex items-center space-x-2 cursor-pointer">
+                                <span className="text-sm text-foreground font-medium cursor-pointer">{quizData.genero}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground cursor-pointer" />
                               </div>
                             </div>
                           </div>
@@ -490,16 +492,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       <Card
                         className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                         style={{ backgroundColor: 'transparent' }}
-                        onClick={() => handleEditField('idade', quizData.idade)}
                       >
-                        <CardContent className="p-3">
-                          <div className="flex items-center space-x-3">
+                        <CardContent 
+                          className="p-3 cursor-pointer"
+                          onClick={() => handleEditField('idade', quizData.idade)}
+                        >
+                          <div className="flex items-center space-x-3 cursor-pointer">
                             <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
-                            <div className="flex items-center justify-between flex-1">
-                              <span className="text-sm text-muted-foreground font-medium">Idade:</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-foreground font-medium">{quizData.idade}</span>
-                                <Edit className="w-3 h-3 text-muted-foreground" />
+                            <div className="flex items-center justify-between flex-1 cursor-pointer">
+                              <span className="text-sm text-muted-foreground font-medium cursor-pointer">Idade:</span>
+                              <div className="flex items-center space-x-2 cursor-pointer">
+                                <span className="text-sm text-foreground font-medium cursor-pointer">{quizData.idade}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground cursor-pointer" />
                               </div>
                             </div>
                           </div>
@@ -511,16 +515,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       <Card
                         className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                         style={{ backgroundColor: 'transparent' }}
-                        onClick={() => handleEditField('motivacao', quizData.motivacao)}
                       >
-                        <CardContent className="p-3">
-                          <div className="flex items-center space-x-3">
+                        <CardContent 
+                          className="p-3 cursor-pointer"
+                          onClick={() => handleEditField('motivacao', quizData.motivacao)}
+                        >
+                          <div className="flex items-center space-x-3 cursor-pointer">
                             <Heart className="w-4 h-4 text-primary flex-shrink-0" />
-                            <div className="flex items-center justify-between flex-1">
-                              <span className="text-sm text-muted-foreground font-medium">Motivação:</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-foreground font-medium">{quizData.motivacao}</span>
-                                <Edit className="w-3 h-3 text-muted-foreground" />
+                            <div className="flex items-center justify-between flex-1 cursor-pointer">
+                              <span className="text-sm text-muted-foreground font-medium cursor-pointer">Motivação:</span>
+                              <div className="flex items-center space-x-2 cursor-pointer">
+                                <span className="text-sm text-foreground font-medium cursor-pointer">{quizData.motivacao}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground cursor-pointer" />
                               </div>
                             </div>
                           </div>
@@ -532,16 +538,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       <Card
                         className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                         style={{ backgroundColor: 'transparent' }}
-                        onClick={() => handleEditField('frequencia', quizData.frequencia)}
                       >
-                        <CardContent className="p-3">
-                          <div className="flex items-center space-x-3">
+                        <CardContent 
+                          className="p-3 cursor-pointer"
+                          onClick={() => handleEditField('frequencia', quizData.frequencia)}
+                        >
+                          <div className="flex items-center space-x-3 cursor-pointer">
                             <Clock className="w-4 h-4 text-primary flex-shrink-0" />
-                            <div className="flex items-center justify-between flex-1">
-                              <span className="text-sm text-muted-foreground font-medium">Frequência:</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-foreground font-medium">{quizData.frequencia}</span>
-                                <Edit className="w-3 h-3 text-muted-foreground" />
+                            <div className="flex items-center justify-between flex-1 cursor-pointer">
+                              <span className="text-sm text-muted-foreground font-medium cursor-pointer">Frequência:</span>
+                              <div className="flex items-center space-x-2 cursor-pointer">
+                                <span className="text-sm text-foreground font-medium cursor-pointer">{quizData.frequencia}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground cursor-pointer" />
                               </div>
                             </div>
                           </div>
@@ -553,16 +561,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       <Card
                         className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                         style={{ backgroundColor: 'transparent' }}
-                        onClick={() => handleEditField('gatilhos', quizData.gatilhos)}
                       >
-                        <CardContent className="p-3">
-                          <div className="flex items-center space-x-3">
+                        <CardContent 
+                          className="p-3 cursor-pointer"
+                          onClick={() => handleEditField('gatilhos', quizData.gatilhos)}
+                        >
+                          <div className="flex items-center space-x-3 cursor-pointer">
                             <Zap className="w-4 h-4 text-primary flex-shrink-0" />
-                            <div className="flex items-center justify-between flex-1">
-                              <span className="text-sm text-muted-foreground font-medium">Gatilhos:</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-foreground font-medium">{quizData.gatilhos}</span>
-                                <Edit className="w-3 h-3 text-muted-foreground" />
+                            <div className="flex items-center justify-between flex-1 cursor-pointer">
+                              <span className="text-sm text-muted-foreground font-medium cursor-pointer">Gatilhos:</span>
+                              <div className="flex items-center space-x-2 cursor-pointer">
+                                <span className="text-sm text-foreground font-medium cursor-pointer">{quizData.gatilhos}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground cursor-pointer" />
                               </div>
                             </div>
                           </div>
@@ -574,16 +584,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       <Card
                         className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                         style={{ backgroundColor: 'transparent' }}
-                        onClick={() => handleEditField('religiao', quizData.religiao)}
                       >
-                        <CardContent className="p-3">
-                          <div className="flex items-center space-x-3">
+                        <CardContent 
+                          className="p-3 cursor-pointer"
+                          onClick={() => handleEditField('religiao', quizData.religiao)}
+                        >
+                          <div className="flex items-center space-x-3 cursor-pointer">
                             <Cross className="w-4 h-4 text-primary flex-shrink-0" />
-                            <div className="flex items-center justify-between flex-1">
-                              <span className="text-sm text-muted-foreground font-medium">Religião:</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-foreground font-medium">{quizData.religiao}</span>
-                                <Edit className="w-3 h-3 text-muted-foreground" />
+                            <div className="flex items-center justify-between flex-1 cursor-pointer">
+                              <span className="text-sm text-muted-foreground font-medium cursor-pointer">Religião:</span>
+                              <div className="flex items-center space-x-2 cursor-pointer">
+                                <span className="text-sm text-foreground font-medium cursor-pointer">{quizData.religiao}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground cursor-pointer" />
                               </div>
                             </div>
                           </div>
