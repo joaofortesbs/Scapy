@@ -8,7 +8,6 @@ import {
   Target,
   Plus
 } from "lucide-react";
-import { useLocation } from "wouter";
 import { ScapyIcon } from "@/components/ui/scapy-icon";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,12 +28,6 @@ import type { User, WeeklyProgress } from "@shared/schema";
 
 // Header Component
 function Header() {
-  const [, setLocation] = useLocation();
-
-  const handleProfileClick = () => {
-    setLocation("/perfil-usuario");
-  };
-
   return (
     <header className="p-4 flex items-center justify-between">
       <div className="w-34 h-34">
@@ -56,11 +49,7 @@ function Header() {
           </div>
         </div>
 
-        <button
-          onClick={handleProfileClick}
-          className="gradient-border w-12 h-12 hover:scale-105 transition-transform duration-200"
-          data-testid="profile-container"
-        >
+        <div className="gradient-border w-12 h-12" data-testid="profile-container">
           <div className="gradient-border-inner flex items-center justify-center">
             <img
               src="https://api.dicebear.com/7.x/avataaars/svg?seed=user&backgroundColor=000515"
@@ -69,7 +58,7 @@ function Header() {
               data-testid="profile-image"
             />
           </div>
-        </button>
+        </div>
       </div>
     </header>
   );
