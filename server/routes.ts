@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertWeeklyProgressSchema, insertUserGoalsSchema } from "@shared/schema";
+import { insertWeeklyProgressSchema, insertUserGoalsSchema, quizContextualizacao, insertQuizContextualizacaoSchema } from "@shared/schema";
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import { neon } from '@neondatabase/serverless';
@@ -451,6 +451,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(goal);
     } catch (error) {
       res.status(400).json({ message: "Invalid data" });
+    }
+  });
+
+  // ========== ROTAS QUIZ DE CONTEXTUALIZAÇÃO ==========
+
+  // Criar ou obter quiz do usuário
+  app.post("/api/quiz/initialize", async (req, res) => {
+    try {
+      const { userId, userFullName } = req.body;
+
+      if (!userId || !userFullName) {
+        return res.status(400).json({ message: 'User ID e nome completo são obrigatórios' });
+      }
+
+      // Verificar se já existe um quiz para este usuário
+      const existingQuiz = await sql`
+        SELECT * FROM quiz_contextualizacao 
+        WHERE user_id = ${userId}
+      `;
+
+      if (existingQuiz.length > 0) {
+        return res.json({ quiz: existingQuiz[0] });
+      }
+
+      // Criar novo quiz
+      const newQuiz = await sql`
+        INSERT INTO quiz_contextualizacao (user_id, user_full_name)
+        VALUES (${userId}, ${userFullName})
+        RETURNING *
+      `;
+
+      res.json({ quiz: newQuiz[0] });
+
+    } catch (error) {
+      console.error('Erro ao inicializar quiz:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Salvar resposta de uma etapa específica
+  app.put("/api/quiz/save-step", async (req, res) => {
+    try {
+      const { userId, stepName, stepValue } = req.body;
+
+      if (!userId || !stepName || !stepValue) {
+        return res.status(400).json({ message: 'UserId, nome da etapa e valor são obrigatórios' });
+      }
+
+      // Mapeamento de etapas para colunas
+      const stepColumnMap: Record<string, string> = {
+        'gender': 'genero',
+        'frequency': 'frequencia', 
+        'age': 'idade',
+        'motivation': 'motivacao',
+        'triggers': 'gatilhos',
+        'religion': 'religiao'
+      };
+
+      const columnName = stepColumnMap[stepName];
+      if (!columnName) {
+        return res.status(400).json({ message: 'Nome da etapa inválido' });
+      }
+
+      // Atualizar a coluna específica
+      const updatedQuiz = await sql`
+        UPDATE quiz_contextualizacao 
+        SET ${sql(columnName)} = ${stepValue}, updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = ${userId}
+        RETURNING *
+      `;
+
+      if (updatedQuiz.length === 0) {
+        return res.status(404).json({ message: 'Quiz não encontrado para este usuário' });
+      }
+
+      res.json({ quiz: updatedQuiz[0], message: `${stepName} salvo com sucesso!` });
+
+    } catch (error) {
+      console.error('Erro ao salvar etapa do quiz:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Marcar quiz como completo
+  app.put("/api/quiz/complete", async (req, res) => {
+    try {
+      const { userId } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID é obrigatório' });
+      }
+
+      const completedQuiz = await sql`
+        UPDATE quiz_contextualizacao 
+        SET completed = true, updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = ${userId}
+        RETURNING *
+      `;
+
+      if (completedQuiz.length === 0) {
+        return res.status(404).json({ message: 'Quiz não encontrado para este usuário' });
+      }
+
+      res.json({ quiz: completedQuiz[0], message: 'Quiz completado com sucesso!' });
+
+    } catch (error) {
+      console.error('Erro ao completar quiz:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Obter dados do quiz do usuário
+  app.get("/api/quiz/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+
+      const quiz = await sql`
+        SELECT * FROM quiz_contextualizacao 
+        WHERE user_id = ${userId}
+      `;
+
+      if (quiz.length === 0) {
+        return res.status(404).json({ message: 'Quiz não encontrado para este usuário' });
+      }
+
+      res.json({ quiz: quiz[0] });
+
+    } catch (error) {
+      console.error('Erro ao buscar quiz:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
     }
   });
 
