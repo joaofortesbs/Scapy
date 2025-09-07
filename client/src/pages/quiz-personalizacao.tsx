@@ -185,19 +185,15 @@ function QuizEtapa2({ onNext }: { onNext: () => void }) {
   const [counter, setCounter] = useState(3773);
   const [subtitleCounter, setSubtitleCounter] = useState(317);
 
-  // Animação do contador crescente
+  // Animação sincronizada dos contadores
   useState(() => {
-    const interval = setInterval(() => {
+    const synchronizedInterval = setInterval(() => {
       setCounter(prev => prev + Math.floor(Math.random() * 3) + 1);
-    }, 2000);
-    
-    const subtitleInterval = setInterval(() => {
       setSubtitleCounter(prev => prev + Math.floor(Math.random() * 2) + 1);
-    }, 3000);
+    }, 2000);
 
     return () => {
-      clearInterval(interval);
-      clearInterval(subtitleInterval);
+      clearInterval(synchronizedInterval);
     };
   });
 
