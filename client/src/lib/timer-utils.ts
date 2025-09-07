@@ -14,15 +14,40 @@ export function formatTimer(totalSeconds: number): string {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-export function calculateTimeDifference(startTime: Date, currentTime: Date): {
+export function calculateTimeDifference(startTime: string | Date | null | undefined, currentTime: Date): {
   days: number;
   hours: number;
   minutes: number;
   seconds: number;
   totalSeconds: number;
 } {
-  const diffInMs = currentTime.getTime() - startTime.getTime();
-  const totalSeconds = Math.floor(diffInMs / 1000);
+  // Handle null/undefined cases
+  if (!startTime) {
+    return {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      totalSeconds: 0
+    };
+  }
+
+  // Convert string to Date if needed
+  const startDate = typeof startTime === 'string' ? new Date(startTime) : startTime;
+  
+  // Validate the date
+  if (isNaN(startDate.getTime())) {
+    return {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      totalSeconds: 0
+    };
+  }
+
+  const diffInMs = currentTime.getTime() - startDate.getTime();
+  const totalSeconds = Math.max(0, Math.floor(diffInMs / 1000));
 
   const days = Math.floor(totalSeconds / (24 * 3600));
   const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
