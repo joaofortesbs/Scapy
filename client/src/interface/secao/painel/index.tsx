@@ -47,15 +47,15 @@ const getCachedData = <T>(key: string): T | null => {
   try {
     const cached = localStorage.getItem(key);
     if (!cached) return null;
-
+    
     const parsed: CacheData<T> = JSON.parse(cached);
     const isExpired = Date.now() - parsed.timestamp > CACHE_DURATION;
-
+    
     if (isExpired) {
       localStorage.removeItem(key);
       return null;
     }
-
+    
     return parsed.data;
   } catch {
     return null;
@@ -151,7 +151,7 @@ function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
 
       // Cache the updated progress
       setCachedData(CACHE_KEYS.WEEKLY_PROGRESS, result);
-
+      
       return result;
     },
     onSuccess: () => {
@@ -211,7 +211,7 @@ function Timer({ user, onUserUpdate }: TimerProps) {
     return cachedUser || user;
   });
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
+  
   useEffect(() => {
     // Start timer interval only once
     if (!timerIntervalRef.current) {
@@ -241,9 +241,9 @@ function Timer({ user, onUserUpdate }: TimerProps) {
 
   const handleStartTimer = async () => {
     if (!user?.id) return;
-
+    
     setIsStarting(true);
-
+    
     try {
       const response = await fetch('/api/timer/start', {
         method: 'POST',
@@ -258,7 +258,7 @@ function Timer({ user, onUserUpdate }: TimerProps) {
       if (response.ok) {
         // Update local user state
         setLocalUser(data.user);
-
+        
         // Cache all related data
         setCachedData(CACHE_KEYS.USER_DATA, data.user);
         setCachedData(CACHE_KEYS.TIMER_STATUS, {
@@ -267,15 +267,15 @@ function Timer({ user, onUserUpdate }: TimerProps) {
           userId: user.id
         });
         setCachedData(CACHE_KEYS.JOURNEY_STATE, true);
-
+        
         // Update legacy localStorage for compatibility
         localStorage.setItem('user', JSON.stringify(data.user));
-
+        
         // Update parent component if callback provided
         if (onUserUpdate) {
           onUserUpdate(data.user);
         }
-
+        
         console.log('Cronômetro iniciado com sucesso!');
       } else {
         console.error('Erro ao iniciar cronômetro:', data.message);
@@ -456,12 +456,12 @@ export default function PainelInterface({
     const cachedJourneyState = getCachedData<boolean>(CACHE_KEYS.JOURNEY_STATE);
     return cachedJourneyState ?? false;
   });
-
+  
   const [localUser, setLocalUser] = useState(() => {
     const cachedUser = getCachedData<User>(CACHE_KEYS.USER_DATA);
     return cachedUser || user;
   });
-
+  
   const [isLoading, setIsLoading] = useState(true);
   const [timerStartDate, setTimerStartDate] = useState<string | null>(() => {
     const cachedTimerStatus = getCachedData<any>(CACHE_KEYS.TIMER_STATUS);
@@ -502,7 +502,7 @@ export default function PainelInterface({
 
         if (response.ok) {
           setHasStartedJourney(data.hasActiveTimer);
-
+          
           // Cache the timer status
           setCachedData(CACHE_KEYS.TIMER_STATUS, {
             hasActiveTimer: data.hasActiveTimer,
@@ -510,7 +510,7 @@ export default function PainelInterface({
             userId: user.id
           });
           setCachedData(CACHE_KEYS.JOURNEY_STATE, data.hasActiveTimer);
-
+          
           if (data.hasActiveTimer && data.startDate) {
             setTimerStartDate(data.startDate);
             // Update local user with timer start date
@@ -557,7 +557,7 @@ export default function PainelInterface({
     setLocalUser(updatedUser);
     setHasStartedJourney(true);
     setTimerStartDate(updatedUser.startDate);
-
+    
     // Update all related cache
     setCachedData(CACHE_KEYS.USER_DATA, updatedUser);
     setCachedData(CACHE_KEYS.JOURNEY_STATE, true);
