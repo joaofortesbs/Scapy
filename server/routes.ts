@@ -593,7 +593,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Resetar quiz
+  // Resetar quiz (permitir refazer)
+  app.put("/api/quiz/reset", async (req, res) => {
+    try {
+      const { userId } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID é obrigatório' });
+      }
+
+      // Resetar o quiz para permitir refazer
+      const resetQuiz = await sql`
+        UPDATE quiz_contextualizacao 
+        SET 
+          genero = null,
+          frequencia = null,
+          idade = null,
+          motivacao = null,
+          gatilhos = null,
+          religiao = null,
+          completed = false,
+          current_step = 1,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = ${userId.toString()}
+        RETURNING *
+      `;
+
+      if (resetQuiz.length === 0) {
+        return res.status(404).json({ message: 'Quiz não encontrado para este usuário' });
+      }
+
+      res.json({ message: 'Quiz resetado com sucesso', quiz: resetQuiz[0] });
+
+    } catch (error) {
+      console.error('Erro ao resetar quiz:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Deletar quiz completamente
   app.delete("/api/quiz/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
@@ -612,10 +650,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Quiz não encontrado' });
       }
 
-      res.json({ message: 'Quiz resetado com sucesso' });
+      res.json({ message: 'Quiz deletado com sucesso' });
 
     } catch (error) {
-      console.error('Erro ao resetar quiz:', error);
+      console.error('Erro ao deletar quiz:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   });
