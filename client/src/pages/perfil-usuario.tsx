@@ -392,7 +392,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
 
                   {/* Cards Internos */}
                   <div className="space-y-3">
-                    <Card className="border-border rounded-full" style={{ backgroundColor: 'rgba(0, 5, 21, 0.5)' }}>
+                    <Card className="border-border rounded-full" style={{ backgroundColor: 'transparent' }}>
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground font-medium">Maior sequência:</span>
@@ -403,7 +403,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       </CardContent>
                     </Card>
 
-                    <Card className="border-border rounded-full" style={{ backgroundColor: 'rgba(0, 5, 21, 0.5)' }}>
+                    <Card className="border-border rounded-full" style={{ backgroundColor: 'transparent' }}>
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground font-medium">Total de recaídas:</span>
@@ -414,7 +414,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       </CardContent>
                     </Card>
 
-                    <Card className="border-border rounded-full" style={{ backgroundColor: 'rgba(0, 5, 21, 0.5)' }}>
+                    <Card className="border-border rounded-full" style={{ backgroundColor: 'transparent' }}>
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground font-medium">Jornada iniciada em:</span>
@@ -428,7 +428,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       </CardContent>
                     </Card>
 
-                    <Card className="border-border rounded-full" style={{ backgroundColor: 'rgba(0, 5, 21, 0.5)' }}>
+                    <Card className="border-border rounded-full" style={{ backgroundColor: 'transparent' }}>
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground font-medium">Pontuação Scapy:</span>
