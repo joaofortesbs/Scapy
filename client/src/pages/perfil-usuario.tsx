@@ -443,167 +443,167 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
               </Card>
             </motion.div>
 
-            {/* Card Dados Quiz de Personalização - Estilo AI Assistant */}
+            {/* Card Dados Quiz de Personalização - Container Principal */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.3 }}
               className="mb-8"
             >
-              <Card className="border-border mb-3 rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
-                <CardContent className="p-3">
-                  <div className="flex items-center justify-center space-x-3">
-                    <BarChart3 className="w-6 h-6 text-primary" />
-                    <span className="text-base text-foreground font-medium">Dados Quiz de Personalização</span>
+              <Card className="border-border rounded-2xl ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                <CardContent className="p-4">
+                  {/* Header do Card */}
+                  <div className="flex items-center justify-center space-x-3 mb-4">
+                    <BarChart3 className="w-7 h-7 text-primary" />
+                    <span className="text-lg text-foreground font-semibold">Dados Quiz de Personalização</span>
                   </div>
+
+                  {quizData ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2, duration: 0.6 }}
+                      className="space-y-3"
+                    >
+                  {quizData.genero && (
+                      <Card
+                        className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: 'transparent' }}
+                        onClick={() => handleEditField('genero', quizData.genero)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center space-x-3">
+                            <Users className="w-4 h-4 text-primary flex-shrink-0" />
+                            <div className="flex items-center justify-between flex-1">
+                              <span className="text-sm text-muted-foreground font-medium">Gênero:</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-foreground font-medium">{quizData.genero}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {quizData.idade && (
+                      <Card
+                        className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: 'transparent' }}
+                        onClick={() => handleEditField('idade', quizData.idade)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center space-x-3">
+                            <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
+                            <div className="flex items-center justify-between flex-1">
+                              <span className="text-sm text-muted-foreground font-medium">Idade:</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-foreground font-medium">{quizData.idade}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {quizData.motivacao && (
+                      <Card
+                        className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: 'transparent' }}
+                        onClick={() => handleEditField('motivacao', quizData.motivacao)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center space-x-3">
+                            <Heart className="w-4 h-4 text-primary flex-shrink-0" />
+                            <div className="flex items-center justify-between flex-1">
+                              <span className="text-sm text-muted-foreground font-medium">Motivação:</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-foreground font-medium">{quizData.motivacao}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {quizData.frequencia && (
+                      <Card
+                        className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: 'transparent' }}
+                        onClick={() => handleEditField('frequencia', quizData.frequencia)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center space-x-3">
+                            <Clock className="w-4 h-4 text-primary flex-shrink-0" />
+                            <div className="flex items-center justify-between flex-1">
+                              <span className="text-sm text-muted-foreground font-medium">Frequência:</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-foreground font-medium">{quizData.frequencia}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {quizData.gatilhos && (
+                      <Card
+                        className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: 'transparent' }}
+                        onClick={() => handleEditField('gatilhos', quizData.gatilhos)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center space-x-3">
+                            <Zap className="w-4 h-4 text-primary flex-shrink-0" />
+                            <div className="flex items-center justify-between flex-1">
+                              <span className="text-sm text-muted-foreground font-medium">Gatilhos:</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-foreground font-medium">{quizData.gatilhos}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {quizData.religiao && (
+                      <Card
+                        className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: 'transparent' }}
+                        onClick={() => handleEditField('religiao', quizData.religiao)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center space-x-3">
+                            <Cross className="w-4 h-4 text-primary flex-shrink-0" />
+                            <div className="flex items-center justify-between flex-1">
+                              <span className="text-sm text-muted-foreground font-medium">Religião:</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-foreground font-medium">{quizData.religiao}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  ) : (
+                    <Card className="border-border rounded-full" style={{ backgroundColor: 'transparent' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-center space-x-3">
+                          <span className="text-sm text-muted-foreground font-medium">
+                            Nenhum dado de quiz encontrado
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </CardContent>
               </Card>
-
-              {quizData ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.6 }}
-                  className="space-y-2"
-                >
-                  {quizData.genero && (
-                    <Card
-                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: '#000515' }}
-                      onClick={() => handleEditField('genero', quizData.genero)}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex items-center space-x-3">
-                          <Users className="w-4 h-4 text-primary flex-shrink-0" />
-                          <div className="flex items-center justify-between flex-1">
-                            <span className="text-sm text-muted-foreground font-medium">Gênero:</span>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm text-foreground font-medium">{quizData.genero}</span>
-                              <Edit className="w-3 h-3 text-muted-foreground" />
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {quizData.idade && (
-                    <Card
-                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: '#000515' }}
-                      onClick={() => handleEditField('idade', quizData.idade)}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex items-center space-x-3">
-                          <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
-                          <div className="flex items-center justify-between flex-1">
-                            <span className="text-sm text-muted-foreground font-medium">Idade:</span>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm text-foreground font-medium">{quizData.idade}</span>
-                              <Edit className="w-3 h-3 text-muted-foreground" />
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {quizData.motivacao && (
-                    <Card
-                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: '#000515' }}
-                      onClick={() => handleEditField('motivacao', quizData.motivacao)}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex items-center space-x-3">
-                          <Heart className="w-4 h-4 text-primary flex-shrink-0" />
-                          <div className="flex items-center justify-between flex-1">
-                            <span className="text-sm text-muted-foreground font-medium">Motivação:</span>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm text-foreground font-medium">{quizData.motivacao}</span>
-                              <Edit className="w-3 h-3 text-muted-foreground" />
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {quizData.frequencia && (
-                    <Card
-                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: '#000515' }}
-                      onClick={() => handleEditField('frequencia', quizData.frequencia)}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex items-center space-x-3">
-                          <Clock className="w-4 h-4 text-primary flex-shrink-0" />
-                          <div className="flex items-center justify-between flex-1">
-                            <span className="text-sm text-muted-foreground font-medium">Frequência:</span>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm text-foreground font-medium">{quizData.frequencia}</span>
-                              <Edit className="w-3 h-3 text-muted-foreground" />
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {quizData.gatilhos && (
-                    <Card
-                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: '#000515' }}
-                      onClick={() => handleEditField('gatilhos', quizData.gatilhos)}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex items-center space-x-3">
-                          <Zap className="w-4 h-4 text-primary flex-shrink-0" />
-                          <div className="flex items-center justify-between flex-1">
-                            <span className="text-sm text-muted-foreground font-medium">Gatilhos:</span>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm text-foreground font-medium">{quizData.gatilhos}</span>
-                              <Edit className="w-3 h-3 text-muted-foreground" />
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {quizData.religiao && (
-                    <Card
-                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: '#000515' }}
-                      onClick={() => handleEditField('religiao', quizData.religiao)}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex items-center space-x-3">
-                          <Cross className="w-4 h-4 text-primary flex-shrink-0" />
-                          <div className="flex items-center justify-between flex-1">
-                            <span className="text-sm text-muted-foreground font-medium">Religião:</span>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm text-foreground font-medium">{quizData.religiao}</span>
-                              <Edit className="w-3 h-3 text-muted-foreground" />
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </motion.div>
-              ) : (
-                <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-center space-x-3">
-                      <span className="text-sm text-muted-foreground font-medium">
-                        Nenhum dado de quiz encontrado
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </motion.div>
+              </motion.div>
           </div>
         </main>
       </div>
