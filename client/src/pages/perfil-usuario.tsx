@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { User, Camera, Award, TrendingUp } from "lucide-react";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileUser {
   id: string;
@@ -17,24 +19,69 @@ interface UserProfileProps {
 }
 
 export default function PerfilUsuario({ user, onBack }: UserProfileProps) {
-  const [profileImage, setProfileImage] = useState<string | null>(user.profileImage || null);
+  const [profileImage, setProfileImage] = useState<string | null>(
+    user.profileImage ? `/objects/${user.profileImage.replace('/objects/', '')}` : null
+  );
   const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleGetUploadParameters = async () => {
+    try {
+      const response = await fetch('/api/objects/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to get upload URL');
+      }
+      
+      const data = await response.json();
+      return {
+        method: 'PUT' as const,
+        url: data.uploadURL,
+      };
+    } catch (error) {
+      console.error('Error getting upload parameters:', error);
+      throw error;
+    }
+  };
 
-    setIsUploading(true);
-    
-    // TODO: Implementar upload para object storage
-    console.log('Upload de imagem:', file);
-    
-    // Simular upload por enquanto
-    setTimeout(() => {
-      const imageUrl = URL.createObjectURL(file);
-      setProfileImage(imageUrl);
+  const handleUploadComplete = async (result: { uploadURL: string }) => {
+    try {
+      setIsUploading(true);
+      
+      // Update profile image in database
+      const response = await fetch('/api/profile-image', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          imageURL: result.uploadURL,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile image');
+      }
+
+      const data = await response.json();
+      setProfileImage(data.profileImage);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Foto de perfil atualizada com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error updating profile image:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar foto de perfil. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
       setIsUploading(false);
-    }, 1000);
+    }
   };
 
   const handleProgressCardClick = () => {
@@ -75,34 +122,32 @@ export default function PerfilUsuario({ user, onBack }: UserProfileProps) {
           >
             {/* Imagem de perfil */}
             <div className="relative inline-block mb-4">
-              <div
-                className="w-32 h-32 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-200 relative overflow-hidden"
-                data-testid="profile-image-container"
+              <ObjectUploader
+                onGetUploadParameters={handleGetUploadParameters}
+                onComplete={handleUploadComplete}
+                disabled={isUploading}
+                buttonClassName="block"
               >
-                {profileImage ? (
-                  <img
-                    src={profileImage}
-                    alt="Foto de perfil"
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                ) : (
-                  <User className="w-16 h-16 text-primary/60" />
-                )}
-                
-                {/* Overlay para upload */}
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-full">
-                  <Camera className="w-8 h-8 text-white" />
+                <div
+                  className="w-32 h-32 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-200 relative overflow-hidden"
+                  data-testid="profile-image-container"
+                >
+                  {profileImage ? (
+                    <img
+                      src={profileImage}
+                      alt="Foto de perfil"
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <User className="w-16 h-16 text-primary/60" />
+                  )}
+                  
+                  {/* Overlay para upload */}
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-full">
+                    <Camera className="w-8 h-8 text-white" />
+                  </div>
                 </div>
-                
-                {/* Input file invisível */}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                  data-testid="input-upload-profile-image"
-                />
-              </div>
+              </ObjectUploader>
               
               {isUploading && (
                 <div className="absolute inset-0 flex items-center justify-center">

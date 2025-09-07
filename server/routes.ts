@@ -5,6 +5,7 @@ import { insertWeeklyProgressSchema, insertUserGoalsSchema } from "@shared/schem
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import { neon } from '@neondatabase/serverless';
+import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -403,6 +404,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(goal);
     } catch (error) {
       res.status(400).json({ message: "Invalid data" });
+    }
+  });
+
+  // ========== OBJECT STORAGE ROUTES ==========
+
+  // Get upload URL for profile image
+  app.post("/api/objects/upload", async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Serve private objects
+  app.get("/objects/:objectPath(*)", async (req, res) => {
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const objectFile = await objectStorageService.getObjectEntityFile(
+        req.path,
+      );
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error serving object:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
+
+  // This endpoint is used to serve public assets.
+  app.get("/public-objects/:filePath(*)", async (req, res) => {
+    const filePath = req.params.filePath;
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const file = await objectStorageService.searchPublicObject(filePath);
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      objectStorageService.downloadObject(file, res);
+    } catch (error) {
+      console.error("Error searching for public object:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Update profile image after upload
+  app.put("/api/profile-image", async (req, res) => {
+    try {
+      const { userId, imageURL } = req.body;
+
+      if (!userId || !imageURL) {
+        return res.status(400).json({ error: "userId and imageURL are required" });
+      }
+
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = objectStorageService.normalizeObjectEntityPath(imageURL);
+
+      // Update user profile image in database
+      const { data: updatedUser, error } = await supabase
+        .from('auth_users')
+        .update({ profile_image: objectPath })
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error updating profile image:", error);
+        return res.status(500).json({ error: "Failed to update profile image" });
+      }
+
+      res.json({
+        message: "Profile image updated successfully",
+        profileImage: objectPath,
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          fullName: updatedUser.full_name,
+          profileImage: updatedUser.profile_image
+        }
+      });
+    } catch (error) {
+      console.error("Error updating profile image:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 
