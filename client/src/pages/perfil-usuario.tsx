@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react"; // Added useEffect import
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Camera, Eye, Trophy, RefreshCw, User, BarChart3, Clock, CheckCircle, Mountain } from "lucide-react";
+import { ArrowLeft, Camera, Eye, Trophy, RefreshCw, User, BarChart3, Clock, CheckCircle, Mountain, Users, Calendar, Heart, Zap, Cross } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import ParticlesBackground from "@/components/particles-background";
@@ -383,9 +383,12 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   {quizData.genero && (
                     <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
                       <CardContent className="p-3">
-                        <div className="flex items-center justify-between space-x-3">
-                          <span className="text-sm text-muted-foreground font-medium">Gênero:</span>
-                          <span className="text-sm text-foreground font-medium">{quizData.genero}</span>
+                        <div className="flex items-center space-x-3">
+                          <Users className="w-4 h-4 text-primary flex-shrink-0" />
+                          <div className="flex items-center justify-between flex-1">
+                            <span className="text-sm text-muted-foreground font-medium">Gênero:</span>
+                            <span className="text-sm text-foreground font-medium">{quizData.genero}</span>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -394,9 +397,12 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   {quizData.idade && (
                     <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
                       <CardContent className="p-3">
-                        <div className="flex items-center justify-between space-x-3">
-                          <span className="text-sm text-muted-foreground font-medium">Idade:</span>
-                          <span className="text-sm text-foreground font-medium">{quizData.idade}</span>
+                        <div className="flex items-center space-x-3">
+                          <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
+                          <div className="flex items-center justify-between flex-1">
+                            <span className="text-sm text-muted-foreground font-medium">Idade:</span>
+                            <span className="text-sm text-foreground font-medium">{quizData.idade}</span>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -405,9 +411,12 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   {quizData.motivacao && (
                     <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
                       <CardContent className="p-3">
-                        <div className="flex items-center justify-between space-x-3">
-                          <span className="text-sm text-muted-foreground font-medium">Motivação:</span>
-                          <span className="text-sm text-foreground font-medium">{quizData.motivacao}</span>
+                        <div className="flex items-center space-x-3">
+                          <Heart className="w-4 h-4 text-primary flex-shrink-0" />
+                          <div className="flex items-center justify-between flex-1">
+                            <span className="text-sm text-muted-foreground font-medium">Motivação:</span>
+                            <span className="text-sm text-foreground font-medium">{quizData.motivacao}</span>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -416,9 +425,12 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   {quizData.frequencia && (
                     <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
                       <CardContent className="p-3">
-                        <div className="flex items-center justify-between space-x-3">
-                          <span className="text-sm text-muted-foreground font-medium">Frequência:</span>
-                          <span className="text-sm text-foreground font-medium">{quizData.frequencia}</span>
+                        <div className="flex items-center space-x-3">
+                          <Clock className="w-4 h-4 text-primary flex-shrink-0" />
+                          <div className="flex items-center justify-between flex-1">
+                            <span className="text-sm text-muted-foreground font-medium">Frequência:</span>
+                            <span className="text-sm text-foreground font-medium">{quizData.frequencia}</span>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -427,9 +439,12 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   {quizData.gatilhos && (
                     <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
                       <CardContent className="p-3">
-                        <div className="flex items-center justify-between space-x-3">
-                          <span className="text-sm text-muted-foreground font-medium">Gatilhos:</span>
-                          <span className="text-sm text-foreground font-medium">{quizData.gatilhos}</span>
+                        <div className="flex items-center space-x-3">
+                          <Zap className="w-4 h-4 text-primary flex-shrink-0" />
+                          <div className="flex items-center justify-between flex-1">
+                            <span className="text-sm text-muted-foreground font-medium">Gatilhos:</span>
+                            <span className="text-sm text-foreground font-medium">{quizData.gatilhos}</span>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -438,9 +453,12 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   {quizData.religiao && (
                     <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
                       <CardContent className="p-3">
-                        <div className="flex items-center justify-between space-x-3">
-                          <span className="text-sm text-muted-foreground font-medium">Religião:</span>
-                          <span className="text-sm text-foreground font-medium">{quizData.religiao}</span>
+                        <div className="flex items-center space-x-3">
+                          <Cross className="w-4 h-4 text-primary flex-shrink-0" />
+                          <div className="flex items-center justify-between flex-1">
+                            <span className="text-sm text-muted-foreground font-medium">Religião:</span>
+                            <span className="text-sm text-foreground font-medium">{quizData.religiao}</span>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
