@@ -85,6 +85,7 @@ function AppRouter() {
             <Route path="/" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
             <Route path="/dashboard" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
             <Route path="/perfil-usuario" component={() => <PerfilUsuario user={user} onUserUpdate={(updatedUser) => { setUser(updatedUser); localStorage.setItem('user', JSON.stringify(updatedUser)); }} />} />
+            <Route path="/quiz-personalizacao" component={() => <QuizPersonalizacao user={user} onCompleteQuiz={handleCompleteQuiz} />} />
             <Route component={NotFound} />
           </Switch>
         </Router>
