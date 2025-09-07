@@ -13,7 +13,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
+import { 
+  formatTimer, 
+  calculateTimeDifference,
+  getActiveTimer,
+  startNewTimer,
+  calculateTimerElapsed,
+  Timer as TimerType
+} from "@/lib/timer-utils";
 import DesafioPlanoBeamEstar from "@/components/desafio-plano-bem-estar";
 import DesafioDuplaDinamica from "@/components/desafio-dupla-dinamica";
 import AnaliseEvolucaoMental from "@/components/analise-evolucao-mental";
@@ -128,12 +135,34 @@ function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
 
 // Timer Component
 interface TimerProps {
-  startDate: Date;
+  userId: string;
 }
 
-function Timer({ startDate }: TimerProps) {
+function Timer({ userId }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [activeTimer, setActiveTimer] = useState<TimerType | null>(null);
+  const [loading, setLoading] = useState(true);
 
+  // Função para carregar o timer ativo
+  const loadActiveTimer = async () => {
+    if (!userId) return;
+    
+    try {
+      const timer = await getActiveTimer(userId);
+      setActiveTimer(timer);
+    } catch (error) {
+      console.error('Erro ao carregar timer:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Carregar timer quando o componente montar
+  useEffect(() => {
+    loadActiveTimer();
+  }, [userId]);
+
+  // Atualizar tempo a cada segundo
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -142,7 +171,53 @@ function Timer({ startDate }: TimerProps) {
     return () => clearInterval(interval);
   }, []);
 
-  const timeDiff = calculateTimeDifference(startDate, currentTime);
+  // Função para iniciar novo timer
+  const handleStartTimer = async () => {
+    if (!userId) return;
+    
+    try {
+      setLoading(true);
+      const newTimer = await startNewTimer(userId);
+      if (newTimer) {
+        setActiveTimer(newTimer);
+      }
+    } catch (error) {
+      console.error('Erro ao iniciar timer:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground mb-3">
+          Carregando cronômetro...
+        </p>
+        <div className="timer-display">
+          00:00:00
+        </div>
+      </div>
+    );
+  }
+
+  if (!activeTimer) {
+    return (
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground mb-3">
+          Pronto para começar sua jornada?
+        </p>
+        <button
+          onClick={handleStartTimer}
+          className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          Iniciar Cronômetro
+        </button>
+      </div>
+    );
+  }
+
+  const timeDiff = calculateTimerElapsed(activeTimer);
 
   return (
     <div className="text-center">
@@ -162,6 +237,10 @@ function Timer({ startDate }: TimerProps) {
           </div>
         </div>
       )}
+
+      <div className="mt-2 text-xs text-muted-foreground">
+        Iniciado em: {new Date(activeTimer.started_at).toLocaleString('pt-BR')}
+      </div>
     </div>
   );
 }
@@ -273,18 +352,12 @@ export default function PainelInterface({
     return localStorage.getItem('hasStartedJourney') === 'true';
   });
 
-  // Timer start date state
-  const [timerStartDate, setTimerStartDate] = useState<Date>(() => {
-    const savedStartDate = localStorage.getItem('timerStartDate');
-    return savedStartDate ? new Date(savedStartDate) : new Date();
-  });
-
-  const handleStartJourney = () => {
-    const currentDate = new Date();
+  const handleStartJourney = async () => {
     setHasStartedJourney(true);
-    setTimerStartDate(currentDate);
     localStorage.setItem('hasStartedJourney', 'true');
-    localStorage.setItem('timerStartDate', currentDate.toISOString());
+    
+    // O timer será iniciado automaticamente pelo componente Timer
+    // quando ele detectar que o usuário começou a jornada
   };
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
@@ -316,7 +389,7 @@ export default function PainelInterface({
                   </div>
 
                   {/* Conditionally show Timer */}
-                  <Timer startDate={timerStartDate} />
+                  <Timer userId={user?.id || 'anonymous'} />
                 </>
               )}
             </section>

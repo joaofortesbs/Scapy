@@ -63,6 +63,35 @@ export type Database = {
           last_login?: string | null
         }
       }
+      timers: {
+        Row: {
+          id: number
+          user_id: string
+          started_at: string
+          ended_at: string | null
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          user_id: string
+          started_at: string
+          ended_at?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          user_id?: string
+          started_at?: string
+          ended_at?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
