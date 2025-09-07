@@ -250,10 +250,6 @@ function Timer({ user, onUserUpdate }: TimerProps) {
           </div>
         </div>
       )}
-      
-      <div className="mt-2 text-xs text-muted-foreground">
-        Iniciado em: {new Date(startDate).toLocaleString('pt-BR')}
-      </div>
     </div>
   );
 }
