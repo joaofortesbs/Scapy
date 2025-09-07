@@ -131,10 +131,10 @@ function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
 
 // Timer Component
 interface TimerProps {
-  userId: string;
+  user: User | undefined;
 }
 
-function Timer({ userId }: TimerProps) {
+function Timer({ user }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   
   useEffect(() => {
@@ -145,10 +145,22 @@ function Timer({ userId }: TimerProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // For demo purposes, we'll use a fixed start date
-  // In a real app, this would come from the user's data
-  const startDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
-  const timeDiff = calculateTimeDifference(startDate, currentTime);
+  // Check if user and startDate are available
+  if (!user || !user.startDate) {
+    return (
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground mb-3">
+          Dados do usuário não disponíveis
+        </p>
+        <div className="timer-display">
+          00:00:00
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate progressive time from user's actual start date
+  const timeDiff = calculateTimeDifference(user.startDate, currentTime);
 
   return (
     <div className="text-center">
@@ -316,7 +328,7 @@ export default function PainelInterface({
                   </div>
 
                   {/* Conditionally show Timer */}
-                  <Timer userId={user?.id || 'anonymous'} />
+                  <Timer user={user} />
                 </>
               )}
             </section>
