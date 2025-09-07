@@ -19,7 +19,7 @@ export default function Timer({ user }: TimerProps) {
   }, []);
 
   // Safety check for user data
-  if (!user || !user.lastRelapse) {
+  if (!user || !user.startDate) {
     return (
       <Card className="p-6 text-center">
         <CardContent>
@@ -29,7 +29,7 @@ export default function Timer({ user }: TimerProps) {
     );
   }
 
-  const timeDiff = calculateTimeDifference(user.lastRelapse, currentTime);
+  const timeDiff = calculateTimeDifference(user.startDate, currentTime);
   const formattedTime = formatTimer(timeDiff);
 
   return (
