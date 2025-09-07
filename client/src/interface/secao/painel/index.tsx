@@ -8,6 +8,7 @@ import {
   Target,
   Plus
 } from "lucide-react";
+import { useLocation } from "wouter";
 import { ScapyIcon } from "@/components/ui/scapy-icon";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,17 @@ import ParticlesBackground from "@/components/particles-background";
 import type { User, WeeklyProgress } from "@shared/schema";
 
 // Header Component
-function Header() {
+interface HeaderInternalProps {
+  user?: User;
+}
+
+function Header({ user }: HeaderInternalProps) {
+  const [, setLocation] = useLocation();
+
+  const handleProfileClick = () => {
+    setLocation('/perfil-usuario');
+  };
+
   return (
     <header className="p-4 flex items-center justify-between">
       <div className="w-34 h-34">
@@ -49,16 +60,20 @@ function Header() {
           </div>
         </div>
 
-        <div className="gradient-border w-12 h-12" data-testid="profile-container">
+        <button 
+          onClick={handleProfileClick}
+          className="gradient-border w-12 h-12 hover:scale-105 transition-transform cursor-pointer" 
+          data-testid="profile-container"
+        >
           <div className="gradient-border-inner flex items-center justify-center">
             <img
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=user&backgroundColor=000515"
+              src={user?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'user'}&backgroundColor=000515`}
               alt="Profile Picture"
               className="w-10 h-10 rounded-full object-cover"
               data-testid="profile-image"
             />
           </div>
-        </div>
+        </button>
       </div>
     </header>
   );
@@ -410,7 +425,7 @@ export default function PainelInterface({
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
       <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
       <div className="relative z-10">
-        <Header />
+        <Header user={user} />
 
         <main className="flex-1 px-4 pb-48">
           <div className="space-y-6">
