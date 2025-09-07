@@ -27,11 +27,19 @@ function AppRouter() {
   }, []);
 
   const handleLoginSuccess = (userData: any, isNewUser = false) => {
-    setIsAuthenticated(true);
-    setUser(userData);
-    setShowQuiz(isNewUser); // Mostrar quiz apenas para novos usuários
-    localStorage.setItem('isAuthenticated', 'true');
-    localStorage.setItem('user', JSON.stringify(userData));
+    try {
+      setIsAuthenticated(true);
+      setUser(userData);
+      setShowQuiz(isNewUser); // Mostrar quiz apenas para novos usuários
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('user', JSON.stringify(userData));
+    } catch (error) {
+      console.error('Erro durante login success:', error);
+      // Fallback: forçar reload da página
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
   };
 
   const handleCompleteQuiz = () => {
@@ -66,7 +74,22 @@ function AppRouter() {
 
   // Se estiver autenticado mas precisa fazer o quiz
   if (showQuiz) {
-    return <QuizPersonalizacao user={user} onCompleteQuiz={handleCompleteQuiz} />;
+    try {
+      return <QuizPersonalizacao user={user} onCompleteQuiz={handleCompleteQuiz} />;
+    } catch (error) {
+      console.error('Erro ao renderizar quiz:', error);
+      // Fallback: ir direto para o dashboard
+      return (
+        <Router>
+          <Switch>
+            <Route path="/" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
+            <Route path="/dashboard" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
+            <Route path="/perfil-usuario" component={() => <PerfilUsuario user={user} onUserUpdate={(updatedUser) => { setUser(updatedUser); localStorage.setItem('user', JSON.stringify(updatedUser)); }} />} />
+            <Route component={NotFound} />
+          </Switch>
+        </Router>
+      );
+    }
   }
 
   // Se estiver autenticado, mostrar aplicação principal
