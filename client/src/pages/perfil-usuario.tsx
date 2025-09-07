@@ -13,6 +13,10 @@ interface PerfilUsuarioProps {
     username: string;
     full_name?: string; // Adjusted to match potential Supabase naming
     profileImage?: string;
+    bestStreak?: number;
+    relapseCount?: number;
+    startDate?: string;
+    scapyPoints?: number;
   };
   onUserUpdate?: (updatedUser: any) => void;
 }
@@ -371,47 +375,70 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
               </motion.div>
             )}
 
-            {/* Card de Recordes e Scapys */}
+            {/* Card de Recordes e Scapys - Estilo AI Assistant */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.3 }}
+              className="mb-8"
             >
-              <Card className="rounded-3xl border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
-                      <Trophy className="w-6 h-6 text-primary" />
-                    </div>
-                  </div>
-
-                  <h3 className="text-xl font-bold text-center text-foreground mb-4">
-                    Recordes e Scapys
-                  </h3>
-
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
-                      <span className="text-sm font-medium text-muted-foreground">Maior sequência</span>
-                      <span className="text-lg font-bold text-primary">0 dias</span>
-                    </div>
-
-                    <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
-                      <span className="text-sm font-medium text-muted-foreground">Total de recaídas</span>
-                      <span className="text-lg font-bold text-primary">0</span>
-                    </div>
-
-                    <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
-                      <span className="text-sm font-medium text-muted-foreground">Jornada iniciada em</span>
-                      <span className="text-lg font-bold text-primary">--/--/----</span>
-                    </div>
-
-                    <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
-                      <span className="text-sm font-medium text-muted-foreground">Pontuação Scapy</span>
-                      <span className="text-lg font-bold text-primary">0 pts</span>
-                    </div>
+              <Card className="border-border mb-3 rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-center space-x-3">
+                    <Trophy className="w-6 h-6 text-primary" />
+                    <span className="text-base text-foreground font-medium">Recordes e Scapys</span>
                   </div>
                 </CardContent>
               </Card>
+
+              <div className="space-y-3">
+                <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground font-medium">Maior sequência:</span>
+                      <span className="text-sm text-foreground font-medium">
+                        {user?.bestStreak || 0} dias
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground font-medium">Total de recaídas:</span>
+                      <span className="text-sm text-foreground font-medium">
+                        {user?.relapseCount || 0}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground font-medium">Jornada iniciada em:</span>
+                      <span className="text-sm text-foreground font-medium">
+                        {user?.startDate
+                          ? new Date(user.startDate).toLocaleDateString('pt-BR')
+                          : '--/--/----'
+                        }
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground font-medium">Pontuação Scapy:</span>
+                      <span className="text-sm text-foreground font-medium">
+                        {user?.scapyPoints || 0} pts
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </motion.div>
 
             {/* Card Dados Quiz de Personalização - Estilo AI Assistant */}
@@ -438,8 +465,8 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   className="space-y-2"
                 >
                   {quizData.genero && (
-                    <Card 
-                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity" 
+                    <Card
+                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity"
                       style={{ backgroundColor: '#000515' }}
                       onClick={() => handleEditField('genero', quizData.genero)}
                     >
@@ -459,8 +486,8 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   )}
 
                   {quizData.idade && (
-                    <Card 
-                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity" 
+                    <Card
+                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity"
                       style={{ backgroundColor: '#000515' }}
                       onClick={() => handleEditField('idade', quizData.idade)}
                     >
@@ -480,8 +507,8 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   )}
 
                   {quizData.motivacao && (
-                    <Card 
-                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity" 
+                    <Card
+                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity"
                       style={{ backgroundColor: '#000515' }}
                       onClick={() => handleEditField('motivacao', quizData.motivacao)}
                     >
@@ -501,8 +528,8 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   )}
 
                   {quizData.frequencia && (
-                    <Card 
-                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity" 
+                    <Card
+                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity"
                       style={{ backgroundColor: '#000515' }}
                       onClick={() => handleEditField('frequencia', quizData.frequencia)}
                     >
@@ -522,8 +549,8 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   )}
 
                   {quizData.gatilhos && (
-                    <Card 
-                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity" 
+                    <Card
+                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity"
                       style={{ backgroundColor: '#000515' }}
                       onClick={() => handleEditField('gatilhos', quizData.gatilhos)}
                     >
@@ -543,8 +570,8 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   )}
 
                   {quizData.religiao && (
-                    <Card 
-                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity" 
+                    <Card
+                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity"
                       style={{ backgroundColor: '#000515' }}
                       onClick={() => handleEditField('religiao', quizData.religiao)}
                     >
@@ -595,7 +622,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
           >
             <div className="text-center mb-4">
               <h3 className="text-lg font-bold text-foreground mb-2">
-                Editar {editingField === 'genero' ? 'Gênero' : 
+                Editar {editingField === 'genero' ? 'Gênero' :
                         editingField === 'idade' ? 'Idade' :
                         editingField === 'motivacao' ? 'Motivação' :
                         editingField === 'frequencia' ? 'Frequência' :
