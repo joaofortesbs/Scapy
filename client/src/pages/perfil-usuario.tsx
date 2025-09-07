@@ -85,9 +85,25 @@ export default function PerfilUsuario({ user, onBack }: UserProfileProps) {
   };
 
   const handleProgressCardClick = () => {
-    // Mesmo efeito do card de Assistente IA
-    console.log('Visualizar Card de Progresso clicado');
-    // TODO: Implementar modal ou expansão do card
+    // Scroll suave para o card de recordes ou expandir informações
+    const recordsCard = document.querySelector('[data-testid="card-recordes-scapys"]');
+    if (recordsCard) {
+      recordsCard.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+      
+      // Adicionar efeito de highlight temporário
+      recordsCard.classList.add('animate-pulse');
+      setTimeout(() => {
+        recordsCard.classList.remove('animate-pulse');
+      }, 2000);
+    }
+    
+    toast({
+      title: "Card de Progresso",
+      description: "Visualizando seus recordes e estatísticas abaixo!",
+    });
   };
 
   return (
@@ -192,6 +208,7 @@ export default function PerfilUsuario({ user, onBack }: UserProfileProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.3 }}
             className="bg-card border border-border/20 rounded-2xl p-6 shadow-lg"
+            data-testid="card-recordes-scapys"
           >
             <div className="flex items-center space-x-3 mb-4">
               <Award className="w-6 h-6 text-primary" />
