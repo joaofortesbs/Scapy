@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -22,19 +22,100 @@ export default function QuizPersonalizacao({ user, onCompleteQuiz }: QuizPersona
     religion: ''
   });
   const [, setLocation] = useLocation();
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Inicializar quiz no carregamento
+  useEffect(() => {
+    if (user && !isInitialized) {
+      initializeQuiz();
+    }
+  }, [user, isInitialized]);
+
+  const initializeQuiz = async () => {
+    try {
+      const response = await fetch('/api/quiz/initialize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          userFullName: user.fullName || user.full_name || 'Usuário'
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Se o quiz já existe, carregar os dados salvos
+        if (data.quiz) {
+          setQuizData({
+            gender: data.quiz.genero || '',
+            frequency: data.quiz.frequencia || '',
+            motivation: data.quiz.motivacao || '',
+            triggers: data.quiz.gatilhos || '',
+            religion: data.quiz.religiao || ''
+          });
+        }
+        setIsInitialized(true);
+      }
+    } catch (error) {
+      console.error('Erro ao inicializar quiz:', error);
+      setIsInitialized(true); // Continuar mesmo com erro
+    }
+  };
+
+  const saveQuizStep = async (stepName: string, stepValue: string) => {
+    try {
+      await fetch('/api/quiz/save-step', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          stepName,
+          stepValue
+        }),
+      });
+    } catch (error) {
+      console.error('Erro ao salvar etapa do quiz:', error);
+    }
+  };
+
+  const completeQuiz = async () => {
+    try {
+      await fetch('/api/quiz/complete', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id
+        }),
+      });
+    } catch (error) {
+      console.error('Erro ao completar quiz:', error);
+    }
+  };
 
   const handleNextStep = () => {
     if (currentStep < 7) {
       setCurrentStep(currentStep + 1);
     } else {
       // Completar quiz e redirecionar para o painel principal
+      completeQuiz();
       onCompleteQuiz();
       setLocation('/dashboard');
     }
   };
 
-  const handleOptionSelect = (field: keyof typeof quizData, value: string) => {
+  const handleOptionSelect = async (field: keyof typeof quizData, value: string) => {
     setQuizData(prev => ({ ...prev, [field]: value }));
+    
+    // Salvar no banco de dados em tempo real
+    if (isInitialized) {
+      await saveQuizStep(field, value);
+    }
   };
 
   const getProgressPercentage = () => {
