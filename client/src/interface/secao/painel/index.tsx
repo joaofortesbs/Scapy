@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   Bot,
   BookOpen,
@@ -26,53 +26,6 @@ import { DailyGoals } from "@/components/daily-goals";
 import AIAssistant from "@/components/ai-assistant";
 import ParticlesBackground from "@/components/particles-background";
 import type { User, WeeklyProgress } from "@shared/schema";
-
-// Cache management utilities
-const CACHE_KEYS = {
-  USER_DATA: 'scapy_user_data',
-  WEEKLY_PROGRESS: 'scapy_weekly_progress',
-  TIMER_STATUS: 'scapy_timer_status',
-  JOURNEY_STATE: 'scapy_journey_state',
-  LAST_UPDATE: 'scapy_last_update'
-};
-
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-interface CacheData<T> {
-  data: T;
-  timestamp: number;
-}
-
-const getCachedData = <T>(key: string): T | null => {
-  try {
-    const cached = localStorage.getItem(key);
-    if (!cached) return null;
-    
-    const parsed: CacheData<T> = JSON.parse(cached);
-    const isExpired = Date.now() - parsed.timestamp > CACHE_DURATION;
-    
-    if (isExpired) {
-      localStorage.removeItem(key);
-      return null;
-    }
-    
-    return parsed.data;
-  } catch {
-    return null;
-  }
-};
-
-const setCachedData = <T>(key: string, data: T): void => {
-  try {
-    const cacheData: CacheData<T> = {
-      data,
-      timestamp: Date.now()
-    };
-    localStorage.setItem(key, JSON.stringify(cacheData));
-  } catch (error) {
-    console.warn('Failed to cache data:', error);
-  }
-};
 
 // Header Component
 interface HeaderInternalProps {
@@ -142,17 +95,12 @@ function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
       startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
       startOfWeek.setHours(0, 0, 0, 0);
 
-      const result = await apiRequest("POST", "/api/weekly-progress", {
+      return apiRequest("POST", "/api/weekly-progress", {
         weekStart: startOfWeek.toISOString(),
         dayCompleted: updatedDays,
         currentStreak: weeklyProgress?.currentStreak || 0,
         bestStreak: weeklyProgress?.bestStreak || 0,
       });
-
-      // Cache the updated progress
-      setCachedData(CACHE_KEYS.WEEKLY_PROGRESS, result);
-      
-      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/weekly-progress"] });
@@ -205,38 +153,19 @@ interface TimerProps {
 function Timer({ user, onUserUpdate }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isStarting, setIsStarting] = useState(false);
-  const [localUser, setLocalUser] = useState(() => {
-    // Try to get cached user data first
-    const cachedUser = getCachedData<User>(CACHE_KEYS.USER_DATA);
-    return cachedUser || user;
-  });
-  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [localUser, setLocalUser] = useState(user);
   
   useEffect(() => {
-    // Start timer interval only once
-    if (!timerIntervalRef.current) {
-      timerIntervalRef.current = setInterval(() => {
-        setCurrentTime(new Date());
-      }, 1000);
-    }
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
 
-    return () => {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-        timerIntervalRef.current = null;
-      }
-    };
+    return () => clearInterval(interval);
   }, []);
 
-  // Update local user when prop changes, but prioritize cached data
+  // Update local user when prop changes
   useEffect(() => {
-    const cachedUser = getCachedData<User>(CACHE_KEYS.USER_DATA);
-    if (cachedUser) {
-      setLocalUser(cachedUser);
-    } else if (user) {
-      setLocalUser(user);
-      setCachedData(CACHE_KEYS.USER_DATA, user);
-    }
+    setLocalUser(user);
   }, [user]);
 
   const handleStartTimer = async () => {
@@ -259,16 +188,7 @@ function Timer({ user, onUserUpdate }: TimerProps) {
         // Update local user state
         setLocalUser(data.user);
         
-        // Cache all related data
-        setCachedData(CACHE_KEYS.USER_DATA, data.user);
-        setCachedData(CACHE_KEYS.TIMER_STATUS, {
-          hasActiveTimer: true,
-          startDate: data.user.startDate,
-          userId: user.id
-        });
-        setCachedData(CACHE_KEYS.JOURNEY_STATE, true);
-        
-        // Update legacy localStorage for compatibility
+        // Update localStorage for user data only
         localStorage.setItem('user', JSON.stringify(data.user));
         
         // Update parent component if callback provided
@@ -348,8 +268,6 @@ function Timer({ user, onUserUpdate }: TimerProps) {
     </div>
   );
 }
-
-
 
 // Panic Button Component
 function PanicButton() {
@@ -451,29 +369,13 @@ export default function PainelInterface({
   activeSection,
   onSectionChange
 }: PainelInterfaceProps) {
-  // Initialize states with cached data
-  const [hasStartedJourney, setHasStartedJourney] = useState(() => {
-    const cachedJourneyState = getCachedData<boolean>(CACHE_KEYS.JOURNEY_STATE);
-    return cachedJourneyState ?? false;
-  });
-  
-  const [localUser, setLocalUser] = useState(() => {
-    const cachedUser = getCachedData<User>(CACHE_KEYS.USER_DATA);
-    return cachedUser || user;
-  });
-  
+  // Journey state - check if user has started their journey from database
+  const [hasStartedJourney, setHasStartedJourney] = useState(false);
+  const [localUser, setLocalUser] = useState(user);
   const [isLoading, setIsLoading] = useState(true);
-  const [timerStartDate, setTimerStartDate] = useState<string | null>(() => {
-    const cachedTimerStatus = getCachedData<any>(CACHE_KEYS.TIMER_STATUS);
-    return cachedTimerStatus?.startDate || null;
-  });
+  const [timerStartDate, setTimerStartDate] = useState<string | null>(null);
 
-  const [cachedWeeklyProgress, setCachedWeeklyProgress] = useState(() => {
-    const cached = getCachedData<WeeklyProgress>(CACHE_KEYS.WEEKLY_PROGRESS);
-    return cached || weeklyProgress;
-  });
-
-  // Check timer status with caching
+  // Check timer status from database when user loads
   useEffect(() => {
     const checkTimerStatus = async () => {
       if (!user?.id) {
@@ -481,42 +383,16 @@ export default function PainelInterface({
         return;
       }
 
-      // Check cache first
-      const cachedTimerStatus = getCachedData<any>(CACHE_KEYS.TIMER_STATUS);
-      const cachedUser = getCachedData<User>(CACHE_KEYS.USER_DATA);
-      const cachedJourneyState = getCachedData<boolean>(CACHE_KEYS.JOURNEY_STATE);
-
-      if (cachedTimerStatus && cachedUser && cachedJourneyState !== null) {
-        // Use cached data
-        setHasStartedJourney(cachedJourneyState);
-        setLocalUser(cachedUser);
-        setTimerStartDate(cachedTimerStatus.startDate);
-        setIsLoading(false);
-        return;
-      }
-
-      // Fetch from server only if cache is empty or expired
       try {
         const response = await fetch(`/api/timer/status/${user.id}`);
         const data = await response.json();
 
         if (response.ok) {
           setHasStartedJourney(data.hasActiveTimer);
-          
-          // Cache the timer status
-          setCachedData(CACHE_KEYS.TIMER_STATUS, {
-            hasActiveTimer: data.hasActiveTimer,
-            startDate: data.startDate,
-            userId: user.id
-          });
-          setCachedData(CACHE_KEYS.JOURNEY_STATE, data.hasActiveTimer);
-          
           if (data.hasActiveTimer && data.startDate) {
             setTimerStartDate(data.startDate);
             // Update local user with timer start date
-            const updatedUser = { ...user, startDate: data.startDate };
-            setLocalUser(updatedUser);
-            setCachedData(CACHE_KEYS.USER_DATA, updatedUser);
+            setLocalUser(prev => prev ? { ...prev, startDate: data.startDate } : prev);
           }
         }
       } catch (error) {
@@ -529,44 +405,21 @@ export default function PainelInterface({
     checkTimerStatus();
   }, [user?.id]);
 
-  // Cache weekly progress when it changes
+  // Update local user when prop changes
   useEffect(() => {
-    if (weeklyProgress) {
-      setCachedWeeklyProgress(weeklyProgress);
-      setCachedData(CACHE_KEYS.WEEKLY_PROGRESS, weeklyProgress);
-    }
-  }, [weeklyProgress]);
-
-  // Update local user when prop changes, but prioritize cache
-  useEffect(() => {
-    const cachedUser = getCachedData<User>(CACHE_KEYS.USER_DATA);
-    if (cachedUser) {
-      setLocalUser(cachedUser);
-    } else if (user) {
-      setLocalUser(user);
-      setCachedData(CACHE_KEYS.USER_DATA, user);
-    }
+    setLocalUser(user);
   }, [user]);
 
   const handleStartJourney = async () => {
     setHasStartedJourney(true);
-    setCachedData(CACHE_KEYS.JOURNEY_STATE, true);
   };
 
   const handleUserUpdate = (updatedUser: any) => {
     setLocalUser(updatedUser);
     setHasStartedJourney(true);
     setTimerStartDate(updatedUser.startDate);
-    
-    // Update all related cache
-    setCachedData(CACHE_KEYS.USER_DATA, updatedUser);
-    setCachedData(CACHE_KEYS.JOURNEY_STATE, true);
-    setCachedData(CACHE_KEYS.TIMER_STATUS, {
-      hasActiveTimer: true,
-      startDate: updatedUser.startDate,
-      userId: updatedUser.id
-    });
   };
+
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
       <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
@@ -576,7 +429,7 @@ export default function PainelInterface({
         <main className="flex-1 px-4 pb-48">
           <div className="space-y-6">
             {/* Conditionally show WeeklyTracker */}
-            {hasStartedJourney && <WeeklyTracker weeklyProgress={cachedWeeklyProgress} />}
+            {hasStartedJourney && <WeeklyTracker weeklyProgress={weeklyProgress} />}
 
             <section className="text-center">
               {isLoading ? (
