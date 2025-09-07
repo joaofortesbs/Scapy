@@ -499,23 +499,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'User ID, nome da etapa e valor são obrigatórios' });
       }
 
-      // Atualizar a etapa específica usando template literal
-      const updatedQuiz = await sql`
+      console.log('Save-step chamado:', { userId, stepName, stepValue, currentStep });
+
+      // Mapeamento correto de etapas para colunas
+      const stepColumnMap: Record<string, string> = {
+        'gender': 'genero',
+        'frequency': 'frequencia', 
+        'age': 'idade',
+        'motivation': 'motivacao',
+        'triggers': 'gatilhos',
+        'religion': 'religiao'
+      };
+
+      const columnName = stepColumnMap[stepName] || stepName;
+
+      // Usar query SQL direta para atualizar
+      const updateQuery = `
         UPDATE quiz_contextualizacao 
-        SET ${sql(stepName)} = ${stepValue}, current_step = ${currentStep || 1}, updated_at = NOW()
-        WHERE user_id = ${userId}
+        SET ${columnName} = $1, current_step = $2, updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $3
         RETURNING *
       `;
+
+      const updatedQuiz = await sql(updateQuery, [stepValue, currentStep || 1, userId]);
+
+      console.log('Quiz atualizado via save-step:', updatedQuiz);
 
       if (updatedQuiz.length === 0) {
         return res.status(404).json({ message: 'Quiz não encontrado' });
       }
 
-      res.json({ quiz: updatedQuiz[0] });
+      res.json({ quiz: updatedQuiz[0], message: 'Etapa salva com sucesso!' });
 
     } catch (error) {
       console.error('Erro ao salvar etapa do quiz:', error);
-      res.status(500).json({ message: 'Erro interno do servidor' });
+      res.status(500).json({ message: 'Erro interno do servidor', error: error.message });
     }
   });
 
@@ -609,7 +627,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'User ID, nome da etapa e valor são obrigatórios' });
       }
 
-      // Mapeamento de etapas para colunas
+      console.log('Salvando etapa:', { userId, stepName, stepValue });
+
+      // Mapeamento correto de etapas para colunas
       const stepColumnMap: Record<string, string> = {
         'gender': 'genero',
         'frequency': 'frequencia', 
@@ -621,16 +641,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const columnName = stepColumnMap[stepName];
       if (!columnName) {
-        return res.status(400).json({ message: 'Nome da etapa inválido' });
+        return res.status(400).json({ message: `Nome da etapa inválido: ${stepName}` });
       }
 
-      // Atualizar a coluna específica
-      const updatedQuiz = await sql`
+      // Usar query SQL direta para atualizar
+      const updateQuery = `
         UPDATE quiz_contextualizacao 
-        SET ${sql(columnName)} = ${stepValue}, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = ${userId}
+        SET ${columnName} = $1, updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $2
         RETURNING *
       `;
+
+      const updatedQuiz = await sql(updateQuery, [stepValue, userId]);
+
+      console.log('Quiz atualizado:', updatedQuiz);
 
       if (updatedQuiz.length === 0) {
         return res.status(404).json({ message: 'Quiz não encontrado para este usuário' });
@@ -640,7 +664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('Erro ao salvar etapa do quiz:', error);
-      res.status(500).json({ message: 'Erro interno do servidor' });
+      res.status(500).json({ message: 'Erro interno do servidor', error: error.message });
     }
   });
 
@@ -653,12 +677,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'User ID é obrigatório' });
       }
 
+      console.log('Completando quiz para usuário:', userId);
+
       const completedQuiz = await sql`
         UPDATE quiz_contextualizacao 
-        SET completed = true, updated_at = CURRENT_TIMESTAMP
+        SET completed = true, current_step = 8, updated_at = CURRENT_TIMESTAMP
         WHERE user_id = ${userId}
         RETURNING *
       `;
+
+      console.log('Quiz completado:', completedQuiz);
 
       if (completedQuiz.length === 0) {
         return res.status(404).json({ message: 'Quiz não encontrado para este usuário' });
@@ -668,7 +696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('Erro ao completar quiz:', error);
-      res.status(500).json({ message: 'Erro interno do servidor' });
+      res.status(500).json({ message: 'Erro interno do servidor', error: error.message });
     }
   });
 
