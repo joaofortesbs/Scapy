@@ -10,7 +10,7 @@ import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import ParticlesBackground from '@/components/particles-background';
 
 interface AuthPageProps {
-  onLoginSuccess: (user: any) => void;
+  onLoginSuccess: (user: any, isNewUser?: boolean) => void;
 }
 
 export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
@@ -126,21 +126,17 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage('Conta criada com sucesso! Faça login para continuar.');
+        setMessage('Conta criada com sucesso! Redirecionando...');
         setMessageType('success');
         
-        // Limpar formulário e voltar para login
-        setRegisterData({
-          email: '',
-          password: '',
-          confirmPassword: '',
-          fullName: ''
-        });
+        // Salvar dados do usuário no localStorage
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('authToken', 'authenticated');
         
+        // Redirecionar para o quiz de personalização (novo usuário)
         setTimeout(() => {
-          setIsLogin(true);
-          setMessage('');
-        }, 2000);
+          onLoginSuccess(data.user, true); // true indica que é um novo usuário
+        }, 1500);
       } else {
         setMessage(data.message || 'Erro ao criar conta');
         setMessageType('error');
