@@ -1,0 +1,17 @@
+Agora precisamos adicionar uma nova página dentro da plataforma, com um arquivo exclusivo para essa nova página, que vai cuidar da interfaca dessa nova página, contendo todos os componentes de dentro dessa nova interface!!!!!!!
+
+- Essa nova página vai ser a página de perfil do usuário "perfil-usuário"! E o usuário vai poder acessar essa página, quando ele clicar no componente de perfil do usuário, localizado no cabeçalho no canto direito de dentro da interface da seção de Painel!!!!!!!
+
+Essa página de Perfil do usuário vai ter o seguinte desing:
+
+- Deixe o componente com a imagem de perfil  no canto superior direito de dentro da interface da seção de Painel, totalmente clicavel e funcional!!!!!!!
+
+- A imagem de perfil do usuário em um componente arredondado centralizado na interface, posicionado no topo, e com o funcionalidade do usuário clicar nesse componente e adicionar uma imagem de perfil de dentro da sua própria maquina! E essa imagem de perfil vai ficar salva dentro do perfil do usuário de dentro do banco de dados do SupaBase!!!!!!! Abaixo desse componente arredondadom vai ter o nome do usuário (full_name), de maneira centralizada!!!!!!!
+
+- Mais abaixo do nome completo do usuário, vai ter um botão de "Visualizar Card de Progresso", esse botão vai ter exatamente o mesmo efeito que o card arredondado de Assistente IA de dentro da interface de Painel!!!!!!!
+
+- Abaixo desse do botão de "Visualizar Card de Progresso", vai ter um card de "Recordes e Scapys", esse card vai ser um car retangular com as bordas bem arredondadas!!!!!!!
+
+- Adicione uma animação suave de aparição dos elementos quando o usuário clicar no componente de Perfil do Usuário no canto superior direito de dentro da interface de Painel! E adicione um efeito de aparição quando o usuário voltar para a interface de Painel!!!!!!!
+
+Preste muita atenção em tudo que for fazer! É extremamente importante que você não cometa erros ou bugs dentro da platafroma, e altere apenas as coisas que eu te pedi, fazendo sempre analsies depois das alterações! 
