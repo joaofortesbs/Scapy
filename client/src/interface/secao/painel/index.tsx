@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
-import { supabase } from "@/lib/supabaseClient";
 import DesafioPlanoBeamEstar from "@/components/desafio-plano-bem-estar";
 import DesafioDuplaDinamica from "@/components/desafio-dupla-dinamica";
 import AnaliseEvolucaoMental from "@/components/analise-evolucao-mental";
@@ -23,6 +22,7 @@ import { DailyGoals } from "@/components/daily-goals";
 import AIAssistant from "@/components/ai-assistant";
 import ParticlesBackground from "@/components/particles-background";
 import type { User, WeeklyProgress } from "@shared/schema";
+import { supabase } from "@/lib/supabaseClient"; // Assuming you have initialized Supabase client
 
 // Header Component
 function Header() {
@@ -267,7 +267,7 @@ function JourneyStart({ onStartJourney, onStartTimer }: JourneyStartProps) {
           alt="Comece sua jornada agora - Bloqueador avançado de apps e sites"
           className="w-[770px] h-[527px] object-contain mx-auto"
           loading="eager"
-          fetchPriority="high"
+          fetchpriority="high"
           width={600}
           height={450}
           onError={(e) => {
@@ -294,7 +294,6 @@ export default function PainelInterface({
   activeSection,
   onSectionChange
 }: PainelInterfaceProps) {
-  const queryClient = useQueryClient();
   const [hasStartedJourney, setHasStartedJourney] = useState(() => {
     const storedValue = localStorage.getItem('hasStartedJourney');
     return storedValue === 'true';
@@ -302,31 +301,25 @@ export default function PainelInterface({
   const [timerStartTime, setTimerStartTime] = useState<string | null>(null);
   const [isLoadingTimer, setIsLoadingTimer] = useState(false);
 
-  // Fetch existing timer from Supabase
-  const { data: timerData, isLoading: isLoadingTimerQuery, refetch: refetchTimer } = useQuery({
+  const { data: timerData, isLoading: isLoadingTimerQuery } = useQuery({
     queryKey: ['timer', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      
       const { data, error } = await supabase
         .from('timer')
         .select('start_time')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
         .single();
       
-      if (error && error.code !== 'PGRST116') {
-        console.error('Erro ao buscar timer:', error);
+      if (error) {
+        console.error("Error fetching timer:", error);
         return null;
       }
-      
       return data;
     },
     enabled: !!user?.id,
   });
 
-  // Update timer state when data is fetched
   useEffect(() => {
     if (timerData && timerData.start_time) {
       setTimerStartTime(timerData.start_time);
@@ -335,37 +328,31 @@ export default function PainelInterface({
     }
   }, [timerData]);
 
-  // Start timer mutation
   const startTimerMutation = useMutation({
     mutationFn: async () => {
-      if (!user?.id) throw new Error('User ID is required');
-      
-      const startTime = new Date().toISOString();
-      
+      if (!user?.id) throw new Error("User ID is required");
+      setIsLoadingTimer(true);
       const { data, error } = await supabase
         .from('timer')
-        .insert({
-          user_id: user.id,
-          start_time: startTime
-        })
+        .insert([{ user_id: user.id, start_time: new Date().toISOString() }])
         .select('start_time')
         .single();
-      
+
       if (error) {
-        console.error('Erro ao salvar timer:', error);
+        console.error("Error starting timer:", error);
+        setIsLoadingTimer(false);
         throw error;
       }
-      
       return data.start_time;
     },
     onSuccess: (startTime) => {
       setTimerStartTime(startTime);
       setHasStartedJourney(true);
       localStorage.setItem('hasStartedJourney', 'true');
-      queryClient.invalidateQueries({ queryKey: ['timer', user?.id] });
+      setIsLoadingTimer(false);
     },
-    onError: (error) => {
-      console.error('Erro ao iniciar timer:', error);
+    onError: () => {
+      setIsLoadingTimer(false);
     }
   });
 
@@ -375,7 +362,6 @@ export default function PainelInterface({
   };
 
   const handleStartTimer = () => {
-    setIsLoadingTimer(true);
     startTimerMutation.mutate();
   };
 
@@ -412,10 +398,10 @@ export default function PainelInterface({
                   </div>
 
                   {/* Conditionally show Timer */}
-                  {isLoadingTimer || isLoadingTimerQuery || startTimerMutation.isPending ? (
+                  {isLoadingTimer || isLoadingTimerQuery ? (
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground mb-3">
-                        {startTimerMutation.isPending ? "Salvando no Supabase..." : isLoadingTimerQuery ? "Carregando dados do cronômetro..." : "Iniciando cronômetro..."}
+                        {isLoadingTimer ? "Iniciando cronômetro..." : "Carregando dados do cronômetro..."}
                       </p>
                       <div className="timer-display">
                         00:00:00
