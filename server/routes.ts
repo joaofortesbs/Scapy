@@ -183,6 +183,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== ROTAS DO CRONÔMETRO ==========
+
+  // Start timer for user
+  app.post("/api/timer/start", async (req, res) => {
+    try {
+      const { userId } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+      }
+
+      // Get current user data
+      const { data: user, error: fetchError } = await supabase
+        .from('auth_users')
+        .select('*')
+        .eq('id', userId)
+        .eq('is_active', true)
+        .single();
+
+      if (fetchError || !user) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      // Create timer start time
+      const timerStartDate = new Date().toISOString();
+
+      // Return user data with timer start date
+      const userData = {
+        id: user.id,
+        email: user.email,
+        fullName: user.full_name,
+        createdAt: user.created_at,
+        lastLogin: user.last_login,
+        startDate: timerStartDate // Current time as start date
+      };
+
+      res.json({ 
+        message: 'Cronômetro iniciado com sucesso!',
+        user: userData,
+        timerStarted: true
+      });
+
+    } catch (error) {
+      console.error('Erro ao iniciar cronômetro:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Get timer data for user
+  app.get("/api/timer/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+
+      const { data: user, error } = await supabase
+        .from('auth_users')
+        .select('id, email, full_name, created_at, last_login')
+        .eq('id', userId)
+        .eq('is_active', true)
+        .single();
+
+      if (error || !user) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      const userData = {
+        id: user.id,
+        email: user.email,
+        fullName: user.full_name,
+        createdAt: user.created_at,
+        lastLogin: user.last_login,
+        startDate: user.created_at // Use created_at as startDate
+      };
+
+      res.json({ user: userData });
+
+    } catch (error) {
+      console.error('Erro ao buscar dados do cronômetro:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
 
   // Get default user (demo user)
   app.get("/api/user", async (req, res) => {
