@@ -31,10 +31,10 @@ export const userGoals = pgTable("user_goals", {
 
 export const timers = pgTable("timers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(),
-  startDate: timestamp("start_date").notNull(),
-  isActive: boolean("is_active").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  user_id: varchar("user_id").notNull(),
+  start_date: timestamp("start_date").notNull(),
+  is_active: boolean("is_active").default(true).notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -54,7 +54,7 @@ export const insertUserGoalsSchema = createInsertSchema(userGoals).omit({
 
 export const insertTimerSchema = createInsertSchema(timers).omit({
   id: true,
-  createdAt: true,
+  created_at: true,
 });
 
 export type User = typeof users.$inferSelect;
