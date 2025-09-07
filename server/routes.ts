@@ -536,7 +536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('Erro ao salvar etapa do quiz:', error);
-      res.status(500).json({ message: 'Erro interno do servidor', error: error.message });
+      res.status(500).json({ message: 'Erro interno do servidor', error: error instanceof Error ? error.message : 'Erro desconhecido' });
     }
   });
 
@@ -568,7 +568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('Erro ao completar quiz:', error);
-      res.status(500).json({ message: 'Erro interno do servidor', error: error.message });
+      res.status(500).json({ message: 'Erro interno do servidor', error: error instanceof Error ? error.message : 'Erro desconhecido' });
     }
   });
 
