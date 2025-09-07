@@ -173,10 +173,8 @@ function Timer({ user, onUserUpdate }: TimerProps) {
         // Update local user state
         setLocalUser(data.user);
         
-        // Update localStorage
+        // Update localStorage for user data only
         localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('hasStartedJourney', 'true');
-        localStorage.setItem('timerStarted', 'true');
         
         // Update parent component if callback provided
         if (onUserUpdate) {
@@ -196,9 +194,8 @@ function Timer({ user, onUserUpdate }: TimerProps) {
     }
   };
 
-  // Check if user has startDate or timer was started
-  const timerStarted = localStorage.getItem('timerStarted') === 'true';
-  const userWithTimer = localUser && (localUser.startDate || timerStarted);
+  // Check if user has startDate - now we rely on database data
+  const userWithTimer = localUser && localUser.startDate;
 
   if (!localUser) {
     return (
@@ -363,11 +360,41 @@ export default function PainelInterface({
   activeSection,
   onSectionChange
 }: PainelInterfaceProps) {
-  // Journey state - check if user has started their journey
-  const [hasStartedJourney, setHasStartedJourney] = useState(() => {
-    return localStorage.getItem('hasStartedJourney') === 'true';
-  });
+  // Journey state - check if user has started their journey from database
+  const [hasStartedJourney, setHasStartedJourney] = useState(false);
   const [localUser, setLocalUser] = useState(user);
+  const [isLoading, setIsLoading] = useState(true);
+  const [timerStartDate, setTimerStartDate] = useState<string | null>(null);
+
+  // Check timer status from database when user loads
+  useEffect(() => {
+    const checkTimerStatus = async () => {
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/timer/status/${user.id}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setHasStartedJourney(data.hasActiveTimer);
+          if (data.hasActiveTimer && data.startDate) {
+            setTimerStartDate(data.startDate);
+            // Update local user with timer start date
+            setLocalUser(prev => prev ? { ...prev, startDate: data.startDate } : prev);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar status do timer:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkTimerStatus();
+  }, [user?.id]);
 
   // Update local user when prop changes
   useEffect(() => {
@@ -376,12 +403,12 @@ export default function PainelInterface({
 
   const handleStartJourney = async () => {
     setHasStartedJourney(true);
-    localStorage.setItem('hasStartedJourney', 'true');
   };
 
   const handleUserUpdate = (updatedUser: any) => {
     setLocalUser(updatedUser);
     setHasStartedJourney(true);
+    setTimerStartDate(updatedUser.startDate);
   };
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
@@ -395,7 +422,13 @@ export default function PainelInterface({
             {hasStartedJourney && <WeeklyTracker weeklyProgress={weeklyProgress} />}
 
             <section className="text-center">
-              {!hasStartedJourney ? (
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <p className="text-sm text-muted-foreground">
+                    Verificando status do cronômetro...
+                  </p>
+                </div>
+              ) : !hasStartedJourney ? (
                 <JourneyStart onStartJourney={handleStartJourney} />
               ) : (
                 <>
