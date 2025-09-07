@@ -132,10 +132,13 @@ function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
 // Timer Component
 interface TimerProps {
   user: User | undefined;
+  onUserUpdate?: (updatedUser: any) => void;
 }
 
-function Timer({ user }: TimerProps) {
+function Timer({ user, onUserUpdate }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isStarting, setIsStarting] = useState(false);
+  const [localUser, setLocalUser] = useState(user);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -145,12 +148,63 @@ function Timer({ user }: TimerProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Check if user and startDate are available
-  if (!user || !user.startDate) {
+  // Update local user when prop changes
+  useEffect(() => {
+    setLocalUser(user);
+  }, [user]);
+
+  const handleStartTimer = async () => {
+    if (!user?.id) return;
+    
+    setIsStarting(true);
+    
+    try {
+      const response = await fetch('/api/timer/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Update local user state
+        setLocalUser(data.user);
+        
+        // Update localStorage
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('hasStartedJourney', 'true');
+        localStorage.setItem('timerStarted', 'true');
+        
+        // Update parent component if callback provided
+        if (onUserUpdate) {
+          onUserUpdate(data.user);
+        }
+        
+        console.log('Cronômetro iniciado com sucesso!');
+      } else {
+        console.error('Erro ao iniciar cronômetro:', data.message);
+        alert('Erro ao iniciar cronômetro: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Erro ao iniciar cronômetro:', error);
+      alert('Erro de conexão. Tente novamente.');
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  // Check if user has startDate or timer was started
+  const timerStarted = localStorage.getItem('timerStarted') === 'true';
+  const userWithTimer = localUser && (localUser.startDate || timerStarted);
+
+  if (!localUser) {
     return (
       <div className="text-center">
         <p className="text-sm text-muted-foreground mb-3">
-          Dados do usuário não disponíveis
+          Carregando dados do usuário...
         </p>
         <div className="timer-display">
           00:00:00
@@ -159,8 +213,27 @@ function Timer({ user }: TimerProps) {
     );
   }
 
+  if (!userWithTimer) {
+    return (
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground mb-3">
+          Pronto para começar sua jornada livre da pornografia?
+        </p>
+        <button
+          onClick={handleStartTimer}
+          disabled={isStarting}
+          className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-semibold text-lg disabled:opacity-50"
+          data-testid="start-timer-button"
+        >
+          {isStarting ? 'Iniciando...' : '🚀 INICIAR CRONÔMETRO'}
+        </button>
+      </div>
+    );
+  }
+
   // Calculate progressive time from user's actual start date
-  const timeDiff = calculateTimeDifference(user.startDate, currentTime);
+  const startDate = localUser.startDate || new Date().toISOString();
+  const timeDiff = calculateTimeDifference(startDate, currentTime);
 
   return (
     <div className="text-center">
@@ -180,6 +253,10 @@ function Timer({ user }: TimerProps) {
           </div>
         </div>
       )}
+      
+      <div className="mt-2 text-xs text-muted-foreground">
+        Iniciado em: {new Date(startDate).toLocaleString('pt-BR')}
+      </div>
     </div>
   );
 }
@@ -290,13 +367,21 @@ export default function PainelInterface({
   const [hasStartedJourney, setHasStartedJourney] = useState(() => {
     return localStorage.getItem('hasStartedJourney') === 'true';
   });
+  const [localUser, setLocalUser] = useState(user);
+
+  // Update local user when prop changes
+  useEffect(() => {
+    setLocalUser(user);
+  }, [user]);
 
   const handleStartJourney = async () => {
     setHasStartedJourney(true);
     localStorage.setItem('hasStartedJourney', 'true');
-    
-    // O timer será iniciado automaticamente pelo componente Timer
-    // quando ele detectar que o usuário começou a jornada
+  };
+
+  const handleUserUpdate = (updatedUser: any) => {
+    setLocalUser(updatedUser);
+    setHasStartedJourney(true);
   };
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
@@ -328,7 +413,7 @@ export default function PainelInterface({
                   </div>
 
                   {/* Conditionally show Timer */}
-                  <Timer user={user} />
+                  <Timer user={localUser} onUserUpdate={handleUserUpdate} />
                 </>
               )}
             </section>
