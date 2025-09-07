@@ -319,7 +319,7 @@ export default function PainelInterface({
       const { data, error } = await supabase
         .from('timer')
         .select('start_time, created_at, id')
-        .eq('user_id', user.id)
+        .eq('user_id', user.id.toString())
         .order('created_at', { ascending: false })
         .limit(1);
       
@@ -381,7 +381,7 @@ export default function PainelInterface({
         const { data: existingTimer, error: fetchError } = await supabase
           .from('timer')
           .select('start_time, id')
-          .eq('user_id', user.id)
+          .eq('user_id', user.id.toString())
           .order('created_at', { ascending: false })
           .limit(1);
 
@@ -402,7 +402,7 @@ export default function PainelInterface({
         const { data, error } = await supabase
           .from('timer')
           .insert([{ 
-            user_id: user.id, 
+            user_id: user.id.toString(), 
             start_time: startTime 
           }])
           .select('start_time, id')
