@@ -175,15 +175,19 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.3 }}
+              className="flex justify-center"
             >
-              <Button
+              <button
                 onClick={handleProgressCardClick}
-                className="w-full h-16 rounded-2xl bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 hover:from-primary/30 hover:to-primary/20 transition-all duration-300 text-primary font-semibold"
+                className="ai-assistant-card-natural-3d h-12 px-6 rounded-full border border-border text-primary font-medium transition-all duration-300 hover:opacity-80"
+                style={{ backgroundColor: '#000515', maxWidth: '280px' }}
                 data-testid="progress-card-button"
               >
-                <Eye className="w-5 h-5 mr-2" />
-                Visualizar Card de Progresso
-              </Button>
+                <div className="flex items-center justify-center space-x-3">
+                  <Eye className="w-5 h-5" />
+                  <span className="text-sm">Visualizar Card de Progresso</span>
+                </div>
+              </button>
             </motion.div>
 
             {/* Card de Progresso (similar ao AI Assistant) */}

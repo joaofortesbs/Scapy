@@ -36,7 +36,6 @@ function AppRouter() {
     setUser(null);
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('user');
-    // Redirect to login page could be handled here if needed
     window.location.reload();
   };
 

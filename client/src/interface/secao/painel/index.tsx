@@ -269,8 +269,6 @@ function Timer({ user, onUserUpdate }: TimerProps) {
   );
 }
 
-
-
 // Panic Button Component
 function PanicButton() {
   const handlePanicClick = () => {
@@ -421,6 +419,7 @@ export default function PainelInterface({
     setHasStartedJourney(true);
     setTimerStartDate(updatedUser.startDate);
   };
+
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
       <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
