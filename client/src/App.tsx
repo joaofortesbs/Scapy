@@ -1,4 +1,4 @@
-import { Router, Route } from "wouter";
+import { Router, Route, Switch } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import AuthPage from "@/pages/auth";
-import PerfilUsuario from "@/pages/perfil-usuario";
 import { useState, useEffect } from "react";
 
 function AppRouter() {
@@ -60,10 +59,11 @@ function AppRouter() {
   // Se estiver autenticado, mostrar aplicação principal
   return (
     <Router>
-      <Route path="/" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
-      <Route path="/dashboard" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
-      <Route path="/perfil-usuario" component={() => <PerfilUsuario user={user} onBack={() => window.history.back()} />} />
-      <Route component={NotFound} />
+      <Switch>
+        <Route path="/" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
+        <Route path="/dashboard" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
+        <Route component={NotFound} />
+      </Switch>
     </Router>
   );
 }
