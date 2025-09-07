@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import AuthPage from "@/pages/auth";
+import PerfilUsuario from "@/pages/perfil-usuario";
 import { useState, useEffect } from "react";
 
 function AppRouter() {
@@ -62,6 +63,7 @@ function AppRouter() {
       <Switch>
         <Route path="/" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
         <Route path="/dashboard" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
+        <Route path="/perfil-usuario" component={() => <PerfilUsuario user={user} onUserUpdate={(updatedUser) => { setUser(updatedUser); localStorage.setItem('user', JSON.stringify(updatedUser)); }} />} />
         <Route component={NotFound} />
       </Switch>
     </Router>
