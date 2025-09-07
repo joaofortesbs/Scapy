@@ -2,9 +2,10 @@ import { useState, useRef, useEffect } from "react"; // Added useEffect import
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Camera, Eye, Trophy, RefreshCw, User, BarChart3 } from "lucide-react"; // Added User and BarChart3
+import { ArrowLeft, Camera, Eye, Trophy, RefreshCw, User, BarChart3, Clock, CheckCircle, Mountain, Users, Calendar, Heart, Zap, Cross, Edit, Save, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+import ParticlesBackground from "@/components/particles-background";
 
 interface PerfilUsuarioProps {
   user?: {
@@ -12,6 +13,10 @@ interface PerfilUsuarioProps {
     username: string;
     full_name?: string; // Adjusted to match potential Supabase naming
     profileImage?: string;
+    bestStreak?: number;
+    relapseCount?: number;
+    startDate?: string;
+    scapyPoints?: number;
   };
   onUserUpdate?: (updatedUser: any) => void;
 }
@@ -21,6 +26,8 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
   const [uploading, setUploading] = useState(false);
   const [progressCardVisible, setProgressCardVisible] = useState(false);
   const [quizData, setQuizData] = useState<any>(null); // State to hold quiz data
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch quiz data when the component mounts or user changes
@@ -28,17 +35,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
     const fetchQuizData = async () => {
       if (!user?.id) return;
       try {
-        const { data, error } = await supabase
-          .from('quiz_contextualizacao') // Assuming this is the table name
-          .select('*')
-          .eq('user_id', user.id)
-          .single(); // Fetch a single record
+        // Use server API instead of direct Supabase query
+        const response = await fetch(`/api/quiz/${user.id}`);
 
-        if (error && error.message !== 'Result is not a single record') { // Handle case where no record exists
-            console.error('Error fetching quiz data:', error);
-            setQuizData(null); // Ensure quizData is null if there's an error or no data
+        if (response.ok) {
+          const result = await response.json();
+          setQuizData(result.quiz);
+        } else if (response.status === 404) {
+          // Quiz not found - user hasn't completed quiz yet
+          setQuizData(null);
         } else {
-            setQuizData(data);
+          console.error('Error fetching quiz data:', response.statusText);
+          setQuizData(null);
         }
       } catch (error) {
         console.error('Unexpected error fetching quiz data:', error);
@@ -122,6 +130,61 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
     setProgressCardVisible(!progressCardVisible);
   };
 
+  const handleEditField = (fieldName: string, currentValue: string) => {
+    setEditingField(fieldName);
+    setEditValue(currentValue);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!user?.id || !editingField) return;
+
+    try {
+      // Mapear nomes dos campos para o formato correto da API
+      const fieldMapping: Record<string, string> = {
+        'genero': 'gender',
+        'idade': 'age',
+        'motivacao': 'motivation',
+        'frequencia': 'frequency',
+        'gatilhos': 'triggers',
+        'religiao': 'religion'
+      };
+
+      const apiFieldName = fieldMapping[editingField] || editingField;
+
+      const response = await fetch('/api/quiz/save-step', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          stepName: apiFieldName,
+          stepValue: editValue
+        }),
+      });
+
+      if (response.ok) {
+        // Atualizar os dados locais
+        setQuizData(prev => ({
+          ...prev,
+          [editingField]: editValue
+        }));
+        setEditingField(null);
+        setEditValue('');
+      } else {
+        alert('Erro ao salvar a edição. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar edição:', error);
+      alert('Erro ao salvar a edição. Tente novamente.');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingField(null);
+    setEditValue('');
+  };
+
   // Function to refazer quiz
   const handleRefazerQuiz = async () => {
     if (!user?.id) return;
@@ -183,6 +246,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
       transition={{ duration: 0.3 }}
       className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden"
     >
+      <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
       <div className="relative z-10">
         {/* Header com botão de voltar */}
         <header className="p-4 flex items-center justify-between">
@@ -204,7 +268,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
         <main className="flex-1 px-4 pb-8">
           <div className="space-y-8">
             {/* Seção da imagem de perfil */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1, duration: 0.3 }}
@@ -311,101 +375,299 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
               </motion.div>
             )}
 
-            {/* Card de Recordes e Scapys */}
+            {/* Card de Recordes e Scapys - Container Principal */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.3 }}
+              className="mb-8"
             >
-              <Card className="rounded-3xl border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
-                      <Trophy className="w-6 h-6 text-primary" />
-                    </div>
+              <Card className="border-border rounded-2xl ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                <CardContent className="p-4">
+                  {/* Header do Card */}
+                  <div className="flex items-center justify-center space-x-3 mb-4">
+                    <Trophy className="w-7 h-7 text-primary" />
+                    <span className="text-lg text-foreground font-semibold">Recordes e Scapys</span>
                   </div>
 
-                  <h3 className="text-xl font-bold text-center text-foreground mb-4">
-                    Recordes e Scapys
-                  </h3>
+                  {/* Cards Internos */}
+                  <div className="space-y-3">
+                    <Card className="border-border rounded-full" style={{ backgroundColor: 'transparent' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground font-medium">Maior sequência:</span>
+                          <span className="text-sm text-foreground font-medium">
+                            {user?.bestStreak || 0} dias
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
-                      <span className="text-sm font-medium text-muted-foreground">Maior sequência</span>
-                      <span className="text-lg font-bold text-primary">0 dias</span>
-                    </div>
+                    <Card className="border-border rounded-full" style={{ backgroundColor: 'transparent' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground font-medium">Total de recaídas:</span>
+                          <span className="text-sm text-foreground font-medium">
+                            {user?.relapseCount || 0}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                    <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
-                      <span className="text-sm font-medium text-muted-foreground">Total de recaídas</span>
-                      <span className="text-lg font-bold text-primary">0</span>
-                    </div>
+                    <Card className="border-border rounded-full" style={{ backgroundColor: 'transparent' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground font-medium">Jornada iniciada em:</span>
+                          <span className="text-sm text-foreground font-medium">
+                            {user?.startDate
+                              ? new Date(user.startDate).toLocaleDateString('pt-BR')
+                              : '--/--/----'
+                            }
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                    <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
-                      <span className="text-sm font-medium text-muted-foreground">Jornada iniciada em</span>
-                      <span className="text-lg font-bold text-primary">--/--/----</span>
-                    </div>
-
-                    <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
-                      <span className="text-sm font-medium text-muted-foreground">Pontuação Scapy</span>
-                      <span className="text-lg font-bold text-primary">0 pts</span>
-                    </div>
+                    <Card className="border-border rounded-full" style={{ backgroundColor: 'transparent' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground font-medium">Pontuação Scapy:</span>
+                          <span className="text-sm text-foreground font-medium">
+                            {user?.scapyPoints || 0} pts
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
 
-            {/* Novo Card para Quiz de Personalização */}
-            {quizData && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.3 }}
-              >
-                <Card className="rounded-3xl border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-blue-500/10">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-center mb-4">
-                      <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
-                        <BarChart3 className="w-6 h-6 text-blue-500" />
-                      </div>
-                    </div>
+            {/* Card Dados Quiz de Personalização - Container Principal */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
+              className="mb-8"
+            >
+              <Card className="border-border rounded-2xl ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                <CardContent className="p-4">
+                  {/* Header do Card */}
+                  <div className="flex items-center justify-center space-x-3 mb-4">
+                    <BarChart3 className="w-7 h-7 text-primary" />
+                    <span className="text-lg text-foreground font-semibold">Dados Quiz de Personalização</span>
+                  </div>
 
-                    <h3 className="text-xl font-bold text-center text-foreground mb-4">
-                      Quiz de Personalização
-                    </h3>
-
-                    <div className="space-y-4 text-center">
-                      {/* Display quiz information */}
-                      {Object.entries(quizData).map(([key, value]) => {
-                        // Skip displaying user_id and potentially other internal fields
-                        if (key === 'user_id' || key === 'id' || key === 'created_at' || key === 'updated_at') {
-                          return null;
-                        }
-                        return (
-                          <div key={key} className="flex flex-col items-center p-3 bg-background/50 rounded-xl">
-                            <span className="text-sm font-medium text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
-                            <span className="text-lg font-bold text-primary">{String(value)}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Botão para refazer o quiz */}
-                    <div className="mt-6 flex justify-center">
-                      <Button 
-                        onClick={handleRefazerQuiz}
-                        className="rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3"
+                  {quizData ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2, duration: 0.6 }}
+                      className="space-y-3"
+                    >
+                  {quizData.genero && (
+                      <Card
+                        className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: 'transparent' }}
+                        onClick={() => handleEditField('genero', quizData.genero)}
                       >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Refazer Quiz
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                        <CardContent className="p-3">
+                          <div className="flex items-center space-x-3">
+                            <Users className="w-4 h-4 text-primary flex-shrink-0" />
+                            <div className="flex items-center justify-between flex-1">
+                              <span className="text-sm text-muted-foreground font-medium">Gênero:</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-foreground font-medium">{quizData.genero}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {quizData.idade && (
+                      <Card
+                        className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: 'transparent' }}
+                        onClick={() => handleEditField('idade', quizData.idade)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center space-x-3">
+                            <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
+                            <div className="flex items-center justify-between flex-1">
+                              <span className="text-sm text-muted-foreground font-medium">Idade:</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-foreground font-medium">{quizData.idade}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {quizData.motivacao && (
+                      <Card
+                        className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: 'transparent' }}
+                        onClick={() => handleEditField('motivacao', quizData.motivacao)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center space-x-3">
+                            <Heart className="w-4 h-4 text-primary flex-shrink-0" />
+                            <div className="flex items-center justify-between flex-1">
+                              <span className="text-sm text-muted-foreground font-medium">Motivação:</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-foreground font-medium">{quizData.motivacao}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {quizData.frequencia && (
+                      <Card
+                        className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: 'transparent' }}
+                        onClick={() => handleEditField('frequencia', quizData.frequencia)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center space-x-3">
+                            <Clock className="w-4 h-4 text-primary flex-shrink-0" />
+                            <div className="flex items-center justify-between flex-1">
+                              <span className="text-sm text-muted-foreground font-medium">Frequência:</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-foreground font-medium">{quizData.frequencia}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {quizData.gatilhos && (
+                      <Card
+                        className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: 'transparent' }}
+                        onClick={() => handleEditField('gatilhos', quizData.gatilhos)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center space-x-3">
+                            <Zap className="w-4 h-4 text-primary flex-shrink-0" />
+                            <div className="flex items-center justify-between flex-1">
+                              <span className="text-sm text-muted-foreground font-medium">Gatilhos:</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-foreground font-medium">{quizData.gatilhos}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {quizData.religiao && (
+                      <Card
+                        className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: 'transparent' }}
+                        onClick={() => handleEditField('religiao', quizData.religiao)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center space-x-3">
+                            <Cross className="w-4 h-4 text-primary flex-shrink-0" />
+                            <div className="flex items-center justify-between flex-1">
+                              <span className="text-sm text-muted-foreground font-medium">Religião:</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-foreground font-medium">{quizData.religiao}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  ) : (
+                    <Card className="border-border rounded-full" style={{ backgroundColor: 'transparent' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-center space-x-3">
+                          <span className="text-sm text-muted-foreground font-medium">
+                            Nenhum dado de quiz encontrado
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </CardContent>
+              </Card>
               </motion.div>
-            )}
           </div>
         </main>
       </div>
+
+      {/* Modal de Edição */}
+      {editingField && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          onClick={handleCancelEdit}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-background border border-primary/30 rounded-2xl p-6 w-full max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-bold text-foreground mb-2">
+                Editar {editingField === 'genero' ? 'Gênero' :
+                        editingField === 'idade' ? 'Idade' :
+                        editingField === 'motivacao' ? 'Motivação' :
+                        editingField === 'frequencia' ? 'Frequência' :
+                        editingField === 'gatilhos' ? 'Gatilhos' :
+                        editingField === 'religiao' ? 'Religião' : editingField}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Digite sua nova resposta abaixo
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                className="w-full p-3 rounded-xl bg-primary/5 border border-primary/20 text-foreground focus:outline-none focus:border-primary"
+                placeholder="Digite sua resposta..."
+                autoFocus
+              />
+
+              <div className="flex space-x-3">
+                <Button
+                  onClick={handleCancelEdit}
+                  variant="outline"
+                  className="flex-1 rounded-xl"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  className="flex-1 rounded-xl bg-primary hover:bg-primary/90"
+                  disabled={!editValue.trim()}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </motion.div>
   );
 }

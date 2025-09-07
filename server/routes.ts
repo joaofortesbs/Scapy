@@ -504,6 +504,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Mapeamento correto de etapas para colunas e current_step
       const stepColumnMap: Record<string, { column: string, step: number }> = {
         'gender': { column: 'genero', step: 3 },
+        'age': { column: 'idade', step: 2 },
         'frequency': { column: 'frequencia', step: 4 }, 
         'motivation': { column: 'motivacao', step: 5 },
         'triggers': { column: 'gatilhos', step: 6 },
