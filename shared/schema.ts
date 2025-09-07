@@ -65,6 +65,7 @@ export const quizContextualizacao = pgTable("quiz_contextualizacao", {
   gatilhos: text("gatilhos"),
   religiao: varchar("religiao", { length: 100 }),
   completed: boolean("completed").default(false).notNull(),
+  currentStep: integer("current_step").default(1).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

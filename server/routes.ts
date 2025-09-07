@@ -493,10 +493,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Salvar resposta de uma etapa específica
   app.put("/api/quiz/save-step", async (req, res) => {
     try {
-      const { userId, stepName, stepValue } = req.body;
+      const { userId, stepName, stepValue, currentStep } = req.body;
 
-      if (!userId || !stepName || !stepValue) {
-        return res.status(400).json({ message: 'UserId, nome da etapa e valor são obrigatórios' });
+      if (!userId || !stepName || stepValue === undefined) {
+        return res.status(400).json({ message: 'User ID, nome da etapa e valor são obrigatórios' });
+      }
+
+      // Atualizar a etapa específica
+      const updateQuery = `
+        UPDATE quiz_contextualizacao 
+        SET ${stepName} = $1, current_step = $2, updated_at = NOW()
+        WHERE user_id = $3
+        RETURNING *
+      `;
+
+      const updatedQuiz = await sql.unsafe(updateQuery, [stepValue, currentStep || 1, userId]);
+
+      if (updatedQuiz.length === 0) {
+        return res.status(404).json({ message: 'Quiz não encontrado' });
+      }
+
+      res.json({ quiz: updatedQuiz[0] });
+
+    } catch (error) {
+      console.error('Erro ao salvar etapa do quiz:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Finalizar quiz
+  app.put("/api/quiz/complete", async (req, res) => {
+    try {
+      const { userId } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID é obrigatório' });
+      }
+
+      const completedQuiz = await sql`
+        UPDATE quiz_contextualizacao 
+        SET completed = true, current_step = 8, updated_at = NOW()
+        WHERE user_id = ${userId}
+        RETURNING *
+      `;
+
+      if (completedQuiz.length === 0) {
+        return res.status(404).json({ message: 'Quiz não encontrado' });
+      }
+
+      res.json({ quiz: completedQuiz[0] });
+
+    } catch (error) {
+      console.error('Erro ao finalizar quiz:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Obter quiz do usuário
+  app.get("/api/quiz/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID é obrigatório' });
+      }
+
+      const quiz = await sql`
+        SELECT * FROM quiz_contextualizacao 
+        WHERE user_id = ${userId}
+      `;
+
+      if (quiz.length === 0) {
+        return res.status(404).json({ message: 'Quiz não encontrado' });
+      }
+
+      res.json({ quiz: quiz[0] });
+
+    } catch (error) {
+      console.error('Erro ao buscar quiz:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Resetar quiz
+  app.delete("/api/quiz/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID é obrigatório' });
+      }
+
+      const deletedQuiz = await sql`
+        DELETE FROM quiz_contextualizacao 
+        WHERE user_id = ${userId}
+        RETURNING *
+      `;
+
+      if (deletedQuiz.length === 0) {
+        return res.status(404).json({ message: 'Quiz não encontrado' });
+      }
+
+      res.json({ message: 'Quiz resetado com sucesso' });
+
+    } catch (error) {
+      console.error('Erro ao resetar quiz:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });erId, nome da etapa e valor são obrigatórios' });
       }
 
       // Mapeamento de etapas para colunas
