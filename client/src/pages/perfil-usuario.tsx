@@ -375,70 +375,72 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
               </motion.div>
             )}
 
-            {/* Card de Recordes e Scapys - Estilo AI Assistant */}
+            {/* Card de Recordes e Scapys - Container Principal */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.3 }}
               className="mb-8"
             >
-              <Card className="border-border mb-3 rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
-                <CardContent className="p-3">
-                  <div className="flex items-center justify-center space-x-3">
+              <Card className="border-border rounded-2xl ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                <CardContent className="p-4">
+                  {/* Header do Card */}
+                  <div className="flex items-center justify-center space-x-3 mb-4">
                     <Trophy className="w-6 h-6 text-primary" />
                     <span className="text-base text-foreground font-medium">Recordes e Scapys</span>
                   </div>
+
+                  {/* Cards Internos */}
+                  <div className="space-y-3">
+                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: 'rgba(0, 5, 21, 0.5)' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground font-medium">Maior sequência:</span>
+                          <span className="text-sm text-foreground font-medium">
+                            {user?.bestStreak || 0} dias
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: 'rgba(0, 5, 21, 0.5)' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground font-medium">Total de recaídas:</span>
+                          <span className="text-sm text-foreground font-medium">
+                            {user?.relapseCount || 0}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: 'rgba(0, 5, 21, 0.5)' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground font-medium">Jornada iniciada em:</span>
+                          <span className="text-sm text-foreground font-medium">
+                            {user?.startDate
+                              ? new Date(user.startDate).toLocaleDateString('pt-BR')
+                              : '--/--/----'
+                            }
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: 'rgba(0, 5, 21, 0.5)' }}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground font-medium">Pontuação Scapy:</span>
+                          <span className="text-sm text-foreground font-medium">
+                            {user?.scapyPoints || 0} pts
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </CardContent>
               </Card>
-
-              <div className="space-y-3">
-                <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground font-medium">Maior sequência:</span>
-                      <span className="text-sm text-foreground font-medium">
-                        {user?.bestStreak || 0} dias
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground font-medium">Total de recaídas:</span>
-                      <span className="text-sm text-foreground font-medium">
-                        {user?.relapseCount || 0}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground font-medium">Jornada iniciada em:</span>
-                      <span className="text-sm text-foreground font-medium">
-                        {user?.startDate
-                          ? new Date(user.startDate).toLocaleDateString('pt-BR')
-                          : '--/--/----'
-                        }
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground font-medium">Pontuação Scapy:</span>
-                      <span className="text-sm text-foreground font-medium">
-                        {user?.scapyPoints || 0} pts
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
             </motion.div>
 
             {/* Card Dados Quiz de Personalização - Estilo AI Assistant */}
