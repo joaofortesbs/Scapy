@@ -190,6 +190,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== ROTAS DE PERFIL DO USUÁRIO ==========
+
+  // Atualizar perfil do usuário
+  app.patch("/api/users/update-profile", async (req, res) => {
+    try {
+      const { userId, profileImage, fullName } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+      }
+
+      const updateData: any = {};
+      if (profileImage) updateData.profile_image = profileImage;
+      if (fullName) updateData.full_name = fullName;
+
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: 'Nenhum dado para atualizar' });
+      }
+
+      // Atualizar perfil na tabela auth_users
+      const { data, error } = await supabase
+        .from('auth_users')
+        .update(updateData)
+        .eq('id', userId)
+        .select('id, email, full_name, profile_image')
+        .single();
+
+      if (error) {
+        console.error('Erro ao atualizar perfil:', error);
+        return res.status(500).json({ message: 'Erro ao atualizar perfil' });
+      }
+
+      res.json({
+        message: 'Perfil atualizado com sucesso!',
+        user: {
+          id: data.id,
+          email: data.email,
+          fullName: data.full_name,
+          profileImage: data.profile_image
+        }
+      });
+
+    } catch (error) {
+      console.error('Erro na rota de atualização de perfil:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
   // ========== ROTAS DO CRONÔMETRO ==========
 
   // Start timer for user

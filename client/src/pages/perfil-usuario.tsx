@@ -59,14 +59,20 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
         .from('profile-images')
         .getPublicUrl(filePath);
 
-      // Atualizar o perfil do usuário no banco
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ profile_image: publicUrl })
-        .eq('id', user.id);
+      // Atualizar o perfil do usuário usando API do servidor
+      const response = await fetch('/api/users/update-profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          profileImage: publicUrl,
+        }),
+      });
 
-      if (updateError) {
-        throw updateError;
+      if (!response.ok) {
+        throw new Error('Erro ao atualizar perfil no servidor');
       }
 
       // Atualizar estado local e notificar componente pai
