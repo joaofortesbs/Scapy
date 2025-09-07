@@ -25,10 +25,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Buscar usuário pelo email
       const { data: user, error } = await supabase
-        .from('auth_users')
+        .from('users')
         .select('*')
-        .eq('email', email.toLowerCase().trim())
-        .eq('is_active', true)
+        .eq('username', email.toLowerCase().trim())
         .single();
 
       if (error || !user) {
@@ -36,25 +35,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verificar senha
-      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+      const isPasswordValid = await bcrypt.compare(password, user.password);
 
       if (!isPasswordValid) {
         return res.status(401).json({ message: 'Email ou senha inválidos' });
       }
 
-      // Atualizar último login
-      await supabase
-        .from('auth_users')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', user.id);
+      // Não precisamos atualizar último login pois não temos esse campo
 
       // Retornar dados do usuário (sem a senha)
       const userData = {
         id: user.id,
-        email: user.email,
-        fullName: user.full_name,
-        createdAt: user.created_at,
-        lastLogin: new Date().toISOString()
+        username: user.username,
+        startDate: user.start_date,
+        createdAt: user.created_at
       };
 
       res.json({ 
@@ -90,9 +84,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Verificar se o email já existe
       const { data: existingUser } = await supabase
-        .from('auth_users')
-        .select('email')
-        .eq('email', email.toLowerCase().trim())
+        .from('users')
+        .select('username')
+        .eq('username', email.toLowerCase().trim())
         .single();
 
       if (existingUser) {
@@ -157,10 +151,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Buscar usuário
       const { data: user, error } = await supabase
-        .from('auth_users')
-        .select('id, email, full_name, created_at, last_login, is_active')
+        .from('users')
+        .select('id, username, created_at')
         .eq('id', userId)
-        .eq('is_active', true)
         .single();
 
       if (error || !user) {
@@ -170,10 +163,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         user: {
           id: user.id,
-          email: user.email,
-          fullName: user.full_name,
-          createdAt: user.created_at,
-          lastLogin: user.last_login
+          username: user.username,
+          createdAt: user.created_at
         }
       });
 

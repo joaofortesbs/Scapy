@@ -1,10 +1,14 @@
 
--- Execute este SQL no Supabase Dashboard para criar a tabela timer
+-- Execute este SQL no Supabase Dashboard para criar/atualizar a tabela timer
 -- Vá em: Supabase Dashboard > SQL Editor > New query
 
-CREATE TABLE IF NOT EXISTS public.timer (
+-- Primeiro, vamos remover a tabela existente se ela existir
+DROP TABLE IF EXISTS public.timer;
+
+-- Criar a tabela timer com referência correta ao auth.users
+CREATE TABLE public.timer (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES public.auth_users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   start_time TIMESTAMP WITH TIME ZONE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -12,16 +16,25 @@ CREATE TABLE IF NOT EXISTS public.timer (
 -- Habilitar RLS (Row Level Security)
 ALTER TABLE public.timer ENABLE ROW LEVEL SECURITY;
 
--- Políticas de segurança
+-- Remover políticas existentes se existirem
+DROP POLICY IF EXISTS "Users can view own timer" ON public.timer;
+DROP POLICY IF EXISTS "Users can insert own timer" ON public.timer;
+DROP POLICY IF EXISTS "Users can update own timer" ON public.timer;
+
+-- Políticas de segurança corrigidas
 CREATE POLICY "Users can view own timer" ON public.timer 
-  FOR SELECT USING (user_id = current_setting('app.current_user_id')::INTEGER);
+  FOR SELECT USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can insert own timer" ON public.timer 
-  FOR INSERT WITH CHECK (user_id = current_setting('app.current_user_id')::INTEGER);
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can update own timer" ON public.timer 
-  FOR UPDATE USING (user_id = current_setting('app.current_user_id')::INTEGER);
+  FOR UPDATE USING (auth.uid() = user_id);
 
--- Criar índice para melhor performance
+-- Criar índices para melhor performance
 CREATE INDEX IF NOT EXISTS idx_timer_user_id ON public.timer(user_id);
 CREATE INDEX IF NOT EXISTS idx_timer_start_time ON public.timer(start_time DESC);
+
+-- Conceder permissões necessárias
+GRANT ALL ON public.timer TO authenticated;
+GRANT ALL ON public.timer TO anon;

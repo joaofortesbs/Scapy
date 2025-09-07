@@ -22,7 +22,7 @@ import { DailyGoals } from "@/components/daily-goals";
 import AIAssistant from "@/components/ai-assistant";
 import ParticlesBackground from "@/components/particles-background";
 import type { User, WeeklyProgress } from "@shared/schema";
-import { supabase } from "@/lib/supabaseClient"; // Assuming you have initialized Supabase client
+import { supabase } from "@/lib/supabaseClient";
 
 // Header Component
 function Header() {
@@ -136,20 +136,24 @@ function Timer({ startTime }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    if (!startTime) return;
-
+    console.log("Timer component - startTime:", startTime);
+    
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [startTime]);
+  }, []);
 
-  if (!startTime) {
+  // Calculate time difference with proper error handling
+  const timeDiff = calculateTimeDifference(startTime, currentTime);
+  console.log("Timer calculation - timeDiff:", timeDiff, "startTime:", startTime);
+
+  if (!startTime || timeDiff.totalSeconds === 0) {
     return (
       <div className="text-center">
         <p className="text-sm text-muted-foreground mb-3">
-          Iniciando cronômetro...
+          Cronômetro não iniciado
         </p>
         <div className="timer-display">
           00:00:00
@@ -157,8 +161,6 @@ function Timer({ startTime }: TimerProps) {
       </div>
     );
   }
-
-  const timeDiff = calculateTimeDifference(new Date(startTime), currentTime);
   
   return (
     <div className="text-center">
@@ -174,7 +176,7 @@ function Timer({ startTime }: TimerProps) {
       {timeDiff.days > 0 && (
         <div className="mt-4">
           <div className="text-sm font-semibold text-primary">
-            {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'} LIMPO
+            {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'} LIMPO{timeDiff.days > 1 ? 'S' : ''}
           </div>
         </div>
       )}
@@ -301,58 +303,140 @@ export default function PainelInterface({
   const [timerStartTime, setTimerStartTime] = useState<string | null>(null);
   const [isLoadingTimer, setIsLoadingTimer] = useState(false);
 
-  const { data: timerData, isLoading: isLoadingTimerQuery } = useQuery({
+  const { data: timerData, isLoading: isLoadingTimerQuery, refetch: refetchTimer } = useQuery({
     queryKey: ['timer', user?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
+      console.log("Starting timer query...");
+      console.log("User from props:", user);
+      
+      if (!user?.id) {
+        console.log("No authenticated user found");
+        return null;
+      }
+
+      console.log("Fetching timer for user:", user.id);
+
       const { data, error } = await supabase
         .from('timer')
-        .select('start_time')
+        .select('start_time, created_at, id')
         .eq('user_id', user.id)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1);
       
       if (error) {
         console.error("Error fetching timer:", error);
         return null;
       }
-      return data;
+
+      console.log("Timer data fetched:", data);
+      
+      if (data && data.length > 0) {
+        return {
+          start_time: data[0].start_time,
+          created_at: data[0].created_at,
+          id: data[0].id
+        };
+      }
+      
+      return null;
     },
-    enabled: !!user?.id,
+    enabled: true, // Always enabled to check for existing timers
+    refetchInterval: 5000, // Refetch every 5 seconds to check for updates
+    retry: 3,
+    retryDelay: 1000,
   });
 
   useEffect(() => {
+    console.log("useEffect - timerData changed:", timerData);
+    
     if (timerData && timerData.start_time) {
+      console.log("Setting timer start time:", timerData.start_time);
       setTimerStartTime(timerData.start_time);
-      setHasStartedJourney(true);
-      localStorage.setItem('hasStartedJourney', 'true');
+      
+      if (!hasStartedJourney) {
+        console.log("Journey not started, setting to true");
+        setHasStartedJourney(true);
+        localStorage.setItem('hasStartedJourney', 'true');
+      }
+    } else if (timerData === null && hasStartedJourney) {
+      // If no timer data but journey was started, reset the timer
+      console.log("No timer data found, resetting timer");
+      setTimerStartTime(null);
     }
-  }, [timerData]);
+  }, [timerData, hasStartedJourney]);
 
   const startTimerMutation = useMutation({
     mutationFn: async () => {
-      if (!user?.id) throw new Error("User ID is required");
-      setIsLoadingTimer(true);
-      const { data, error } = await supabase
-        .from('timer')
-        .insert([{ user_id: user.id, start_time: new Date().toISOString() }])
-        .select('start_time')
-        .single();
+      try {
+        console.log("Starting timer mutation...");
+        
+        if (!user?.id) {
+          throw new Error("User must be authenticated to start timer");
+        }
 
-      if (error) {
-        console.error("Error starting timer:", error);
+        console.log("Starting timer for user:", user.id);
+        setIsLoadingTimer(true);
+
+        // Check if timer already exists
+        const { data: existingTimer, error: fetchError } = await supabase
+          .from('timer')
+          .select('start_time, id')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (fetchError) {
+          console.error("Error fetching existing timer:", fetchError);
+          throw fetchError;
+        }
+
+        if (existingTimer && existingTimer.length > 0) {
+          console.log("Timer already exists:", existingTimer[0]);
+          return existingTimer[0].start_time;
+        }
+
+        // Create new timer
+        const startTime = new Date().toISOString();
+        console.log("Creating new timer with start_time:", startTime);
+        
+        const { data, error } = await supabase
+          .from('timer')
+          .insert([{ 
+            user_id: user.id, 
+            start_time: startTime 
+          }])
+          .select('start_time, id')
+          .single();
+
+        if (error) {
+          console.error("Error creating timer:", error);
+          throw error;
+        }
+
+        console.log("Timer created successfully:", data);
+        return data.start_time;
+      } catch (error) {
+        console.error("Error in startTimerMutation:", error);
         setIsLoadingTimer(false);
         throw error;
       }
-      return data.start_time;
     },
     onSuccess: (startTime) => {
+      console.log("Timer started successfully:", startTime);
       setTimerStartTime(startTime);
       setHasStartedJourney(true);
       localStorage.setItem('hasStartedJourney', 'true');
       setIsLoadingTimer(false);
+      
+      // Refetch timer data after short delay
+      setTimeout(() => {
+        refetchTimer();
+      }, 500);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Timer start failed:", error);
       setIsLoadingTimer(false);
+      alert(`Erro ao iniciar cronômetro: ${error.message}`);
     }
   });
 
@@ -401,7 +485,7 @@ export default function PainelInterface({
                   {isLoadingTimer || isLoadingTimerQuery ? (
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground mb-3">
-                        {isLoadingTimer ? "Iniciando cronômetro..." : "Carregando dados do cronômetro..."}
+                        {isLoadingTimer ? "Iniciando cronômetro..." : "Carregando cronômetro..."}
                       </p>
                       <div className="timer-display">
                         00:00:00

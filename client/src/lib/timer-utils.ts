@@ -6,58 +6,61 @@ export interface TimeDifference {
   totalSeconds: number;
 }
 
-export function calculateTimeDifference(startDate: Date | string | null | undefined, currentDate: Date): TimeDifference {
-  // Handle null/undefined/invalid startDate
-  if (!startDate) {
+export function formatTimer(totalSeconds: number): string {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+export function calculateTimeDifference(startTime: string | Date | null | undefined, currentTime: Date): {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  totalSeconds: number;
+} {
+  // Handle null/undefined cases
+  if (!startTime) {
     return {
       days: 0,
       hours: 0,
       minutes: 0,
       seconds: 0,
-      totalSeconds: 0,
+      totalSeconds: 0
     };
   }
 
-  const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
-
-  // Validate that start is a valid Date object
-  if (!start || isNaN(start.getTime())) {
+  // Convert string to Date if needed
+  const startDate = typeof startTime === 'string' ? new Date(startTime) : startTime;
+  
+  // Validate the date
+  if (isNaN(startDate.getTime())) {
     return {
       days: 0,
       hours: 0,
       minutes: 0,
       seconds: 0,
-      totalSeconds: 0,
+      totalSeconds: 0
     };
   }
 
-  const diffInMs = currentDate.getTime() - start.getTime();
-  const totalSeconds = Math.floor(diffInMs / 1000);
+  const diffInMs = currentTime.getTime() - startDate.getTime();
+  const totalSeconds = Math.max(0, Math.floor(diffInMs / 1000));
 
-  const days = Math.floor(totalSeconds / (24 * 60 * 60));
-  const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
-  const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+  const days = Math.floor(totalSeconds / (24 * 3600));
+  const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
   return {
-    days: Math.max(0, days),
-    hours: Math.max(0, hours),
-    minutes: Math.max(0, minutes),
-    seconds: Math.max(0, seconds),
-    totalSeconds: Math.max(0, totalSeconds),
+    days,
+    hours,
+    minutes,
+    seconds,
+    totalSeconds
   };
-}
-
-export function formatTimer(timeDiff: TimeDifference): string {
-  const { days, hours, minutes, seconds } = timeDiff;
-  return `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-}
-
-export function getStartOfWeek(date: Date = new Date()): Date {
-  const startOfWeek = new Date(date);
-  startOfWeek.setDate(date.getDate() - date.getDay());
-  startOfWeek.setHours(0, 0, 0, 0);
-  return startOfWeek;
 }
 
 export function formatDuration(totalSeconds: number): string {
