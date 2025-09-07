@@ -15,11 +15,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { 
   formatTimer, 
-  calculateTimeDifference,
-  getActiveTimer,
-  startNewTimer,
-  calculateTimerElapsed,
-  Timer as TimerType
+  calculateTimeDifference
 } from "@/lib/timer-utils";
 import DesafioPlanoBeamEstar from "@/components/desafio-plano-bem-estar";
 import DesafioDuplaDinamica from "@/components/desafio-dupla-dinamica";
@@ -140,29 +136,7 @@ interface TimerProps {
 
 function Timer({ userId }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [activeTimer, setActiveTimer] = useState<TimerType | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // Função para carregar o timer ativo
-  const loadActiveTimer = async () => {
-    if (!userId) return;
-    
-    try {
-      const timer = await getActiveTimer(userId);
-      setActiveTimer(timer);
-    } catch (error) {
-      console.error('Erro ao carregar timer:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Carregar timer quando o componente montar
-  useEffect(() => {
-    loadActiveTimer();
-  }, [userId]);
-
-  // Atualizar tempo a cada segundo
+  
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -171,53 +145,10 @@ function Timer({ userId }: TimerProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Função para iniciar novo timer
-  const handleStartTimer = async () => {
-    if (!userId) return;
-    
-    try {
-      setLoading(true);
-      const newTimer = await startNewTimer(userId);
-      if (newTimer) {
-        setActiveTimer(newTimer);
-      }
-    } catch (error) {
-      console.error('Erro ao iniciar timer:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground mb-3">
-          Carregando cronômetro...
-        </p>
-        <div className="timer-display">
-          00:00:00
-        </div>
-      </div>
-    );
-  }
-
-  if (!activeTimer) {
-    return (
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground mb-3">
-          Pronto para começar sua jornada?
-        </p>
-        <button
-          onClick={handleStartTimer}
-          className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-        >
-          Iniciar Cronômetro
-        </button>
-      </div>
-    );
-  }
-
-  const timeDiff = calculateTimerElapsed(activeTimer);
+  // For demo purposes, we'll use a fixed start date
+  // In a real app, this would come from the user's data
+  const startDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
+  const timeDiff = calculateTimeDifference(startDate, currentTime);
 
   return (
     <div className="text-center">
@@ -237,10 +168,6 @@ function Timer({ userId }: TimerProps) {
           </div>
         </div>
       )}
-
-      <div className="mt-2 text-xs text-muted-foreground">
-        Iniciado em: {new Date(activeTimer.started_at).toLocaleString('pt-BR')}
-      </div>
     </div>
   );
 }
