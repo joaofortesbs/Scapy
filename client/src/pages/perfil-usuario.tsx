@@ -28,17 +28,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
     const fetchQuizData = async () => {
       if (!user?.id) return;
       try {
-        const { data, error } = await supabase
-          .from('quiz_contextualizacao') // Assuming this is the table name
-          .select('*')
-          .eq('user_id', user.id)
-          .single(); // Fetch a single record
-
-        if (error && error.message !== 'Result is not a single record') { // Handle case where no record exists
-            console.error('Error fetching quiz data:', error);
-            setQuizData(null); // Ensure quizData is null if there's an error or no data
+        // Use server API instead of direct Supabase query
+        const response = await fetch(`/api/quiz/${user.id}`);
+        
+        if (response.ok) {
+          const result = await response.json();
+          setQuizData(result.quiz);
+        } else if (response.status === 404) {
+          // Quiz not found - user hasn't completed quiz yet
+          setQuizData(null);
         } else {
-            setQuizData(data);
+          console.error('Error fetching quiz data:', response.statusText);
+          setQuizData(null);
         }
       } catch (error) {
         console.error('Unexpected error fetching quiz data:', error);
@@ -354,55 +355,89 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
               </Card>
             </motion.div>
 
-            {/* Novo Card para Quiz de Personalização */}
-            {quizData && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.3 }}
-              >
-                <Card className="rounded-3xl border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-blue-500/10">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-center mb-4">
-                      <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
-                        <BarChart3 className="w-6 h-6 text-blue-500" />
+            {/* Card Dados Quiz de Personalização */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
+            >
+              <Card className="rounded-3xl border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-blue-500/10">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
+                      <BarChart3 className="w-6 h-6 text-blue-500" />
+                    </div>
+                  </div>
+
+                  <h3 className="text-xl font-bold text-center text-foreground mb-4">
+                    Dados Quiz de Personalização
+                  </h3>
+
+                  {quizData ? (
+                    <div className="space-y-4">
+                      {/* Display quiz information */}
+                      {quizData.genero && (
+                        <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
+                          <span className="text-sm font-medium text-muted-foreground">Gênero</span>
+                          <span className="text-lg font-bold text-primary">{quizData.genero}</span>
+                        </div>
+                      )}
+                      {quizData.frequencia && (
+                        <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
+                          <span className="text-sm font-medium text-muted-foreground">Frequência</span>
+                          <span className="text-lg font-bold text-primary">{quizData.frequencia}</span>
+                        </div>
+                      )}
+                      {quizData.motivacao && (
+                        <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
+                          <span className="text-sm font-medium text-muted-foreground">Motivação</span>
+                          <span className="text-lg font-bold text-primary">{quizData.motivacao}</span>
+                        </div>
+                      )}
+                      {quizData.gatilhos && (
+                        <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
+                          <span className="text-sm font-medium text-muted-foreground">Gatilhos</span>
+                          <span className="text-lg font-bold text-primary">{quizData.gatilhos}</span>
+                        </div>
+                      )}
+                      {quizData.religiao && (
+                        <div className="flex justify-between items-center p-3 bg-background/50 rounded-xl">
+                          <span className="text-sm font-medium text-muted-foreground">Religião</span>
+                          <span className="text-lg font-bold text-primary">{quizData.religiao}</span>
+                        </div>
+                      )}
+                      
+                      {quizData.completed && (
+                        <div className="flex justify-between items-center p-3 bg-green-500/10 rounded-xl border border-green-500/20">
+                          <span className="text-sm font-medium text-muted-foreground">Status</span>
+                          <span className="text-lg font-bold text-green-500">Completado</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center space-y-4">
+                      <div className="p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                        <p className="text-yellow-600 font-medium">Quiz não respondido</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Complete o Quiz de Personalização para ver seus dados aqui.
+                        </p>
                       </div>
                     </div>
+                  )}
 
-                    <h3 className="text-xl font-bold text-center text-foreground mb-4">
-                      Quiz de Personalização
-                    </h3>
-
-                    <div className="space-y-4 text-center">
-                      {/* Display quiz information */}
-                      {Object.entries(quizData).map(([key, value]) => {
-                        // Skip displaying user_id and potentially other internal fields
-                        if (key === 'user_id' || key === 'id' || key === 'created_at' || key === 'updated_at') {
-                          return null;
-                        }
-                        return (
-                          <div key={key} className="flex flex-col items-center p-3 bg-background/50 rounded-xl">
-                            <span className="text-sm font-medium text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
-                            <span className="text-lg font-bold text-primary">{String(value)}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Botão para refazer o quiz */}
-                    <div className="mt-6 flex justify-center">
-                      <Button 
-                        onClick={handleRefazerQuiz}
-                        className="rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3"
-                      >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Refazer Quiz
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
+                  {/* Botão para fazer/refazer o quiz */}
+                  <div className="mt-6 flex justify-center">
+                    <Button 
+                      onClick={handleRefazerQuiz}
+                      className="rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      {quizData ? 'Refazer Quiz' : 'Fazer Quiz'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
         </main>
       </div>
