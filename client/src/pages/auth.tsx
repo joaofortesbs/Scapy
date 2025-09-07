@@ -129,14 +129,28 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
         setMessage('Conta criada com sucesso! Redirecionando...');
         setMessageType('success');
         
-        // Salvar dados do usuário no localStorage
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('authToken', 'authenticated');
-        
-        // Redirecionar para o quiz de personalização (novo usuário)
-        setTimeout(() => {
-          onLoginSuccess(data.user, true); // true indica que é um novo usuário
-        }, 1500);
+        try {
+          // Salvar dados do usuário no localStorage
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('authToken', 'authenticated');
+          
+          // Redirecionar para o quiz de personalização (novo usuário)
+          setTimeout(() => {
+            try {
+              onLoginSuccess(data.user, true); // true indica que é um novo usuário
+            } catch (domError) {
+              console.error('Erro de DOM durante redirecionamento:', domError);
+              // Fallback: tentar novamente após um delay
+              setTimeout(() => {
+                window.location.reload();
+              }, 500);
+            }
+          }, 1500);
+        } catch (storageError) {
+          console.error('Erro ao salvar no localStorage:', storageError);
+          // Mesmo assim, tentar redirecionar
+          onLoginSuccess(data.user, true);
+        }
       } else {
         setMessage(data.message || 'Erro ao criar conta');
         setMessageType('error');
