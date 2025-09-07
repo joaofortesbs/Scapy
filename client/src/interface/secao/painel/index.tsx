@@ -138,20 +138,18 @@ function Timer({ startTime }: TimerProps) {
   useEffect(() => {
     console.log("Timer component - startTime:", startTime);
     
-    if (!startTime) return;
-
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [startTime]);
+  }, []);
 
   if (!startTime) {
     return (
       <div className="text-center">
         <p className="text-sm text-muted-foreground mb-3">
-          Iniciando cronômetro...
+          Cronômetro não iniciado
         </p>
         <div className="timer-display">
           00:00:00
@@ -177,7 +175,7 @@ function Timer({ startTime }: TimerProps) {
       {timeDiff.days > 0 && (
         <div className="mt-4">
           <div className="text-sm font-semibold text-primary">
-            {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'} LIMPO
+            {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'} LIMPO{timeDiff.days > 0 ? 'S' : ''}
           </div>
         </div>
       )}
@@ -337,18 +335,20 @@ export default function PainelInterface({
         return null;
       }
     },
-    enabled: true,
-    refetchInterval: 5000, // Refetch every 5 seconds
+    enabled: hasStartedJourney,
+    refetchInterval: 1000, // Update every second for real-time display
   });
 
   useEffect(() => {
     if (timerData && timerData.start_time) {
       console.log("Setting timer start time:", timerData.start_time);
       setTimerStartTime(timerData.start_time);
-      setHasStartedJourney(true);
-      localStorage.setItem('hasStartedJourney', 'true');
+      if (!hasStartedJourney) {
+        setHasStartedJourney(true);
+        localStorage.setItem('hasStartedJourney', 'true');
+      }
     }
-  }, [timerData]);
+  }, [timerData, hasStartedJourney]);
 
   const startTimerMutation = useMutation({
     mutationFn: async () => {
@@ -456,18 +456,7 @@ export default function PainelInterface({
                   </div>
 
                   {/* Conditionally show Timer */}
-                  {isLoadingTimer || isLoadingTimerQuery ? (
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground mb-3">
-                        {isLoadingTimer ? "Iniciando cronômetro..." : "Carregando dados do cronômetro..."}
-                      </p>
-                      <div className="timer-display">
-                        00:00:00
-                      </div>
-                    </div>
-                  ) : (
-                    <Timer startTime={timerStartTime} />
-                  )}
+                  <Timer startTime={timerStartTime} />
                 </>
               )}
             </section>
