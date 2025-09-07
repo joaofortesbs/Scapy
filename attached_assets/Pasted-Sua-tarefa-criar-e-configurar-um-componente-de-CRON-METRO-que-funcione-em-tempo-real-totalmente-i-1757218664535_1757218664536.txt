@@ -1,0 +1,58 @@
+Sua tarefa é criar e configurar um componente de CRONÔMETRO que funcione em tempo real, totalmente integrado com o banco de dados do Supabase.  
+
+### Objetivo:
+- O cronômetro deve salvar o tempo dentro do Supabase de forma correta e confiável.
+- Sempre que o usuário acessar a plataforma novamente, o cronômetro deve exibir o tempo correto em tempo real (como se nunca tivesse parado).  
+- Se necessário, utilize cálculos matemáticos no front-end para reconstruir o tempo ao vivo com base nos dados do banco.
+
+---
+
+### Requisitos Técnicos:
+1. **Banco de Dados (Supabase / PostgreSQL):**
+   - Criar uma tabela `timers` com as seguintes colunas:
+     - `id BIGSERIAL PRIMARY KEY`
+     - `user_id UUID REFERENCES auth.users(id)`
+     - `started_at TIMESTAMP WITH TIME ZONE`
+     - `ended_at TIMESTAMP WITH TIME ZONE NULL`
+     - `status TEXT DEFAULT 'rodando'`
+   - Obs: `ended_at` será usado apenas quando o cronômetro for pausado/finalizado.
+
+2. **Lógica de Salvamento:**
+   - Quando o usuário iniciar o cronômetro, salvar `started_at = NOW()` no banco.
+   - O cronômetro não deve salvar "milissegundos rodando em loop", apenas a hora de início.
+   - O cálculo do tempo em tempo real será feito assim:
+     - Se `status = 'rodando'` e `ended_at IS NULL`:  
+       `tempo_decorrido = NOW() - started_at`
+     - Se `status = 'pausado'` e `ended_at IS NOT NULL`:  
+       `tempo_decorrido = ended_at - started_at`
+
+3. **Front-end (React no Vibe Code):**
+   - Criar um componente `<Cronometro />` que:
+     - Busca os dados do `timer` no Supabase para o `user_id` logado.
+     - Exibe o tempo decorrido ao vivo (em horas, minutos e segundos).
+     - Atualiza a interface a cada segundo usando `setInterval`.
+     - Se não houver `timer` ativo, oferece a opção de iniciar um novo.
+
+4. **Matemática no Front-end:**
+   - Sempre calcular `tempo_decorrido` assim:
+     ```js
+     if (status === "rodando") {
+       tempoDecorrido = Date.now() - new Date(started_at);
+     } else if (status === "pausado") {
+       tempoDecorrido = new Date(ended_at) - new Date(started_at);
+     }
+     ```
+   - Converter o resultado em horas/minutos/segundos para exibir corretamente.
+
+5. **Persistência em Sessões Diferentes:**
+   - O tempo nunca deve "zerar" quando o usuário sair e voltar.  
+   - O cronômetro deve recalcular o tempo com base nos dados salvos no banco, garantindo consistência total.
+
+---
+
+### Resultado Esperado:
+- O usuário inicia o cronômetro → `started_at` salvo no Supabase.  
+- O usuário sai da plataforma e volta → o cronômetro continua rodando em tempo real, exibindo corretamente a diferença entre `NOW()` e `started_at`.  
+- Se o cronômetro for pausado/finalizado → `ended_at` é salvo e o tempo fica congelado corretamente.  
+
+Crie esse componente de forma **otimizada, limpa e escalável**, pronto para ser usado dentro da plataforma.

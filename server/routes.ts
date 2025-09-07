@@ -25,9 +25,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Buscar usuário pelo email
       const { data: user, error } = await supabase
-        .from('users')
+        .from('auth_users')
         .select('*')
-        .eq('username', email.toLowerCase().trim())
+        .eq('email', email.toLowerCase().trim())
+        .eq('is_active', true)
         .single();
 
       if (error || !user) {
@@ -35,20 +36,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verificar senha
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
       if (!isPasswordValid) {
         return res.status(401).json({ message: 'Email ou senha inválidos' });
       }
 
-      // Não precisamos atualizar último login pois não temos esse campo
+      // Atualizar último login
+      await supabase
+        .from('auth_users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', user.id);
 
       // Retornar dados do usuário (sem a senha)
       const userData = {
         id: user.id,
-        username: user.username,
-        startDate: user.start_date,
-        createdAt: user.created_at
+        email: user.email,
+        fullName: user.full_name,
+        createdAt: user.created_at,
+        lastLogin: new Date().toISOString()
       };
 
       res.json({ 
@@ -84,9 +90,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Verificar se o email já existe
       const { data: existingUser } = await supabase
-        .from('users')
-        .select('username')
-        .eq('username', email.toLowerCase().trim())
+        .from('auth_users')
+        .select('email')
+        .eq('email', email.toLowerCase().trim())
         .single();
 
       if (existingUser) {
@@ -151,9 +157,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Buscar usuário
       const { data: user, error } = await supabase
-        .from('users')
-        .select('id, username, created_at')
+        .from('auth_users')
+        .select('id, email, full_name, created_at, last_login, is_active')
         .eq('id', userId)
+        .eq('is_active', true)
         .single();
 
       if (error || !user) {
@@ -163,8 +170,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         user: {
           id: user.id,
-          username: user.username,
-          createdAt: user.created_at
+          email: user.email,
+          fullName: user.full_name,
+          createdAt: user.created_at,
+          lastLogin: user.last_login
         }
       });
 
@@ -259,134 +268,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(goal);
     } catch (error) {
       res.status(400).json({ message: "Invalid data" });
-    }
-  });
-
-  // Rota para iniciar o timer
-  app.post("/api/timer/start", async (req, res) => {
-    try {
-      const authHeader = req.headers.authorization;
-
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: 'Token não fornecido' });
-      }
-
-      const token = authHeader.substring(7);
-      const tokenParts = token.split('_');
-
-      if (tokenParts.length !== 3 || tokenParts[0] !== 'auth') {
-        return res.status(401).json({ message: 'Token inválido' });
-      }
-
-      const userId = parseInt(tokenParts[1]);
-
-      // Verificar se usuário existe
-      const { data: user, error: userError } = await supabase
-        .from('auth_users')
-        .select('id')
-        .eq('id', userId)
-        .eq('is_active', true)
-        .single();
-
-      if (userError || !user) {
-        return res.status(401).json({ message: 'Usuário não encontrado' });
-      }
-
-      // Verificar se já existe um timer ativo para este usuário
-      const { data: existingTimer } = await supabase
-        .from('timer')
-        .select('id, start_time')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      let timerData;
-
-      if (existingTimer && existingTimer.length > 0) {
-        // Se já existe timer, retorna o existente
-        timerData = existingTimer[0];
-      } else {
-        // Criar novo timer
-        const startTime = new Date().toISOString();
-
-        const { data: newTimer, error: timerError } = await supabase
-          .from('timer')
-          .insert({
-            user_id: userId,
-            start_time: startTime
-          })
-          .select()
-          .single();
-
-        if (timerError) {
-          console.error('Erro ao criar timer:', timerError);
-          return res.status(500).json({ message: 'Erro ao iniciar timer' });
-        }
-
-        timerData = newTimer;
-      }
-
-      res.json({
-        message: 'Timer iniciado com sucesso',
-        timer: {
-          id: timerData.id,
-          startTime: timerData.start_time,
-          userId: userId
-        }
-      });
-
-    } catch (error) {
-      console.error('Erro ao iniciar timer:', error);
-      res.status(500).json({ message: 'Erro interno do servidor' });
-    }
-  });
-
-  // Rota para obter dados do timer
-  app.get("/api/timer", async (req, res) => {
-    try {
-      const authHeader = req.headers.authorization;
-
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: 'Token não fornecido' });
-      }
-
-      const token = authHeader.substring(7);
-      const tokenParts = token.split('_');
-
-      if (tokenParts.length !== 3 || tokenParts[0] !== 'auth') {
-        return res.status(401).json({ message: 'Token inválido' });
-      }
-
-      const userId = parseInt(tokenParts[1]);
-
-      // Buscar timer mais recente do usuário
-      const { data: timer, error } = await supabase
-        .from('timer')
-        .select('id, start_time, created_at')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (error) {
-        console.error('Erro ao buscar timer:', error);
-        return res.status(500).json({ message: 'Erro ao buscar timer' });
-      }
-
-      if (!timer || timer.length === 0) {
-        return res.json({ timer: null });
-      }
-
-      res.json({
-        timer: {
-          id: timer[0].id,
-          startTime: timer[0].start_time,
-          createdAt: timer[0].created_at
-        }
-      });
-
-    } catch (error) {
-      console.error('Erro ao buscar timer:', error);
-      res.status(500).json({ message: 'Erro interno do servidor' });
     }
   });
 

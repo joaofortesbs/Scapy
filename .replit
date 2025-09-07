@@ -39,4 +39,3 @@ args = "npm run dev"
 waitForPort = 5000
 
 [agent]
-integrations = ["javascript_supabase==1.0.0"]
