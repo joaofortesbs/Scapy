@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertWeeklyProgressSchema, insertUserGoalsSchema } from "@shared/schema";
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
+import { neon } from '@neondatabase/serverless';
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -14,6 +15,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   const supabase = createClient(supabaseUrl, supabaseKey);
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole);
+  
+  // Direct PostgreSQL connection for bypassing Supabase cache issues
+  const sql = neon(process.env.DATABASE_URL!);
 
   // ========== ROTAS DE AUTENTICAÇÃO ==========
 
@@ -212,23 +216,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create timer start time
       const timerStartDate = new Date().toISOString();
 
-      // Save timer to Supabase timers table using service role for write permissions
-      const { data: timerData, error: timerError } = await supabaseAdmin
-        .from('timers')
-        .insert({
-          userId: userId,
-          startDate: timerStartDate,
-          isActive: true
-        })
-        .select()
-        .single();
+      // Save timer using direct SQL to bypass Supabase cache issues
+      try {
+        const timerData = await sql`
+          INSERT INTO timers (user_id, start_date, is_active)
+          VALUES (${userId}, ${timerStartDate}, true)
+          RETURNING *
+        `;
 
-      if (timerError) {
-        console.error('Erro ao salvar timer no Supabase:', timerError);
+        console.log('Timer salvo no banco:', timerData[0]);
+      } catch (sqlError) {
+        console.error('Erro ao salvar timer no banco:', sqlError);
         return res.status(500).json({ message: 'Erro ao salvar timer no banco de dados' });
       }
-
-      console.log('Timer salvo no Supabase:', timerData);
 
       // Return user data with timer start date
       const userData = {
@@ -243,8 +243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         message: 'Cronômetro iniciado com sucesso!',
         user: userData,
-        timerStarted: true,
-        timerId: timerData.id
+        timerStarted: true
       });
 
     } catch (error) {
@@ -258,28 +257,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
 
-      // Check if user has an active timer
-      const { data: timerData, error: timerError } = await supabase
-        .from('timers')
-        .select('*')
-        .eq('userId', userId)
-        .eq('isActive', true)
-        .order('created_at', { ascending: false })
-        .limit(1);
+      // Check if user has an active timer using direct SQL to bypass Supabase cache
+      try {
+        const timerData = await sql`
+          SELECT * FROM timers 
+          WHERE user_id = ${userId} AND is_active = true 
+          ORDER BY created_at DESC 
+          LIMIT 1
+        `;
 
-      if (timerError) {
-        console.error('Erro ao verificar timer:', timerError);
+        const hasActiveTimer = timerData.length > 0;
+        const latestTimer = hasActiveTimer ? timerData[0] : null;
+
+        res.json({
+          hasActiveTimer,
+          timer: latestTimer,
+          startDate: latestTimer ? latestTimer.start_date : null
+        });
+      } catch (sqlError) {
+        console.error('Erro ao verificar timer via SQL:', sqlError);
         return res.status(500).json({ message: 'Erro ao verificar timer' });
       }
-
-      const hasActiveTimer = timerData && timerData.length > 0;
-      const latestTimer = hasActiveTimer ? timerData[0] : null;
-
-      res.json({
-        hasActiveTimer,
-        timer: latestTimer,
-        startDate: latestTimer ? latestTimer.startDate : null
-      });
 
     } catch (error) {
       console.error('Erro ao verificar status do timer:', error);
