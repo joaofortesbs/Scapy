@@ -165,7 +165,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
 
       if (response.ok) {
         // Atualizar os dados locais
-        setQuizData(prev => ({
+        setQuizData((prev: any) => ({
           ...prev,
           [editingField]: editValue
         }));
@@ -205,7 +205,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
           },
           body: JSON.stringify({
             userId: user.id,
-            userFullName: user.fullName || user.full_name || 'Usuário'
+            userFullName: user.full_name || user.username || 'Usuário'
           }),
         });
 
@@ -310,7 +310,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
 
               {/* Nome do usuário */}
               <h2 className="text-2xl font-bold text-foreground mb-2" data-testid="user-name">
-                {user?.fullName || user?.username || 'Usuário'}
+                {user?.full_name || user?.username || 'Usuário'}
               </h2>
             </motion.div>
 
@@ -590,6 +590,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                         </CardContent>
                       </Card>
                     )}
+                    </motion.div>
                   ) : (
                     <Card className="border-border rounded-full" style={{ backgroundColor: 'transparent' }}>
                       <CardContent className="p-3">
@@ -603,7 +604,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   )}
                 </CardContent>
               </Card>
-              </motion.div>
+            </motion.div>
           </div>
         </main>
       </div>
