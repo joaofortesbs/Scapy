@@ -247,7 +247,7 @@ function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
           alt="Comece sua jornada agora - Bloqueador avançado de apps e sites"
           className="w-[770px] h-[527px] object-contain mx-auto"
           loading="eager"
-          fetchpriority="high"
+          fetchPriority="high"
           width={600}
           height={450}
           onError={(e) => {
