@@ -128,10 +128,10 @@ function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
 
 // Timer Component
 interface TimerProps {
-  user?: User;
+  startDate: Date;
 }
 
-function Timer({ user }: TimerProps) {
+function Timer({ startDate }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -142,21 +142,7 @@ function Timer({ user }: TimerProps) {
     return () => clearInterval(interval);
   }, []);
 
-  if (!user) {
-    return (
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground mb-3">
-          Carregando...
-        </p>
-        <div className="timer-display">
-          00:00:00
-        </div>
-      </div>
-    );
-  }
-
-  const timeDiff = calculateTimeDifference(user.startDate, currentTime);
-  const formattedTime = formatTimer(timeDiff);
+  const timeDiff = calculateTimeDifference(startDate, currentTime);
 
   return (
     <div className="text-center">
@@ -287,9 +273,18 @@ export default function PainelInterface({
     return localStorage.getItem('hasStartedJourney') === 'true';
   });
 
+  // Timer start date state
+  const [timerStartDate, setTimerStartDate] = useState<Date>(() => {
+    const savedStartDate = localStorage.getItem('timerStartDate');
+    return savedStartDate ? new Date(savedStartDate) : new Date();
+  });
+
   const handleStartJourney = () => {
+    const currentDate = new Date();
     setHasStartedJourney(true);
+    setTimerStartDate(currentDate);
     localStorage.setItem('hasStartedJourney', 'true');
+    localStorage.setItem('timerStartDate', currentDate.toISOString());
   };
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
@@ -321,7 +316,7 @@ export default function PainelInterface({
                   </div>
 
                   {/* Conditionally show Timer */}
-                  <Timer user={user} />
+                  <Timer startDate={timerStartDate} />
                 </>
               )}
             </section>
