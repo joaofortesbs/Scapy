@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react"; // Added useEffect import
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Camera, Eye, Trophy, RefreshCw, User, BarChart3, Clock, CheckCircle, Mountain, Users, Calendar, Heart, Zap, Cross } from "lucide-react";
+import { ArrowLeft, Camera, Eye, Trophy, RefreshCw, User, BarChart3, Clock, CheckCircle, Mountain, Users, Calendar, Heart, Zap, Cross, Edit, Save, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import ParticlesBackground from "@/components/particles-background";
@@ -22,6 +22,8 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
   const [uploading, setUploading] = useState(false);
   const [progressCardVisible, setProgressCardVisible] = useState(false);
   const [quizData, setQuizData] = useState<any>(null); // State to hold quiz data
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch quiz data when the component mounts or user changes
@@ -122,6 +124,61 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
 
   const handleProgressCardClick = () => {
     setProgressCardVisible(!progressCardVisible);
+  };
+
+  const handleEditField = (fieldName: string, currentValue: string) => {
+    setEditingField(fieldName);
+    setEditValue(currentValue);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!user?.id || !editingField) return;
+
+    try {
+      // Mapear nomes dos campos para o formato correto da API
+      const fieldMapping: Record<string, string> = {
+        'genero': 'gender',
+        'idade': 'age',
+        'motivacao': 'motivation',
+        'frequencia': 'frequency',
+        'gatilhos': 'triggers',
+        'religiao': 'religion'
+      };
+
+      const apiFieldName = fieldMapping[editingField] || editingField;
+
+      const response = await fetch('/api/quiz/save-step', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          stepName: apiFieldName,
+          stepValue: editValue
+        }),
+      });
+
+      if (response.ok) {
+        // Atualizar os dados locais
+        setQuizData(prev => ({
+          ...prev,
+          [editingField]: editValue
+        }));
+        setEditingField(null);
+        setEditValue('');
+      } else {
+        alert('Erro ao salvar a edição. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar edição:', error);
+      alert('Erro ao salvar a edição. Tente novamente.');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingField(null);
+    setEditValue('');
   };
 
   // Function to refazer quiz
@@ -381,13 +438,20 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   className="space-y-2"
                 >
                   {quizData.genero && (
-                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                    <Card 
+                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity" 
+                      style={{ backgroundColor: '#000515' }}
+                      onClick={() => handleEditField('genero', quizData.genero)}
+                    >
                       <CardContent className="p-3">
                         <div className="flex items-center space-x-3">
                           <Users className="w-4 h-4 text-primary flex-shrink-0" />
                           <div className="flex items-center justify-between flex-1">
                             <span className="text-sm text-muted-foreground font-medium">Gênero:</span>
-                            <span className="text-sm text-foreground font-medium">{quizData.genero}</span>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-foreground font-medium">{quizData.genero}</span>
+                              <Edit className="w-3 h-3 text-muted-foreground" />
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -395,13 +459,20 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   )}
 
                   {quizData.idade && (
-                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                    <Card 
+                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity" 
+                      style={{ backgroundColor: '#000515' }}
+                      onClick={() => handleEditField('idade', quizData.idade)}
+                    >
                       <CardContent className="p-3">
                         <div className="flex items-center space-x-3">
                           <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
                           <div className="flex items-center justify-between flex-1">
                             <span className="text-sm text-muted-foreground font-medium">Idade:</span>
-                            <span className="text-sm text-foreground font-medium">{quizData.idade}</span>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-foreground font-medium">{quizData.idade}</span>
+                              <Edit className="w-3 h-3 text-muted-foreground" />
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -409,13 +480,20 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   )}
 
                   {quizData.motivacao && (
-                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                    <Card 
+                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity" 
+                      style={{ backgroundColor: '#000515' }}
+                      onClick={() => handleEditField('motivacao', quizData.motivacao)}
+                    >
                       <CardContent className="p-3">
                         <div className="flex items-center space-x-3">
                           <Heart className="w-4 h-4 text-primary flex-shrink-0" />
                           <div className="flex items-center justify-between flex-1">
                             <span className="text-sm text-muted-foreground font-medium">Motivação:</span>
-                            <span className="text-sm text-foreground font-medium">{quizData.motivacao}</span>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-foreground font-medium">{quizData.motivacao}</span>
+                              <Edit className="w-3 h-3 text-muted-foreground" />
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -423,13 +501,20 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   )}
 
                   {quizData.frequencia && (
-                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                    <Card 
+                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity" 
+                      style={{ backgroundColor: '#000515' }}
+                      onClick={() => handleEditField('frequencia', quizData.frequencia)}
+                    >
                       <CardContent className="p-3">
                         <div className="flex items-center space-x-3">
                           <Clock className="w-4 h-4 text-primary flex-shrink-0" />
                           <div className="flex items-center justify-between flex-1">
                             <span className="text-sm text-muted-foreground font-medium">Frequência:</span>
-                            <span className="text-sm text-foreground font-medium">{quizData.frequencia}</span>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-foreground font-medium">{quizData.frequencia}</span>
+                              <Edit className="w-3 h-3 text-muted-foreground" />
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -437,13 +522,20 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   )}
 
                   {quizData.gatilhos && (
-                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                    <Card 
+                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity" 
+                      style={{ backgroundColor: '#000515' }}
+                      onClick={() => handleEditField('gatilhos', quizData.gatilhos)}
+                    >
                       <CardContent className="p-3">
                         <div className="flex items-center space-x-3">
                           <Zap className="w-4 h-4 text-primary flex-shrink-0" />
                           <div className="flex items-center justify-between flex-1">
                             <span className="text-sm text-muted-foreground font-medium">Gatilhos:</span>
-                            <span className="text-sm text-foreground font-medium">{quizData.gatilhos}</span>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-foreground font-medium">{quizData.gatilhos}</span>
+                              <Edit className="w-3 h-3 text-muted-foreground" />
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -451,13 +543,20 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   )}
 
                   {quizData.religiao && (
-                    <Card className="border-border rounded-full ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
+                    <Card 
+                      className="border-border rounded-full ai-assistant-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity" 
+                      style={{ backgroundColor: '#000515' }}
+                      onClick={() => handleEditField('religiao', quizData.religiao)}
+                    >
                       <CardContent className="p-3">
                         <div className="flex items-center space-x-3">
                           <Cross className="w-4 h-4 text-primary flex-shrink-0" />
                           <div className="flex items-center justify-between flex-1">
                             <span className="text-sm text-muted-foreground font-medium">Religião:</span>
-                            <span className="text-sm text-foreground font-medium">{quizData.religiao}</span>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-foreground font-medium">{quizData.religiao}</span>
+                              <Edit className="w-3 h-3 text-muted-foreground" />
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -479,6 +578,67 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
           </div>
         </main>
       </div>
+
+      {/* Modal de Edição */}
+      {editingField && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          onClick={handleCancelEdit}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-background border border-primary/30 rounded-2xl p-6 w-full max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-bold text-foreground mb-2">
+                Editar {editingField === 'genero' ? 'Gênero' : 
+                        editingField === 'idade' ? 'Idade' :
+                        editingField === 'motivacao' ? 'Motivação' :
+                        editingField === 'frequencia' ? 'Frequência' :
+                        editingField === 'gatilhos' ? 'Gatilhos' :
+                        editingField === 'religiao' ? 'Religião' : editingField}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Digite sua nova resposta abaixo
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                className="w-full p-3 rounded-xl bg-primary/5 border border-primary/20 text-foreground focus:outline-none focus:border-primary"
+                placeholder="Digite sua resposta..."
+                autoFocus
+              />
+
+              <div className="flex space-x-3">
+                <Button
+                  onClick={handleCancelEdit}
+                  variant="outline"
+                  className="flex-1 rounded-xl"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  className="flex-1 rounded-xl bg-primary hover:bg-primary/90"
+                  disabled={!editValue.trim()}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </motion.div>
   );
 }
