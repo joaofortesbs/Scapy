@@ -54,6 +54,30 @@ export const insertUserGoalsSchema = createInsertSchema(userGoals).omit({
   createdAt: true,
 });
 
+export const quizContextualizacao = pgTable("quiz_contextualizacao", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  userFullName: text("user_full_name").notNull(),
+  genero: varchar("genero", { length: 50 }),
+  frequencia: varchar("frequencia", { length: 100 }),
+  idade: varchar("idade", { length: 50 }),
+  motivacao: text("motivacao"),
+  gatilhos: text("gatilhos"),
+  religiao: varchar("religiao", { length: 100 }),
+  completed: boolean("completed").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertQuizContextualizacaoSchema = createInsertSchema(quizContextualizacao).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type QuizContextualizacao = typeof quizContextualizacao.$inferSelect;
+export type InsertQuizContextualizacao = z.infer<typeof insertQuizContextualizacaoSchema>;
+
 export const insertTimerSchema = createInsertSchema(timers).omit({
   id: true,
   created_at: true,
