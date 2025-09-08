@@ -40,7 +40,7 @@ export default function QuizPersonalizacao({ user, onCompleteQuiz }: QuizPersona
         },
         body: JSON.stringify({
           userId: user.id,
-          userFullName: user.fullName || user.full_name || 'Usuário'
+          userFullName: user.full_name || user.fullName || user.username || 'Usuário'
         }),
       });
 

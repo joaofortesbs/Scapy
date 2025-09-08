@@ -17,8 +17,9 @@ export function useProfileImage(user: User | undefined | null) {
         return;
       }
 
-      // Fallback padrão
-      const defaultImage = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username || 'user'}&backgroundColor=000515`;
+      // Fallback padrão usando full_name se disponível
+      const seedName = user.full_name || user.fullName || user.username || 'user';
+      const defaultImage = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seedName)}&backgroundColor=000515`;
 
       try {
         // ========== SISTEMA 100% OFFLINE - SÓ LOCALSTORAGE! ==========
