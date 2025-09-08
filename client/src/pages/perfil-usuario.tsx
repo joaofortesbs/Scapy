@@ -30,7 +30,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
   const [currentUser, setCurrentUser] = useState(user);
-  
+
   // Hook robusto para carregamento de imagem
   const { imageUrl, isLoading: imageLoading, saveImageToLocalStorage } = useProfileImage(currentUser);
 
@@ -83,15 +83,15 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
       console.log('🎯 SISTEMA 100% OFFLINE - Salvando imagem...');
 
       // ============ SISTEMA 100% OFFLINE - SÓ LOCALSTORAGE! ============
-      
+
       // Salvar imagem Base64 no localStorage específico
       saveImageToLocalStorage(result.base64);
-      
+
       // Atualizar dados do usuário com a imagem Base64
       const updatedUser = { ...currentUser, profileImage: result.base64 };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setCurrentUser(updatedUser);
-      
+
       // Atualizar estado local imediatamente
       if (onUserUpdate) {
         onUserUpdate(updatedUser);
@@ -220,6 +220,15 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
     }
   };
 
+  // Robust function to get user display name
+  const getUserDisplayName = () => {
+    if (!currentUser) return 'Usuário';
+    if (currentUser.full_name && currentUser.full_name.trim() !== '') {
+      return currentUser.full_name;
+    }
+    return currentUser.username || 'Usuário';
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -290,7 +299,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
 
               {/* Nome do usuário */}
               <h2 className="text-2xl font-bold text-foreground mb-2" data-testid="user-name">
-                {currentUser?.full_name || currentUser?.username || 'Usuário'}
+                {getUserDisplayName()}
               </h2>
             </motion.div>
 
