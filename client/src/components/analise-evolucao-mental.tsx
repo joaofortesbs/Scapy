@@ -14,7 +14,7 @@ export default function AnaliseEvolucaoMental() {
         <CardContent className="p-0">
           {/* Card original de Evolução Mental (mantido intacto) */}
           <Card className="border-border rounded-full evolucao-mental-card-natural-3d" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
-            <CardContent className="p-6 px-8">
+            <CardContent className="p-4">
               <div className="flex items-center space-x-4">
                 {/* Ícone de cérebro no canto esquerdo */}
                 <div className="flex-shrink-0">
