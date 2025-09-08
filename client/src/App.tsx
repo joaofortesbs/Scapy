@@ -8,6 +8,7 @@ import Dashboard from "@/pages/dashboard";
 import AuthPage from "@/pages/auth";
 import PerfilUsuario from "@/pages/perfil-usuario";
 import QuizPersonalizacao from "@/pages/quiz-personalizacao";
+import MelhorVersao from "@/pages/melhor-versao";
 import { useState, useEffect } from "react";
 
 function AppRouter() {
@@ -113,6 +114,7 @@ function AppRouter() {
               />
             </Route>
             <Route path="/quiz-personalizacao" component={() => <QuizPersonalizacao user={user} onCompleteQuiz={handleCompleteQuiz} />} />
+            <Route path="/melhor-versao" component={() => <MelhorVersao />} />
             <Route component={NotFound} />
           </Switch>
         </Router>
@@ -136,6 +138,7 @@ function AppRouter() {
           />
         </Route>
         <Route path="/quiz-personalizacao" component={() => <QuizPersonalizacao user={user} onCompleteQuiz={handleCompleteQuiz} />} />
+        <Route path="/melhor-versao" component={() => <MelhorVersao />} />
         <Route component={NotFound} />
       </Switch>
     </Router>
