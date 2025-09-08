@@ -9,38 +9,32 @@ export default function AnaliseEvolucaoMental() {
 
   return (
     <section className="mb-6">
-      {/* Card externo com bordas arredondadas menores e altura muito maior */}
-      <Card className="border-border rounded-3xl p-12" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
-        <CardContent className="p-0">
-          {/* Card original de Evolução Mental (mantido intacto) */}
-          <Card className="border-border rounded-full evolucao-mental-card-natural-3d" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
-            <CardContent className="py-4 px-8">
-              <div className="flex items-center space-x-4">
-                {/* Ícone de cérebro no canto esquerdo */}
-                <div className="flex-shrink-0">
-                  <Brain className="w-6 h-6 text-primary" />
-                </div>
-                
-                {/* Texto "Evolução Mental" */}
-                <div className="flex-shrink-0">
-                  <span className="text-sm font-medium text-foreground">Evolução Mental</span>
-                </div>
-                
-                {/* Barra de progresso */}
-                <div className="flex-1 mx-3">
-                  <Progress 
-                    value={evolutionPercentage} 
-                    className="h-2 bg-secondary/30 border border-border"
-                  />
-                </div>
-                
-                {/* Porcentagem */}
-                <div className="flex-shrink-0">
-                  <span className="text-sm font-medium text-primary">{evolutionPercentage}%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      <Card className="border-border rounded-full evolucao-mental-card-natural-3d" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-4">
+            {/* Ícone de cérebro no canto esquerdo */}
+            <div className="flex-shrink-0">
+              <Brain className="w-6 h-6 text-primary" />
+            </div>
+            
+            {/* Texto "Evolução Mental" */}
+            <div className="flex-shrink-0">
+              <span className="text-sm font-medium text-foreground">Evolução Mental</span>
+            </div>
+            
+            {/* Barra de progresso */}
+            <div className="flex-1 mx-3">
+              <Progress 
+                value={evolutionPercentage} 
+                className="h-2 bg-secondary/30 border border-border"
+              />
+            </div>
+            
+            {/* Porcentagem */}
+            <div className="flex-shrink-0">
+              <span className="text-sm font-medium text-primary">{evolutionPercentage}%</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </section>
