@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'wouter';
 import { Progress } from '@/components/ui/progress';
@@ -6,6 +6,11 @@ import QuadroDosSonhos from '@/components/QuadroDosSonhos';
 import ParticlesBackground from '@/components/particles-background';
 
 export default function MelhorVersao() {
+  // Rolar para o topo quando a página carregar
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Para novos usuários, começamos com 0% - pode ser conectado com dados reais depois
   const evolutionPercentage = 25; // Exemplo: 25% = primeira fase (Consciência) completa
 
@@ -80,13 +85,6 @@ export default function MelhorVersao() {
                   </div>
                 );
               })}
-            </div>
-
-            {/* Setas entre as fases */}
-            <div className="absolute top-7 left-0 right-0 flex justify-between px-6">
-              {fases.slice(0, -1).map((_, index) => (
-                <span key={index} className="text-muted-foreground text-sm">→</span>
-              ))}
             </div>
           </div>
         </div>
