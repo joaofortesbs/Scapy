@@ -14,8 +14,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { 
-  formatTimer, 
+import {
+  formatTimer,
   calculateTimeDifference
 } from "@/lib/timer-utils";
 import DesafioPlanoBeamEstar from "@/components/desafio-plano-bem-estar";
@@ -60,9 +60,9 @@ function Header({ user }: HeaderInternalProps) {
           </div>
         </div>
 
-        <button 
+        <button
           onClick={handleProfileClick}
-          className="gradient-border w-12 h-12 hover:scale-105 transition-transform cursor-pointer" 
+          className="gradient-border w-12 h-12 hover:scale-105 transition-transform cursor-pointer"
           data-testid="profile-container"
         >
           <div className="gradient-border-inner flex items-center justify-center">
@@ -154,7 +154,7 @@ function Timer({ user, onUserUpdate }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isStarting, setIsStarting] = useState(false);
   const [localUser, setLocalUser] = useState(user);
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -170,9 +170,9 @@ function Timer({ user, onUserUpdate }: TimerProps) {
 
   const handleStartTimer = async () => {
     if (!user?.id) return;
-    
+
     setIsStarting(true);
-    
+
     try {
       const response = await fetch('/api/timer/start', {
         method: 'POST',
@@ -187,15 +187,15 @@ function Timer({ user, onUserUpdate }: TimerProps) {
       if (response.ok) {
         // Update local user state
         setLocalUser(data.user);
-        
+
         // Update localStorage for user data only
         localStorage.setItem('user', JSON.stringify(data.user));
-        
+
         // Update parent component if callback provided
         if (onUserUpdate) {
           onUserUpdate(data.user);
         }
-        
+
         console.log('Cronômetro iniciado com sucesso!');
       } else {
         console.error('Erro ao iniciar cronômetro:', data.message);
@@ -270,9 +270,9 @@ function Timer({ user, onUserUpdate }: TimerProps) {
           <div className="text-6xl font-bold text-primary mb-4" data-testid="days-display">
             {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'}
           </div>
-          
+
           {/* Rectangular component with rounded borders containing the time */}
-          <div className="bg-secondary/20 border border-border rounded-full p-2 px-4 inline-block">
+          <div className="ai-assistant-card-natural-3d border border-border rounded-full p-2 px-3 inline-block" style={{ backgroundColor: '#000515' }}>
             <div className="text-lg font-mono text-primary font-semibold" data-testid="time-component">
               {String(timeDiff.hours).padStart(2, '0')}h {String(timeDiff.minutes).padStart(2, '0')}min {String(timeDiff.seconds).padStart(2, '0')}seg
             </div>
