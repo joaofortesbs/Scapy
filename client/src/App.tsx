@@ -14,7 +14,6 @@ function AppRouter() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [showQuiz, setShowQuiz] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Estado para controlar o carregamento inicial
 
   // Verificar autenticação ao carregar
   useEffect(() => {
@@ -25,7 +24,6 @@ function AppRouter() {
       setIsAuthenticated(true);
       setUser(JSON.parse(savedUser));
     }
-    setIsLoading(false); // Define isLoading como false após a verificação inicial
   }, []);
 
   const handleLoginSuccess = (userData: any, isNewUser = false) => {
@@ -57,8 +55,8 @@ function AppRouter() {
     window.location.reload();
   };
 
-  // Se estiver carregando, mostrar tela de carregamento
-  if (isLoading) {
+  // Loading state opcional
+  if (user === null && localStorage.getItem('isAuthenticated') === 'true') {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -86,15 +84,7 @@ function AppRouter() {
           <Switch>
             <Route path="/" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
             <Route path="/dashboard" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
-            <Route path="/perfil-usuario">
-              <PerfilUsuario
-                user={user}
-                onUserUpdate={(updatedUser) => {
-                  console.log('🔄 Atualizando dados do usuário:', updatedUser);
-                  setUser(updatedUser);
-                }}
-              />
-            </Route>
+            <Route path="/perfil-usuario" component={() => <PerfilUsuario user={user} onUserUpdate={(updatedUser) => { setUser(updatedUser); localStorage.setItem('user', JSON.stringify(updatedUser)); }} />} />
             <Route path="/quiz-personalizacao" component={() => <QuizPersonalizacao user={user} onCompleteQuiz={handleCompleteQuiz} />} />
             <Route component={NotFound} />
           </Switch>
@@ -109,15 +99,7 @@ function AppRouter() {
       <Switch>
         <Route path="/" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
         <Route path="/dashboard" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
-        <Route path="/perfil-usuario">
-          <PerfilUsuario
-            user={user}
-            onUserUpdate={(updatedUser) => {
-              console.log('🔄 Atualizando dados do usuário:', updatedUser);
-              setUser(updatedUser);
-            }}
-          />
-        </Route>
+        <Route path="/perfil-usuario" component={() => <PerfilUsuario user={user} onUserUpdate={(updatedUser) => { setUser(updatedUser); localStorage.setItem('user', JSON.stringify(updatedUser)); }} />} />
         <Route path="/quiz-personalizacao" component={() => <QuizPersonalizacao user={user} onCompleteQuiz={handleCompleteQuiz} />} />
         <Route component={NotFound} />
       </Switch>
