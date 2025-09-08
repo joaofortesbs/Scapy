@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,11 +59,22 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
       if (response.ok) {
         setMessage('Login realizado com sucesso!');
         setMessageType('success');
-        
+
         // Salvar dados do usuário no localStorage
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('authToken', data.token || 'authenticated');
-        
+        const userData = {
+          id: data.user.id,
+          email: data.user.email,
+          username: data.user.username,
+          full_name: data.user.full_name || data.user.fullName, // Verificar ambos os campos
+          startDate: data.user.startDate || new Date().toISOString(),
+          bestStreak: data.user.bestStreak || 0,
+          relapseCount: data.user.relapseCount || 0,
+          scapyPoints: data.user.scapyPoints || 0
+        };
+
+        console.log('💾 Salvando dados do usuário no login:', userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+
         // Chamar callback de sucesso
         setTimeout(() => {
           onLoginSuccess(data.user);
@@ -128,12 +138,23 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
       if (response.ok) {
         setMessage('Conta criada com sucesso! Redirecionando...');
         setMessageType('success');
-        
+
         try {
           // Salvar dados do usuário no localStorage
-          localStorage.setItem('user', JSON.stringify(data.user));
-          localStorage.setItem('authToken', 'authenticated');
-          
+          const userData = {
+            id: data.user.id,
+            email: data.user.email,
+            username: data.user.username,
+            full_name: data.user.full_name || data.user.fullName || registerData.fullName, // Verificar múltiplas fontes
+            startDate: new Date().toISOString(),
+            bestStreak: 0,
+            relapseCount: 0,
+            scapyPoints: 0
+          };
+
+          console.log('📝 Salvando dados do usuário no registro:', userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+
           // Redirecionar para o quiz de personalização (novo usuário)
           setTimeout(() => {
             try {
@@ -167,7 +188,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 relative overflow-hidden">
       <ParticlesBackground />
-      
+
       {/* Logo e Título */}
       <div className="absolute top-8 left-1/2 transform -translate-x-1/2 text-center z-10">
         <h1 className="text-4xl font-bold text-white mb-2">
