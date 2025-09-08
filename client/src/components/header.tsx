@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { User, Target, LogOut } from "lucide-react";
 import { useLocation } from "wouter";
+import { useProfileImage } from "@/hooks/useProfileImage";
 
 interface HeaderProps {
   user?: {
@@ -15,6 +16,9 @@ interface HeaderProps {
 
 function Header({ user, onLogout }: HeaderProps) {
   const [, setLocation] = useLocation();
+  
+  // Hook robusto para carregamento de imagem
+  const { imageUrl } = useProfileImage(user);
 
   const handleProfileClick = () => {
     setLocation('/perfil-usuario');
@@ -48,10 +52,15 @@ function Header({ user, onLogout }: HeaderProps) {
         >
           <div className="gradient-border-inner flex items-center justify-center">
             <img
-              src={user?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'user'}&backgroundColor=000515`}
+              src={imageUrl}
               alt="Profile Picture"
               className="w-10 h-10 rounded-full object-cover"
               data-testid="profile-image"
+              onError={(e) => {
+                // Fallback adicional se a imagem falhar completamente
+                const target = e.target as HTMLImageElement;
+                target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'user'}&backgroundColor=000515`;
+              }}
             />
           </div>
         </button>

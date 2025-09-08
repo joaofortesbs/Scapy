@@ -6,6 +6,7 @@ import { ArrowLeft, Camera, Eye, Trophy, RefreshCw, User, BarChart3, Clock, Chec
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { motion } from "framer-motion";
 import ParticlesBackground from "@/components/particles-background";
+import { useProfileImage } from "@/hooks/useProfileImage";
 
 interface PerfilUsuarioProps {
   user?: {
@@ -28,6 +29,9 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
   const [quizData, setQuizData] = useState<any>(null); // State to hold quiz data
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+  
+  // Hook robusto para carregamento de imagem
+  const { imageUrl, isLoading: imageLoading, saveImageToLocalStorage } = useProfileImage(user);
 
   // Fetch quiz data when the component mounts or user changes
   useEffect(() => {
@@ -94,6 +98,9 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
       
       // SEMPRE salvar no localStorage primeiro (sistema robusto)
       localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Salvar também uma cópia da imagem para fallback
+      saveImageToLocalStorage(result.uploadURL);
       
       // Atualizar estado local imediatamente
       if (onUserUpdate) {
@@ -283,11 +290,21 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
               <div className="relative inline-block mb-4">
                 <div className="relative">
                   <img
-                    src={user?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'user'}&backgroundColor=000515`}
+                    src={imageUrl}
                     alt="Foto de Perfil"
                     className="w-32 h-32 rounded-full object-cover border-4 border-primary/20"
                     data-testid="profile-avatar"
+                    onError={(e) => {
+                      // Fallback adicional se a imagem falhar completamente
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'user'}&backgroundColor=000515`;
+                    }}
                   />
+                  {imageLoading && (
+                    <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center">
+                      <RefreshCw className="w-6 h-6 animate-spin text-white" />
+                    </div>
+                  )}
 
                   {/* Botão para alterar foto */}
                   <ObjectUploader
