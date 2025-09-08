@@ -10,7 +10,7 @@ export default function AnaliseEvolucaoMental() {
   return (
     <section className="mb-6">
       {/* Card externo retangular */}
-      <Card className="border-border rounded-t-full rounded-b-lg p-4" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
+      <Card className="border-border rounded-lg p-4" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
         <CardContent className="p-0">
           {/* Card original de Evolução Mental (mantido intacto) */}
           <Card className="border-border rounded-full evolucao-mental-card-natural-3d" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
