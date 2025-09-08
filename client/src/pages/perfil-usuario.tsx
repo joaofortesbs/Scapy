@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Camera, Eye, Trophy, RefreshCw, User, BarChart3, Clock, CheckCircle, Mountain, Users, Calendar, Heart, Zap, Cross, Edit, Save, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { ObjectUploader } from "@/components/ObjectUploader";
 import { motion } from "framer-motion";
 import ParticlesBackground from "@/components/particles-background";
 
@@ -28,7 +28,6 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
   const [quizData, setQuizData] = useState<any>(null); // State to hold quiz data
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch quiz data when the component mounts or user changes
   useEffect(() => {
@@ -57,44 +56,39 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
     fetchQuizData();
   }, [user?.id]);
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user?.id) return;
-
-    // Validar tipo de arquivo
-    if (!file.type.startsWith('image/')) {
-      alert('Por favor, selecione apenas arquivos de imagem.');
-      return;
+  const handleGetUploadParameters = async () => {
+    if (!user?.id) {
+      throw new Error('Usuário não encontrado');
     }
 
-    // Validar tamanho (5MB máximo)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('A imagem deve ter no máximo 5MB.');
-      return;
+    const response = await fetch('/api/users/profile-image/upload-url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: user.id,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Erro ao obter URL de upload');
     }
 
-    setUploading(true);
+    const { uploadURL } = await response.json();
+    return {
+      method: 'PUT' as const,
+      url: uploadURL,
+    };
+  };
+
+  const handleUploadComplete = async (result: { uploadURL: string }) => {
+    if (!user?.id) return;
 
     try {
-      // Fazer upload da imagem para o Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `profile-images/${fileName}`;
+      setUploading(true);
 
-      const { error: uploadError } = await supabase.storage
-        .from('profile-images')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // Obter URL pública da imagem
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile-images')
-        .getPublicUrl(filePath);
-
-      // Atualizar o perfil do usuário usando API do servidor
+      // Update user profile with the image URL
       const response = await fetch('/api/users/update-profile', {
         method: 'PATCH',
         headers: {
@@ -102,7 +96,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
         },
         body: JSON.stringify({
           userId: user.id,
-          profileImage: publicUrl,
+          profileImage: result.uploadURL,
         }),
       });
 
@@ -110,8 +104,10 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
         throw new Error('Erro ao atualizar perfil no servidor');
       }
 
-      // Atualizar estado local e notificar componente pai
-      const updatedUser = { ...user, profileImage: publicUrl };
+      const responseData = await response.json();
+      
+      // Update local state and notify parent component
+      const updatedUser = { ...user, profileImage: responseData.user.profileImage };
       if (onUserUpdate) {
         onUserUpdate(updatedUser);
       }
@@ -119,7 +115,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
       alert('Foto de perfil atualizada com sucesso!');
 
     } catch (error) {
-      console.error('Erro ao fazer upload da imagem:', error);
+      console.error('Erro ao atualizar perfil:', error);
       alert('Erro ao atualizar foto de perfil. Tente novamente.');
     } finally {
       setUploading(false);
@@ -284,27 +280,16 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   />
 
                   {/* Botão para alterar foto */}
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
+                  <ObjectUploader
+                    maxFileSize={5 * 1024 * 1024} // 5MB
+                    onGetUploadParameters={handleGetUploadParameters}
+                    onComplete={handleUploadComplete}
                     disabled={uploading}
-                    className="absolute bottom-2 right-2 w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:bg-primary/90 transition-colors shadow-lg disabled:opacity-50"
-                    data-testid="change-photo-button"
-                  >
-                    {uploading ? (
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
-                    ) : (
-                      <Camera className="w-5 h-5" />
-                    )}
-                  </button>
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
                     accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    data-testid="file-input"
-                  />
+                    buttonClassName="absolute bottom-2 right-2 w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:bg-primary/90 transition-colors shadow-lg disabled:opacity-50"
+                  >
+                    <Camera className="w-5 h-5" />
+                  </ObjectUploader>
                 </div>
               </div>
 
@@ -469,16 +454,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       <Card
                         className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                         style={{ backgroundColor: 'transparent' }}
-                        onClick={() => handleEditField('genero', quizData.genero)}
                       >
-                        <CardContent className="p-3">
-                          <div className="flex items-center space-x-3">
+                        <CardContent 
+                          className="p-3 cursor-pointer"
+                          onClick={() => handleEditField('genero', quizData.genero)}
+                        >
+                          <div className="flex items-center space-x-3 cursor-pointer">
                             <Users className="w-4 h-4 text-primary flex-shrink-0" />
-                            <div className="flex items-center justify-between flex-1">
-                              <span className="text-sm text-muted-foreground font-medium">Gênero:</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-foreground font-medium">{quizData.genero}</span>
-                                <Edit className="w-3 h-3 text-muted-foreground" />
+                            <div className="flex items-center justify-between flex-1 cursor-pointer">
+                              <span className="text-sm text-muted-foreground font-medium cursor-pointer">Gênero:</span>
+                              <div className="flex items-center space-x-2 cursor-pointer">
+                                <span className="text-sm text-foreground font-medium cursor-pointer">{quizData.genero}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground cursor-pointer" />
                               </div>
                             </div>
                           </div>
@@ -490,16 +477,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       <Card
                         className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                         style={{ backgroundColor: 'transparent' }}
-                        onClick={() => handleEditField('idade', quizData.idade)}
                       >
-                        <CardContent className="p-3">
-                          <div className="flex items-center space-x-3">
+                        <CardContent 
+                          className="p-3 cursor-pointer"
+                          onClick={() => handleEditField('idade', quizData.idade)}
+                        >
+                          <div className="flex items-center space-x-3 cursor-pointer">
                             <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
-                            <div className="flex items-center justify-between flex-1">
-                              <span className="text-sm text-muted-foreground font-medium">Idade:</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-foreground font-medium">{quizData.idade}</span>
-                                <Edit className="w-3 h-3 text-muted-foreground" />
+                            <div className="flex items-center justify-between flex-1 cursor-pointer">
+                              <span className="text-sm text-muted-foreground font-medium cursor-pointer">Idade:</span>
+                              <div className="flex items-center space-x-2 cursor-pointer">
+                                <span className="text-sm text-foreground font-medium cursor-pointer">{quizData.idade}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground cursor-pointer" />
                               </div>
                             </div>
                           </div>
@@ -511,16 +500,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       <Card
                         className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                         style={{ backgroundColor: 'transparent' }}
-                        onClick={() => handleEditField('motivacao', quizData.motivacao)}
                       >
-                        <CardContent className="p-3">
-                          <div className="flex items-center space-x-3">
+                        <CardContent 
+                          className="p-3 cursor-pointer"
+                          onClick={() => handleEditField('motivacao', quizData.motivacao)}
+                        >
+                          <div className="flex items-center space-x-3 cursor-pointer">
                             <Heart className="w-4 h-4 text-primary flex-shrink-0" />
-                            <div className="flex items-center justify-between flex-1">
-                              <span className="text-sm text-muted-foreground font-medium">Motivação:</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-foreground font-medium">{quizData.motivacao}</span>
-                                <Edit className="w-3 h-3 text-muted-foreground" />
+                            <div className="flex items-center justify-between flex-1 cursor-pointer">
+                              <span className="text-sm text-muted-foreground font-medium cursor-pointer">Motivação:</span>
+                              <div className="flex items-center space-x-2 cursor-pointer">
+                                <span className="text-sm text-foreground font-medium cursor-pointer">{quizData.motivacao}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground cursor-pointer" />
                               </div>
                             </div>
                           </div>
@@ -532,16 +523,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       <Card
                         className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                         style={{ backgroundColor: 'transparent' }}
-                        onClick={() => handleEditField('frequencia', quizData.frequencia)}
                       >
-                        <CardContent className="p-3">
-                          <div className="flex items-center space-x-3">
+                        <CardContent 
+                          className="p-3 cursor-pointer"
+                          onClick={() => handleEditField('frequencia', quizData.frequencia)}
+                        >
+                          <div className="flex items-center space-x-3 cursor-pointer">
                             <Clock className="w-4 h-4 text-primary flex-shrink-0" />
-                            <div className="flex items-center justify-between flex-1">
-                              <span className="text-sm text-muted-foreground font-medium">Frequência:</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-foreground font-medium">{quizData.frequencia}</span>
-                                <Edit className="w-3 h-3 text-muted-foreground" />
+                            <div className="flex items-center justify-between flex-1 cursor-pointer">
+                              <span className="text-sm text-muted-foreground font-medium cursor-pointer">Frequência:</span>
+                              <div className="flex items-center space-x-2 cursor-pointer">
+                                <span className="text-sm text-foreground font-medium cursor-pointer">{quizData.frequencia}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground cursor-pointer" />
                               </div>
                             </div>
                           </div>
@@ -553,16 +546,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       <Card
                         className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                         style={{ backgroundColor: 'transparent' }}
-                        onClick={() => handleEditField('gatilhos', quizData.gatilhos)}
                       >
-                        <CardContent className="p-3">
-                          <div className="flex items-center space-x-3">
+                        <CardContent 
+                          className="p-3 cursor-pointer"
+                          onClick={() => handleEditField('gatilhos', quizData.gatilhos)}
+                        >
+                          <div className="flex items-center space-x-3 cursor-pointer">
                             <Zap className="w-4 h-4 text-primary flex-shrink-0" />
-                            <div className="flex items-center justify-between flex-1">
-                              <span className="text-sm text-muted-foreground font-medium">Gatilhos:</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-foreground font-medium">{quizData.gatilhos}</span>
-                                <Edit className="w-3 h-3 text-muted-foreground" />
+                            <div className="flex items-center justify-between flex-1 cursor-pointer">
+                              <span className="text-sm text-muted-foreground font-medium cursor-pointer">Gatilhos:</span>
+                              <div className="flex items-center space-x-2 cursor-pointer">
+                                <span className="text-sm text-foreground font-medium cursor-pointer">{quizData.gatilhos}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground cursor-pointer" />
                               </div>
                             </div>
                           </div>
@@ -574,16 +569,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                       <Card
                         className="border-border rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                         style={{ backgroundColor: 'transparent' }}
-                        onClick={() => handleEditField('religiao', quizData.religiao)}
                       >
-                        <CardContent className="p-3">
-                          <div className="flex items-center space-x-3">
+                        <CardContent 
+                          className="p-3 cursor-pointer"
+                          onClick={() => handleEditField('religiao', quizData.religiao)}
+                        >
+                          <div className="flex items-center space-x-3 cursor-pointer">
                             <Cross className="w-4 h-4 text-primary flex-shrink-0" />
-                            <div className="flex items-center justify-between flex-1">
-                              <span className="text-sm text-muted-foreground font-medium">Religião:</span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-foreground font-medium">{quizData.religiao}</span>
-                                <Edit className="w-3 h-3 text-muted-foreground" />
+                            <div className="flex items-center justify-between flex-1 cursor-pointer">
+                              <span className="text-sm text-muted-foreground font-medium cursor-pointer">Religião:</span>
+                              <div className="flex items-center space-x-2 cursor-pointer">
+                                <span className="text-sm text-foreground font-medium cursor-pointer">{quizData.religiao}</span>
+                                <Edit className="w-3 h-3 text-muted-foreground cursor-pointer" />
                               </div>
                             </div>
                           </div>
