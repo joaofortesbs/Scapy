@@ -33,7 +33,7 @@ export default function MelhorVersao() {
           <div className="w-16"></div> {/* Spacer para centralizar o título */}
         </div>
 
-        {/* Barra de progresso principal */}
+        {/* Container da Barra de Progresso */}
         <div className="p-4 mb-6">
           <div className="text-center mb-4">
             <h2 className="text-xl font-bold text-primary mb-2">
@@ -91,8 +91,8 @@ export default function MelhorVersao() {
           </div>
         </div>
 
-        {/* Quadro dos Sonhos */}
-        <div className="px-4 -mt-20">
+        {/* Container do Quadro dos Sonhos */}
+        <div className="px-4">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-center mb-2">
               Quadro dos Sonhos
