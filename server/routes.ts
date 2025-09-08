@@ -217,9 +217,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId, profileImage, fullName } = req.body;
 
+      console.log('🔍 DEBUG - Update Profile Request:', { userId, profileImage: profileImage ? 'presente' : 'ausente', fullName });
+
       if (!userId) {
         return res.status(400).json({ message: 'ID do usuário é obrigatório' });
       }
+
+      // ========== VERIFICAR SE USUÁRIO EXISTE PRIMEIRO ==========
+      const checkUserQuery = `SELECT id, email FROM auth_users WHERE id = $1`;
+      console.log('🔍 DEBUG - Verificando usuário:', userId);
+      
+      const userCheck = await sql(checkUserQuery, [userId]);
+      console.log('🔍 DEBUG - Resultado da verificação:', userCheck);
+
+      if (userCheck.length === 0) {
+        console.log('❌ DEBUG - Usuário não encontrado na tabela auth_users');
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      console.log('✅ DEBUG - Usuário encontrado:', userCheck[0]);
 
       const updateData: any = {};
       if (profileImage) {
@@ -255,7 +271,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         RETURNING id, email, full_name, profile_image
       `;
       
+      console.log('🔍 DEBUG - Query de update:', updateQuery);
+      console.log('🔍 DEBUG - Valores:', values);
+      
       const result = await sql(updateQuery, values);
+      console.log('🔍 DEBUG - Resultado do update:', result);
 
       if (result.length === 0) {
         return res.status(404).json({ message: 'Usuário não encontrado' });
