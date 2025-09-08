@@ -716,4 +716,3 @@ const ParticlesBackground: React.FC<ParticlesBackgroundProps> = ({
 };
 
 export default ParticlesBackground;
-export { ParticlesBackground };

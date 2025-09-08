@@ -4,12 +4,12 @@ import type { User } from "@shared/schema";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
 
 interface TimerProps {
-  user: User | null;
+  user?: User;
 }
 
 export default function Timer({ user }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
-
+  
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -18,14 +18,16 @@ export default function Timer({ user }: TimerProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Safety check for user data
-  if (!user || !user.startDate) {
+  if (!user) {
     return (
-      <Card className="p-6 text-center">
-        <CardContent>
-          <p className="text-muted-foreground">Dados do usuário não disponíveis</p>
-        </CardContent>
-      </Card>
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground mb-3">
+          Carregando...
+        </p>
+        <div className="timer-display">
+          00:00:00
+        </div>
+      </div>
     );
   }
 
@@ -42,7 +44,7 @@ export default function Timer({ user }: TimerProps) {
         <span data-testid="timer-minutes">{String(timeDiff.minutes).padStart(2, '0')}</span>:
         <span data-testid="timer-seconds">{String(timeDiff.seconds).padStart(2, '0')}</span>
       </div>
-
+      
       {timeDiff.days > 0 && (
         <div className="mt-4">
           <div className="text-sm font-semibold text-primary">
