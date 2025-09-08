@@ -76,7 +76,9 @@ export function ObjectUploader({
     } finally {
       setUploading(false);
       // Clear the input so the same file can be uploaded again if needed
-      event.target.value = '';
+      if (event.target) {
+        event.target.value = '';
+      }
     }
   };
 
