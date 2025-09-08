@@ -59,7 +59,7 @@ function Header({ user, onLogout }: HeaderProps) {
               onError={(e) => {
                 // Fallback adicional se a imagem falhar completamente
                 const target = e.target as HTMLImageElement;
-                const seedName = user?.fullName || user?.username || 'user';
+                const seedName = user?.full_name || user?.fullName || user?.username || 'user';
                 target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seedName)}&backgroundColor=000515`;
               }}
             />
