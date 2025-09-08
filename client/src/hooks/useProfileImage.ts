@@ -11,7 +11,7 @@ export function useProfileImage(user: User | undefined | null) {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const loadProfileImage = async () => {
+    const loadProfileImage = () => {
       if (!user) {
         setImageUrl('');
         return;
@@ -20,75 +20,66 @@ export function useProfileImage(user: User | undefined | null) {
       // Fallback padrão
       const defaultImage = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username || 'user'}&backgroundColor=000515`;
 
-      // Se não tem profileImage definida, usar padrão
-      if (!user.profileImage) {
-        setImageUrl(defaultImage);
-        return;
-      }
-
-      setIsLoading(true);
-
       try {
-        // ========== PRIMEIRO: TENTAR CARREGAR DO SERVIDOR ==========
-        const response = await fetch(user.profileImage);
+        // ========== SISTEMA 100% OFFLINE - SÓ LOCALSTORAGE! ==========
+        console.log('🔍 Carregando imagem do localStorage para usuário:', user.id);
         
-        if (response.ok) {
-          // Se conseguiu carregar do servidor, usar a URL original
-          setImageUrl(user.profileImage);
-        } else {
-          throw new Error('Servidor não conseguiu carregar a imagem');
+        // Verificar se temos uma imagem Base64 salva localmente
+        const localImageKey = `profileImage_${user.id}`;
+        const localImageData = localStorage.getItem(localImageKey);
+        
+        if (localImageData) {
+          console.log('✅ Imagem encontrada no localStorage!');
+          setImageUrl(localImageData);
+          return;
         }
-      } catch (serverError) {
-        console.log('⚠️ Servidor falhou, tentando localStorage...');
-        
-        try {
-          // ========== FALLBACK: CARREGAR DO LOCALSTORAGE ==========
-          const savedUser = localStorage.getItem('user');
-          if (savedUser) {
-            const userData = JSON.parse(savedUser);
-            
-            // Verificar se temos uma imagem salva localmente
-            const localImageKey = `profileImage_${user.id}`;
-            const localImageData = localStorage.getItem(localImageKey);
-            
-            if (localImageData) {
-              // Se temos dados da imagem no localStorage, usar
-              setImageUrl(localImageData);
-            } else if (userData.profileImage && userData.profileImage !== user.profileImage) {
-              // Se tem uma versão diferente no localStorage, tentar essa
-              try {
-                const localResponse = await fetch(userData.profileImage);
-                if (localResponse.ok) {
-                  setImageUrl(userData.profileImage);
-                } else {
-                  setImageUrl(defaultImage);
-                }
-              } catch {
-                setImageUrl(defaultImage);
-              }
-            } else {
-              setImageUrl(defaultImage);
-            }
-          } else {
-            setImageUrl(defaultImage);
+
+        // Fallback: verificar dados do usuário no localStorage
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+          const userData = JSON.parse(savedUser);
+          
+          // Se tem profileImage que começa com "data:" (Base64)
+          if (userData.profileImage && userData.profileImage.startsWith('data:')) {
+            console.log('✅ Imagem Base64 encontrada nos dados do usuário!');
+            setImageUrl(userData.profileImage);
+            // Salvar na chave específica também
+            localStorage.setItem(localImageKey, userData.profileImage);
+            return;
           }
-        } catch (localStorageError) {
-          console.log('⚠️ localStorage também falhou, usando padrão');
-          setImageUrl(defaultImage);
         }
-      } finally {
-        setIsLoading(false);
+
+        // Se não encontrou nada, usar avatar padrão
+        console.log('⚠️ Nenhuma imagem local encontrada, usando avatar padrão');
+        setImageUrl(defaultImage);
+
+      } catch (localStorageError) {
+        console.log('⚠️ Erro no localStorage, usando avatar padrão:', localStorageError);
+        setImageUrl(defaultImage);
       }
     };
 
     loadProfileImage();
   }, [user?.id, user?.profileImage, user?.username]);
 
-  // Função para salvar imagem no localStorage
-  const saveImageToLocalStorage = (imageData: string) => {
+  // Função para salvar imagem Base64 no localStorage
+  const saveImageToLocalStorage = (base64Data: string) => {
     if (user?.id) {
       const localImageKey = `profileImage_${user.id}`;
-      localStorage.setItem(localImageKey, imageData);
+      localStorage.setItem(localImageKey, base64Data);
+      console.log('💾 Imagem salva no localStorage:', localImageKey);
+      
+      // Atualizar também os dados do usuário
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        const userData = JSON.parse(savedUser);
+        userData.profileImage = base64Data;
+        localStorage.setItem('user', JSON.stringify(userData));
+        console.log('💾 Dados do usuário atualizados com imagem Base64');
+      }
+      
+      // Atualizar imagem imediatamente
+      setImageUrl(base64Data);
     }
   };
 
