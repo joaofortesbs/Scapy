@@ -161,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Token inválido' });
       }
 
-      const userId = parseInt(tokenParts[1]);
+      const userId = tokenParts[1];
 
       // Buscar usuário
       const { data: user, error } = await supabase
