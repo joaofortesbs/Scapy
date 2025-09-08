@@ -4,11 +4,7 @@ import { Button } from "@/components/ui/button";
 
 interface ObjectUploaderProps {
   maxFileSize?: number;
-  onGetUploadParameters: () => Promise<{
-    method: "PUT";
-    url: string;
-  }>;
-  onComplete?: (result: { uploadURL: string }) => void;
+  onComplete?: (result: { uploadURL: string; base64: string }) => void;
   buttonClassName?: string;
   children: ReactNode;
   disabled?: boolean;
@@ -16,11 +12,11 @@ interface ObjectUploaderProps {
 }
 
 /**
- * A file upload component that renders as a button for direct file uploads.
+ * Sistema de upload OFFLINE que converte imagens para Base64
+ * e salva no localStorage - funciona SEM servidor!
  */
 export function ObjectUploader({
   maxFileSize = 5 * 1024 * 1024, // 5MB default
-  onGetUploadParameters,
   onComplete,
   buttonClassName,
   children,
@@ -28,6 +24,15 @@ export function ObjectUploader({
   accept = "image/*"
 }: ObjectUploaderProps) {
   const [uploading, setUploading] = useState(false);
+
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -49,30 +54,27 @@ export function ObjectUploader({
     setUploading(true);
 
     try {
-      // Get upload parameters (presigned URL)
-      const uploadParams = await onGetUploadParameters();
+      console.log('🔄 Convertendo imagem para Base64...');
       
-      // Upload file directly to object storage
-      const uploadResponse = await fetch(uploadParams.url, {
-        method: uploadParams.method,
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        }
-      });
+      // ============ SISTEMA 100% OFFLINE ============
+      const base64 = await convertToBase64(file);
+      
+      console.log('✅ Imagem convertida para Base64 com sucesso!');
 
-      if (!uploadResponse.ok) {
-        throw new Error(`Upload failed with status ${uploadResponse.status}`);
-      }
+      // Simular URL de upload para compatibilidade
+      const fakeUploadURL = `local://profile-image-${Date.now()}.${file.type.split('/')[1]}`;
 
-      // Call completion callback with the upload URL
+      // Call completion callback with base64 data
       if (onComplete) {
-        onComplete({ uploadURL: uploadParams.url });
+        onComplete({ 
+          uploadURL: fakeUploadURL,
+          base64: base64
+        });
       }
 
     } catch (error) {
-      console.error('Erro no upload:', error);
-      alert('Erro ao fazer upload da imagem. Tente novamente.');
+      console.error('Erro ao converter imagem:', error);
+      alert('Erro ao processar imagem. Tente novamente.');
     } finally {
       setUploading(false);
       // Clear the input so the same file can be uploaded again if needed
@@ -99,7 +101,10 @@ export function ObjectUploader({
       disabled={disabled || uploading}
     >
       {uploading ? (
-        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+        <div className="flex items-center gap-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+          <span>Processando...</span>
+        </div>
       ) : (
         children
       )}

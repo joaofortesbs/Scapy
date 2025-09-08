@@ -60,80 +60,34 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
     fetchQuizData();
   }, [user?.id]);
 
-  const handleGetUploadParameters = async () => {
-    if (!user?.id) {
-      throw new Error('Usuário não encontrado');
-    }
-
-    const response = await fetch('/api/users/profile-image/upload-url', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId: user.id,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao obter URL de upload');
-    }
-
-    const { uploadURL } = await response.json();
-    return {
-      method: 'PUT' as const,
-      url: uploadURL,
-    };
-  };
-
-  const handleUploadComplete = async (result: { uploadURL: string }) => {
+  const handleUploadComplete = async (result: { uploadURL: string; base64: string }) => {
     if (!user?.id) return;
 
     try {
       setUploading(true);
 
-      // ============ SISTEMA ROBUSTO: SEMPRE SALVAR NO LOCALSTORAGE ============
-      const imageUrl = `/objects/profile-images/${result.uploadURL.split('/').pop()}`;
-      const updatedUser = { ...user, profileImage: imageUrl };
+      console.log('🎯 SISTEMA 100% OFFLINE - Salvando imagem...');
+
+      // ============ SISTEMA 100% OFFLINE - SÓ LOCALSTORAGE! ============
       
-      // SEMPRE salvar no localStorage primeiro (sistema robusto)
+      // Salvar imagem Base64 no localStorage específico
+      saveImageToLocalStorage(result.base64);
+      
+      // Atualizar dados do usuário com a imagem Base64
+      const updatedUser = { ...user, profileImage: result.base64 };
       localStorage.setItem('user', JSON.stringify(updatedUser));
-      
-      // Salvar também uma cópia da imagem para fallback
-      saveImageToLocalStorage(result.uploadURL);
       
       // Atualizar estado local imediatamente
       if (onUserUpdate) {
         onUserUpdate(updatedUser);
       }
 
-      // ============ TENTAR ATUALIZAR NO BANCO (com fallback) ============
-      try {
-        const response = await fetch('/api/users/update-profile', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: user.id,
-            profileImage: result.uploadURL,
-          }),
-        });
-
-        if (response.ok) {
-          console.log('✅ Perfil atualizado no banco com sucesso!');
-        } else {
-          console.warn('⚠️ Erro no banco, mas imagem salva localmente:', response.status);
-        }
-      } catch (serverError) {
-        console.warn('⚠️ Erro de conexão com servidor, mas imagem salva localmente:', serverError);
-      }
-
+      console.log('✅ Imagem salva com sucesso no localStorage!');
       alert('✅ Foto de perfil atualizada com sucesso!');
 
     } catch (error) {
-      console.error('Erro crítico no upload:', error);
-      alert('Erro ao processar imagem. Tente novamente.');
+      console.error('Erro ao salvar imagem:', error);
+      alert('Erro ao salvar imagem. Tente novamente.');
     } finally {
       setUploading(false);
     }
@@ -309,7 +263,6 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   {/* Botão para alterar foto */}
                   <ObjectUploader
                     maxFileSize={5 * 1024 * 1024} // 5MB
-                    onGetUploadParameters={handleGetUploadParameters}
                     onComplete={handleUploadComplete}
                     disabled={uploading}
                     accept="image/*"
