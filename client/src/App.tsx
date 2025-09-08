@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
+import Index from "@/pages/Index";
 import AuthPage from "@/pages/auth";
 import PerfilUsuario from "@/pages/perfil-usuario";
 import QuizPersonalizacao from "@/pages/quiz-personalizacao";
@@ -14,7 +15,8 @@ function AppRouter() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [showQuiz, setShowQuiz] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Estado para controlar o carregamento inicial
+  const [isLoading, setIsLoading] = useState(true);
+  <Route path="/" component={Index} />// Estado para controlar o carregamento inicial
 
   // Verificar autenticação ao carregar
   useEffect(() => {
