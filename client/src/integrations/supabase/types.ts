@@ -92,6 +92,53 @@ export type Database = {
           updated_at?: string
         }
       }
+      quiz_contextualizacao: {
+        Row: {
+          id: string
+          user_id: string
+          user_full_name: string
+          genero: string | null
+          frequencia: string | null
+          idade: string | null
+          motivacao: string | null
+          gatilhos: string | null
+          religiao: string | null
+          completed: boolean
+          current_step: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          user_full_name: string
+          genero?: string | null
+          frequencia?: string | null
+          idade?: string | null
+          motivacao?: string | null
+          gatilhos?: string | null
+          religiao?: string | null
+          completed?: boolean
+          current_step?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          user_full_name?: string
+          genero?: string | null
+          frequencia?: string | null
+          idade?: string | null
+          motivacao?: string | null
+          gatilhos?: string | null
+          religiao?: string | null
+          completed?: boolean
+          current_step?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
