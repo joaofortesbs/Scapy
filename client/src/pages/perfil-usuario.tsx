@@ -275,7 +275,9 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
 
               {/* Nome do usuário */}
               <h2 className="text-2xl font-bold text-foreground mb-2" data-testid="user-name">
-                {user?.full_name || user?.username || 'Usuário'}
+                {(user?.full_name && user.full_name.trim() !== '') 
+                  ? user.full_name 
+                  : (user?.username || 'Usuário')}
               </h2>
             </motion.div>
 
