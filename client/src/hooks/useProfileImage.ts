@@ -1,12 +1,8 @@
 import { useState, useEffect } from 'react';
 
-import { User as SchemaUser } from '@shared/schema';
-
 interface User {
   id?: string;
   username?: string;
-  fullName?: string;
-  full_name?: string;
   profileImage?: string;
 }
 
@@ -21,8 +17,8 @@ export function useProfileImage(user: User | undefined | null) {
         return;
       }
 
-      // Fallback padrão usando fullName/full_name se disponível
-      const seedName = user.fullName || user.full_name || user.username || 'user';
+      // Fallback padrão usando full_name se disponível
+      const seedName = user.full_name || user.fullName || user.username || 'user';
       const defaultImage = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seedName)}&backgroundColor=000515`;
 
       try {
