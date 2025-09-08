@@ -277,7 +277,7 @@ function Timer({ user, onUserUpdate }: TimerProps) {
           {/* Rectangular component with rounded borders containing the time */}
           <div className="ai-assistant-card-natural-3d border border-border rounded-full p-2 px-3 inline-block" style={{ backgroundColor: '#000515' }}>
             <div className="text-lg font-mono text-primary font-semibold" data-testid="time-component">
-              ({String(timeDiff.hours).padStart(2, '0')}h {String(timeDiff.minutes).padStart(2, '0')}m {String(timeDiff.seconds).padStart(2, '0')}s)
+              {String(timeDiff.hours).padStart(2, '0')}h {String(timeDiff.minutes).padStart(2, '0')}m {String(timeDiff.seconds).padStart(2, '0')}s
             </div>
           </div>
         </>
