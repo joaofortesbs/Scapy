@@ -241,8 +241,8 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
     }
     
     // Fallback para fullName (camelCase) se existir
-    if (currentUser.fullName && currentUser.fullName.trim() !== '' && currentUser.fullName !== 'undefined') {
-      return currentUser.fullName;
+    if ((currentUser as any).fullName && (currentUser as any).fullName.trim() !== '' && (currentUser as any).fullName !== 'undefined') {
+      return (currentUser as any).fullName;
     }
     
     // Último fallback para username

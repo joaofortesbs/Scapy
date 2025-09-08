@@ -4,6 +4,8 @@ interface User {
   id?: string;
   username?: string;
   profileImage?: string;
+  full_name?: string;
+  fullName?: string;
 }
 
 export function useProfileImage(user: User | undefined | null) {
