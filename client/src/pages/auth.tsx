@@ -65,7 +65,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
           id: data.user.id,
           email: data.user.email,
           username: data.user.username,
-          full_name: data.user.full_name || data.user.fullName, // Verificar ambos os campos
+          full_name: data.user.full_name || data.user.fullName || data.user.username || 'Usuário',
           startDate: data.user.startDate || new Date().toISOString(),
           bestStreak: data.user.bestStreak || 0,
           relapseCount: data.user.relapseCount || 0,
@@ -145,7 +145,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
             id: data.user.id,
             email: data.user.email,
             username: data.user.username,
-            full_name: data.user.full_name || data.user.fullName || registerData.fullName, // Verificar múltiplas fontes
+            full_name: data.user.full_name || data.user.fullName || registerData.fullName || data.user.username || 'Usuário',
             startDate: new Date().toISOString(),
             bestStreak: 0,
             relapseCount: 0,

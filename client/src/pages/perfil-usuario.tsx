@@ -40,7 +40,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
     if (savedUser) {
       try {
         const userData = JSON.parse(savedUser);
-        setCurrentUser(userData);
+        
+        // Normalizar dados do usuário para garantir consistência
+        const normalizedUser = {
+          ...userData,
+          full_name: userData.full_name || userData.fullName || userData.username || 'Usuário'
+        };
+        
+        console.log('🔍 Dados do usuário carregados:', normalizedUser);
+        setCurrentUser(normalizedUser);
+        
+        // Atualizar localStorage com dados normalizados
+        localStorage.setItem('user', JSON.stringify(normalizedUser));
       } catch (error) {
         console.error('Erro ao carregar dados do usuário:', error);
       }
@@ -223,9 +234,18 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
   // Robust function to get user display name
   const getUserDisplayName = () => {
     if (!currentUser) return 'Usuário';
-    if (currentUser.full_name && currentUser.full_name.trim() !== '') {
+    
+    // Verificar full_name primeiro (formato padrão do backend)
+    if (currentUser.full_name && currentUser.full_name.trim() !== '' && currentUser.full_name !== 'undefined') {
       return currentUser.full_name;
     }
+    
+    // Fallback para fullName (camelCase) se existir
+    if (currentUser.fullName && currentUser.fullName.trim() !== '' && currentUser.fullName !== 'undefined') {
+      return currentUser.fullName;
+    }
+    
+    // Último fallback para username
     return currentUser.username || 'Usuário';
   };
 

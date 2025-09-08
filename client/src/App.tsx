@@ -22,10 +22,27 @@ function AppRouter() {
     const savedUser = localStorage.getItem('user');
 
     if (savedAuth === 'true' && savedUser) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(savedUser));
+      try {
+        const userData = JSON.parse(savedUser);
+        
+        // Normalizar dados do usuário
+        const normalizedUser = {
+          ...userData,
+          full_name: userData.full_name || userData.fullName || userData.username || 'Usuário'
+        };
+        
+        console.log('🔍 Usuário autenticado carregado:', normalizedUser);
+        setIsAuthenticated(true);
+        setUser(normalizedUser);
+        
+        // Salvar dados normalizados
+        localStorage.setItem('user', JSON.stringify(normalizedUser));
+      } catch (error) {
+        console.error('Erro ao carregar usuário:', error);
+        setIsAuthenticated(false);
+      }
     }
-    setIsLoading(false); // Define isLoading como false após a verificação inicial
+    setIsLoading(false);
   }, []);
 
   const handleLoginSuccess = (userData: any, isNewUser = false) => {
