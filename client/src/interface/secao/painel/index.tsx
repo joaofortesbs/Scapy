@@ -8,23 +8,37 @@ import {
   Target,
   Plus
 } from "lucide-react";
+import { useLocation } from "wouter";
 import { ScapyIcon } from "@/components/ui/scapy-icon";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
+import { 
+  formatTimer, 
+  calculateTimeDifference
+} from "@/lib/timer-utils";
 import DesafioPlanoBeamEstar from "@/components/desafio-plano-bem-estar";
 import DesafioDuplaDinamica from "@/components/desafio-dupla-dinamica";
 import AnaliseEvolucaoMental from "@/components/analise-evolucao-mental";
 import FraseDoDia from "@/components/frase-do-dia";
-import DailyGoals from "@/components/daily-goals";
+import { DailyGoals } from "@/components/daily-goals";
 import AIAssistant from "@/components/ai-assistant";
 import ParticlesBackground from "@/components/particles-background";
 import type { User, WeeklyProgress } from "@shared/schema";
 
 // Header Component
-function Header() {
+interface HeaderInternalProps {
+  user?: User;
+}
+
+function Header({ user }: HeaderInternalProps) {
+  const [, setLocation] = useLocation();
+
+  const handleProfileClick = () => {
+    setLocation('/perfil-usuario');
+  };
+
   return (
     <header className="p-4 flex items-center justify-between">
       <div className="w-34 h-34">
@@ -46,16 +60,20 @@ function Header() {
           </div>
         </div>
 
-        <div className="gradient-border w-12 h-12" data-testid="profile-container">
+        <button 
+          onClick={handleProfileClick}
+          className="gradient-border w-12 h-12 hover:scale-105 transition-transform cursor-pointer" 
+          data-testid="profile-container"
+        >
           <div className="gradient-border-inner flex items-center justify-center">
             <img
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=user&backgroundColor=000515"
+              src={user?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'user'}&backgroundColor=000515`}
               alt="Profile Picture"
               className="w-10 h-10 rounded-full object-cover"
               data-testid="profile-image"
             />
           </div>
-        </div>
+        </button>
       </div>
     </header>
   );
@@ -128,12 +146,15 @@ function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
 
 // Timer Component
 interface TimerProps {
-  user?: User;
+  user: User | undefined;
+  onUserUpdate?: (updatedUser: any) => void;
 }
 
-function Timer({ user }: TimerProps) {
+function Timer({ user, onUserUpdate }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
-
+  const [isStarting, setIsStarting] = useState(false);
+  const [localUser, setLocalUser] = useState(user);
+  
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -142,11 +163,60 @@ function Timer({ user }: TimerProps) {
     return () => clearInterval(interval);
   }, []);
 
-  if (!user) {
+  // Update local user when prop changes
+  useEffect(() => {
+    setLocalUser(user);
+  }, [user]);
+
+  const handleStartTimer = async () => {
+    if (!user?.id) return;
+    
+    setIsStarting(true);
+    
+    try {
+      const response = await fetch('/api/timer/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Update local user state
+        setLocalUser(data.user);
+        
+        // Update localStorage for user data only
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Update parent component if callback provided
+        if (onUserUpdate) {
+          onUserUpdate(data.user);
+        }
+        
+        console.log('Cronômetro iniciado com sucesso!');
+      } else {
+        console.error('Erro ao iniciar cronômetro:', data.message);
+        alert('Erro ao iniciar cronômetro: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Erro ao iniciar cronômetro:', error);
+      alert('Erro de conexão. Tente novamente.');
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  // Check if user has startDate - now we rely on database data
+  const userWithTimer = localUser && localUser.startDate;
+
+  if (!localUser) {
     return (
       <div className="text-center">
         <p className="text-sm text-muted-foreground mb-3">
-          Carregando...
+          Carregando dados do usuário...
         </p>
         <div className="timer-display">
           00:00:00
@@ -155,8 +225,27 @@ function Timer({ user }: TimerProps) {
     );
   }
 
-  const timeDiff = calculateTimeDifference(user.startDate, currentTime);
-  const formattedTime = formatTimer(timeDiff);
+  if (!userWithTimer) {
+    return (
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground mb-3">
+          Pronto para começar sua jornada livre da pornografia?
+        </p>
+        <button
+          onClick={handleStartTimer}
+          disabled={isStarting}
+          className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-semibold text-lg disabled:opacity-50"
+          data-testid="start-timer-button"
+        >
+          {isStarting ? 'Iniciando...' : '🚀 INICIAR CRONÔMETRO'}
+        </button>
+      </div>
+    );
+  }
+
+  // Calculate progressive time from user's actual start date
+  const startDate = localUser.startDate || new Date().toISOString();
+  const timeDiff = calculateTimeDifference(startDate, currentTime);
 
   return (
     <div className="text-center">
@@ -179,8 +268,6 @@ function Timer({ user }: TimerProps) {
     </div>
   );
 }
-
-
 
 // Panic Button Component
 function PanicButton() {
@@ -241,6 +328,33 @@ function BottomNavigation({
   );
 }
 
+// Journey Start Component
+function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
+  return (
+    <div className="flex items-start justify-center mt-8 min-h-[60vh]">
+      <div
+        className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
+        onClick={onStartJourney}
+        data-testid="journey-start-image"
+      >
+        <img
+          src="/Imagem-inicio-jornada-painel.webp"
+          alt="Comece sua jornada agora - Bloqueador avançado de apps e sites"
+          className="w-[770px] h-[527px] object-contain mx-auto"
+          loading="eager"
+          fetchPriority="high"
+          width={600}
+          height={450}
+          onError={(e) => {
+            console.error("Erro ao carregar imagem:", e);
+            e.currentTarget.src = "/Imagem-inicio-jornada-painel.png";
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 // Main Panel Interface Component
 interface PainelInterfaceProps {
   user?: User;
@@ -255,47 +369,114 @@ export default function PainelInterface({
   activeSection,
   onSectionChange
 }: PainelInterfaceProps) {
+  // Journey state - check if user has started their journey from database
+  const [hasStartedJourney, setHasStartedJourney] = useState(false);
+  const [localUser, setLocalUser] = useState(user);
+  const [isLoading, setIsLoading] = useState(true);
+  const [timerStartDate, setTimerStartDate] = useState<string | null>(null);
+
+  // Check timer status from database when user loads
+  useEffect(() => {
+    const checkTimerStatus = async () => {
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/timer/status/${user.id}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setHasStartedJourney(data.hasActiveTimer);
+          if (data.hasActiveTimer && data.startDate) {
+            setTimerStartDate(data.startDate);
+            // Update local user with timer start date
+            setLocalUser(prev => prev ? { ...prev, startDate: data.startDate } : prev);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar status do timer:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkTimerStatus();
+  }, [user?.id]);
+
+  // Update local user when prop changes
+  useEffect(() => {
+    setLocalUser(user);
+  }, [user]);
+
+  const handleStartJourney = async () => {
+    setHasStartedJourney(true);
+  };
+
+  const handleUserUpdate = (updatedUser: any) => {
+    setLocalUser(updatedUser);
+    setHasStartedJourney(true);
+    setTimerStartDate(updatedUser.startDate);
+  };
+
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
       <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
       <div className="relative z-10">
-        <Header />
+        <Header user={user} />
 
         <main className="flex-1 px-4 pb-48">
           <div className="space-y-6">
-            <WeeklyTracker weeklyProgress={weeklyProgress} />
+            {/* Conditionally show WeeklyTracker */}
+            {hasStartedJourney && <WeeklyTracker weeklyProgress={weeklyProgress} />}
 
             <section className="text-center">
-              <div className="floating-avatar mb-6">
-                <img
-                  src="/caveman-avatar.png"
-                  alt="Avatar Caveman"
-                  className="w-80 h-80 object-contain mx-auto"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=caveman&backgroundColor=000515";
-                  }}
-                  data-testid="avatar-image"
-                />
-              </div>
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <p className="text-sm text-muted-foreground">
+                    Verificando status do cronômetro...
+                  </p>
+                </div>
+              ) : !hasStartedJourney ? (
+                <JourneyStart onStartJourney={handleStartJourney} />
+              ) : (
+                <>
+                  {/* Conditionally show caveman avatar */}
+                  <div className="floating-avatar mb-6">
+                    <img
+                      src="/caveman-avatar.png"
+                      alt="Avatar Caveman"
+                      className="w-80 h-80 object-contain mx-auto"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=caveman&backgroundColor=000515";
+                      }}
+                      data-testid="avatar-image"
+                    />
+                  </div>
 
-              <Timer user={user} />
+                  {/* Conditionally show Timer */}
+                  <Timer user={localUser} onUserUpdate={handleUserUpdate} />
+                </>
+              )}
             </section>
           </div>
 
+          {/* These components always show regardless of journey state */}
           <div className="mt-6">
             <AIAssistant />
           </div>
 
           <div className="mt-6 flex flex-col space-y-6">
             <AnaliseEvolucaoMental />
-            
+
             <FraseDoDia />
-            
+
             <div className="challenge-cards-container mt-8">
               <DesafioPlanoBeamEstar />
               <DesafioDuplaDinamica />
             </div>
-            
+
             <div className="daily-goals-section">
               <DailyGoals />
             </div>
