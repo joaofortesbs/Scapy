@@ -267,6 +267,9 @@ function Timer({ user, onUserUpdate }: TimerProps) {
       ) : (
         // New design for 1+ days
         <>
+          <p className="text-sm text-muted-foreground mb-3">
+            Você está livre da pornografia há:
+          </p>
           <div className="text-6xl font-bold text-primary mb-4" data-testid="days-display">
             {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'}
           </div>
