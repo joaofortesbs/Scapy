@@ -108,8 +108,8 @@ export class MemStorage implements IStorage {
     const userGoal: UserGoals = {
       ...goal,
       id,
-      isActive: goal.isActive ?? true,
       createdAt: new Date(),
+      isActive: goal.isActive ?? true,
     };
     this.userGoals.set(id, userGoal);
     return userGoal;

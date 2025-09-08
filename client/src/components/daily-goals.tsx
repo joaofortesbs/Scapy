@@ -2,7 +2,7 @@ import { Target, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export function DailyGoals() {
+export default function DailyGoals() {
   const handleAddGoal = () => {
     alert("Adicionar nova meta - Em desenvolvimento");
   };
