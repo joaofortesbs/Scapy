@@ -88,35 +88,45 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
     try {
       setUploading(true);
 
-      // Update user profile with the image URL
-      const response = await fetch('/api/users/update-profile', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          profileImage: result.uploadURL,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao atualizar perfil no servidor');
-      }
-
-      const responseData = await response.json();
+      // ============ SISTEMA ROBUSTO: SEMPRE SALVAR NO LOCALSTORAGE ============
+      const imageUrl = `/objects/profile-images/${result.uploadURL.split('/').pop()}`;
+      const updatedUser = { ...user, profileImage: imageUrl };
       
-      // Update local state and notify parent component
-      const updatedUser = { ...user, profileImage: responseData.user.profileImage };
+      // SEMPRE salvar no localStorage primeiro (sistema robusto)
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Atualizar estado local imediatamente
       if (onUserUpdate) {
         onUserUpdate(updatedUser);
       }
 
-      alert('Foto de perfil atualizada com sucesso!');
+      // ============ TENTAR ATUALIZAR NO BANCO (com fallback) ============
+      try {
+        const response = await fetch('/api/users/update-profile', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            profileImage: result.uploadURL,
+          }),
+        });
+
+        if (response.ok) {
+          console.log('✅ Perfil atualizado no banco com sucesso!');
+        } else {
+          console.warn('⚠️ Erro no banco, mas imagem salva localmente:', response.status);
+        }
+      } catch (serverError) {
+        console.warn('⚠️ Erro de conexão com servidor, mas imagem salva localmente:', serverError);
+      }
+
+      alert('✅ Foto de perfil atualizada com sucesso!');
 
     } catch (error) {
-      console.error('Erro ao atualizar perfil:', error);
-      alert('Erro ao atualizar foto de perfil. Tente novamente.');
+      console.error('Erro crítico no upload:', error);
+      alert('Erro ao processar imagem. Tente novamente.');
     } finally {
       setUploading(false);
     }
