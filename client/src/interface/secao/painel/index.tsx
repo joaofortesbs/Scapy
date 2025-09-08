@@ -247,23 +247,37 @@ function Timer({ user, onUserUpdate }: TimerProps) {
   const startDate = localUser.startDate || new Date().toISOString();
   const timeDiff = calculateTimeDifference(startDate, currentTime);
 
+  // Check if user has completed at least 1 full day (24 hours)
+  const hasCompletedOneDay = timeDiff.days > 0;
+
   return (
     <div className="text-center">
-      <p className="text-sm text-muted-foreground mb-0">
-        Você está livre da pornografia há:
-      </p>
-      <div className="timer-display" data-testid="timer-display">
-        <span data-testid="timer-hours">{String(timeDiff.hours).padStart(2, '0')}</span>:
-        <span data-testid="timer-minutes">{String(timeDiff.minutes).padStart(2, '0')}</span>:
-        <span data-testid="timer-seconds">{String(timeDiff.seconds).padStart(2, '0')}</span>
-      </div>
-
-      {timeDiff.days > 0 && (
-        <div className="mt-4">
-          <div className="text-sm font-semibold text-primary">
-            {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'} LIMPO
+      {!hasCompletedOneDay ? (
+        // Original timer display for less than 24 hours
+        <>
+          <p className="text-sm text-muted-foreground mb-0">
+            Você está livre da pornografia há:
+          </p>
+          <div className="timer-display" data-testid="timer-display">
+            <span data-testid="timer-hours">{String(timeDiff.hours).padStart(2, '0')}</span>:
+            <span data-testid="timer-minutes">{String(timeDiff.minutes).padStart(2, '0')}</span>:
+            <span data-testid="timer-seconds">{String(timeDiff.seconds).padStart(2, '0')}</span>
           </div>
-        </div>
+        </>
+      ) : (
+        // New design for 1+ days
+        <>
+          <div className="text-6xl font-bold text-primary mb-4" data-testid="days-display">
+            {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'}
+          </div>
+          
+          {/* Rectangular component with rounded borders containing the time */}
+          <div className="bg-secondary/20 border border-border rounded-full p-2 px-4 inline-block">
+            <div className="text-lg font-mono text-primary font-semibold" data-testid="time-component">
+              {String(timeDiff.hours).padStart(2, '0')}h {String(timeDiff.minutes).padStart(2, '0')}min {String(timeDiff.seconds).padStart(2, '0')}seg
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
