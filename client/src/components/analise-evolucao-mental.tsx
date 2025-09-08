@@ -39,26 +39,19 @@ export default function AnaliseEvolucaoMental() {
       </Card>
       
       {/* Checklist com ícones de + */}
-      <div className="mt-4 space-y-3">
+      <div className="mt-4 space-y-3 ml-8">
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0">
             <Plus className="w-4 h-4 text-primary" />
           </div>
-          <span className="text-sm text-muted-foreground">Desenvolver autodisciplina e controle mental</span>
+          <span className="text-sm text-muted-foreground">Adicionar quadro dos sonhos</span>
         </div>
         
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0">
             <Plus className="w-4 h-4 text-primary" />
           </div>
-          <span className="text-sm text-muted-foreground">Aumentar foco e concentração nas atividades</span>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          <div className="flex-shrink-0">
-            <Plus className="w-4 h-4 text-primary" />
-          </div>
-          <span className="text-sm text-muted-foreground">Fortalecer confiança e autoestima pessoal</span>
+          <span className="text-sm text-muted-foreground">Adicionar objetivos</span>
         </div>
       </div>
     </section>
