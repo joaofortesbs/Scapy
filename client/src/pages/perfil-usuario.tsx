@@ -29,17 +29,31 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
   const [quizData, setQuizData] = useState<any>(null); // State to hold quiz data
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+  const [currentUser, setCurrentUser] = useState(user);
   
   // Hook robusto para carregamento de imagem
-  const { imageUrl, isLoading: imageLoading, saveImageToLocalStorage } = useProfileImage(user);
+  const { imageUrl, isLoading: imageLoading, saveImageToLocalStorage } = useProfileImage(currentUser);
+
+  // Carregar dados completos do usuário do localStorage
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        setCurrentUser(userData);
+      } catch (error) {
+        console.error('Erro ao carregar dados do usuário:', error);
+      }
+    }
+  }, []);
 
   // Fetch quiz data when the component mounts or user changes
   useEffect(() => {
     const fetchQuizData = async () => {
-      if (!user?.id) return;
+      if (!currentUser?.id) return;
       try {
         // Use server API instead of direct Supabase query
-        const response = await fetch(`/api/quiz/${user.id}`);
+        const response = await fetch(`/api/quiz/${currentUser.id}`);
 
         if (response.ok) {
           const result = await response.json();
@@ -58,10 +72,10 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
     };
 
     fetchQuizData();
-  }, [user?.id]);
+  }, [currentUser?.id]);
 
   const handleUploadComplete = async (result: { uploadURL: string; base64: string }) => {
-    if (!user?.id) return;
+    if (!currentUser?.id) return;
 
     try {
       setUploading(true);
@@ -74,8 +88,9 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
       saveImageToLocalStorage(result.base64);
       
       // Atualizar dados do usuário com a imagem Base64
-      const updatedUser = { ...user, profileImage: result.base64 };
+      const updatedUser = { ...currentUser, profileImage: result.base64 };
       localStorage.setItem('user', JSON.stringify(updatedUser));
+      setCurrentUser(updatedUser);
       
       // Atualizar estado local imediatamente
       if (onUserUpdate) {
@@ -103,7 +118,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
   };
 
   const handleSaveEdit = async () => {
-    if (!user?.id || !editingField) return;
+    if (!currentUser?.id || !editingField) return;
 
     try {
       // Mapear nomes dos campos para o formato correto da API
@@ -124,7 +139,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user.id,
+          userId: currentUser.id,
           stepName: apiFieldName,
           stepValue: editValue
         }),
@@ -154,7 +169,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
 
   // Function to refazer quiz
   const handleRefazerQuiz = async () => {
-    if (!user?.id) return;
+    if (!currentUser?.id) return;
 
     const confirmRefazer = confirm(
       'Tem certeza que deseja refazer o Quiz de Personalização? Suas respostas anteriores serão substituídas.'
@@ -171,8 +186,8 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            userId: user.id,
-            userFullName: user.full_name || user.username || 'Usuário'
+            userId: currentUser.id,
+            userFullName: currentUser.full_name || currentUser.username || 'Usuário'
           }),
         });
 
@@ -189,7 +204,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            userId: user.id,
+            userId: currentUser.id,
           }),
         });
 
@@ -251,7 +266,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                     onError={(e) => {
                       // Fallback adicional se a imagem falhar completamente
                       const target = e.target as HTMLImageElement;
-                      target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'user'}&backgroundColor=000515`;
+                      target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.username || 'user'}&backgroundColor=000515`;
                     }}
                   />
                   {imageLoading && (
@@ -275,7 +290,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
 
               {/* Nome do usuário */}
               <h2 className="text-2xl font-bold text-foreground mb-2" data-testid="user-name">
-                {user?.full_name || user?.username || 'Usuário'}
+                {currentUser?.full_name || currentUser?.username || 'Usuário'}
               </h2>
             </motion.div>
 
@@ -362,7 +377,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground font-medium">Maior sequência:</span>
                           <span className="text-sm text-foreground font-medium">
-                            {user?.bestStreak || 0} dias
+                            {currentUser?.bestStreak || 0} dias
                           </span>
                         </div>
                       </CardContent>
@@ -373,7 +388,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground font-medium">Total de recaídas:</span>
                           <span className="text-sm text-foreground font-medium">
-                            {user?.relapseCount || 0}
+                            {currentUser?.relapseCount || 0}
                           </span>
                         </div>
                       </CardContent>
@@ -384,8 +399,8 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground font-medium">Jornada iniciada em:</span>
                           <span className="text-sm text-foreground font-medium">
-                            {user?.startDate
-                              ? new Date(user.startDate).toLocaleDateString('pt-BR')
+                            {currentUser?.startDate
+                              ? new Date(currentUser.startDate).toLocaleDateString('pt-BR')
                               : '--/--/----'
                             }
                           </span>
@@ -398,7 +413,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground font-medium">Pontuação Scapy:</span>
                           <span className="text-sm text-foreground font-medium">
-                            {user?.scapyPoints || 0} pts
+                            {currentUser?.scapyPoints || 0} pts
                           </span>
                         </div>
                       </CardContent>
