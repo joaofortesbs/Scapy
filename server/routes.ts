@@ -249,10 +249,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       values.push(userId); // Add userId as the last parameter
       
       const updateQuery = `
-        UPDATE users 
+        UPDATE auth_users 
         SET ${updateFields.join(', ')}
         WHERE id = $${placeholderIndex}
-        RETURNING id, username, full_name, profile_image
+        RETURNING id, email, full_name, profile_image
       `;
       
       const result = await sql(updateQuery, values);
@@ -266,7 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Perfil atualizado com sucesso!',
         user: {
           id: updatedUser.id,
-          username: updatedUser.username,
+          email: updatedUser.email,
           fullName: updatedUser.full_name,
           profileImage: updatedUser.profile_image
         }
