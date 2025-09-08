@@ -272,7 +272,7 @@ function Timer({ user, onUserUpdate }: TimerProps) {
           </div>
           
           {/* Rectangular component with rounded borders containing the time */}
-          <div className="bg-secondary/20 border border-border rounded-full p-2 px-3 inline-block">
+          <div className="bg-secondary/20 border border-border rounded-full p-2 px-4 inline-block">
             <div className="text-lg font-mono text-primary font-semibold" data-testid="time-component">
               {String(timeDiff.hours).padStart(2, '0')}h {String(timeDiff.minutes).padStart(2, '0')}min {String(timeDiff.seconds).padStart(2, '0')}seg
             </div>
