@@ -5,6 +5,7 @@ import { insertWeeklyProgressSchema, insertUserGoalsSchema, quizContextualizacao
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import { neon } from '@neondatabase/serverless';
+import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -193,6 +194,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== ROTAS DE PERFIL DO USUÁRIO ==========
 
   // Atualizar perfil do usuário
+  // Get upload URL for profile image
+  app.post("/api/users/profile-image/upload-url", async (req, res) => {
+    try {
+      const { userId } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+      }
+
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getProfileImageUploadURL(userId);
+      res.json({ uploadURL });
+
+    } catch (error) {
+      console.error('Erro ao obter URL de upload:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
   app.patch("/api/users/update-profile", async (req, res) => {
     try {
       const { userId, profileImage, fullName } = req.body;
@@ -202,39 +222,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updateData: any = {};
-      if (profileImage) updateData.profile_image = profileImage;
-      if (fullName) updateData.full_name = fullName;
+      if (profileImage) {
+        const objectStorageService = new ObjectStorageService();
+        updateData.profileImage = objectStorageService.normalizeProfileImagePath(profileImage);
+      }
+      if (fullName) updateData.fullName = fullName;
 
       if (Object.keys(updateData).length === 0) {
         return res.status(400).json({ message: 'Nenhum dado para atualizar' });
       }
 
-      // Atualizar perfil na tabela auth_users
-      const { data, error } = await supabase
-        .from('auth_users')
-        .update(updateData)
-        .eq('id', userId)
-        .select('id, email, full_name, profile_image')
-        .single();
+      // Build the update query dynamically
+      let updateFields = [];
+      let values = [];
+      let placeholderIndex = 1;
+      
+      if (updateData.profileImage) {
+        updateFields.push(`profile_image = $${placeholderIndex++}`);
+        values.push(updateData.profileImage);
+      }
+      if (updateData.fullName) {
+        updateFields.push(`full_name = $${placeholderIndex++}`);
+        values.push(updateData.fullName);
+      }
+      
+      values.push(userId); // Add userId as the last parameter
+      
+      const updateQuery = `
+        UPDATE users 
+        SET ${updateFields.join(', ')}
+        WHERE id = $${placeholderIndex}
+        RETURNING id, username, full_name, profile_image
+      `;
+      
+      const result = await sql(updateQuery, values);
 
-      if (error) {
-        console.error('Erro ao atualizar perfil:', error);
-        return res.status(500).json({ message: 'Erro ao atualizar perfil' });
+      if (result.length === 0) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
+      const updatedUser = result[0];
       res.json({
         message: 'Perfil atualizado com sucesso!',
         user: {
-          id: data.id,
-          email: data.email,
-          fullName: data.full_name,
-          profileImage: data.profile_image
+          id: updatedUser.id,
+          username: updatedUser.username,
+          fullName: updatedUser.full_name,
+          profileImage: updatedUser.profile_image
         }
       });
 
     } catch (error) {
       console.error('Erro na rota de atualização de perfil:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Serve profile images
+  app.get("/objects/profile-images/:imageName(*)", async (req, res) => {
+    const imageName = req.params.imageName;
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const file = await objectStorageService.getProfileImageFile(`/objects/profile-images/${imageName}`);
+      objectStorageService.downloadObject(file, res);
+    } catch (error) {
+      console.error("Error serving profile image:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
     }
   });
 
