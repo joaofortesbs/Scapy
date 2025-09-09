@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { scheduleDailyPhraseGeneration } from "./gemini-service";
+import { scheduleDailyCleanup } from "./routes";
 
 const app = express();
 app.use(express.json());
@@ -61,6 +62,9 @@ app.use((req, res, next) => {
 
   // Initialize daily phrase generation scheduling
   scheduleDailyPhraseGeneration();
+
+  // Initialize daily cleanup scheduling
+  scheduleDailyCleanup();
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.

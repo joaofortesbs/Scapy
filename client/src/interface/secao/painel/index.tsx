@@ -82,12 +82,59 @@ function Header({ user }: HeaderInternalProps) {
 // Weekly Tracker Component
 interface WeeklyTrackerProps {
   weeklyProgress?: WeeklyProgress;
+  userMood?: string | null; // Prop to receive user's mood
+  dayIndex: number; // To identify which day to style
 }
 
-function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
+function WeeklyTracker({ weeklyProgress, userMood, dayIndex }: WeeklyTrackerProps) {
   const queryClient = useQueryClient();
   const weekDays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
   const dayNames = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+
+  // Get mood data from weekly mood tracking for each day
+  const getDayMoodStyle = (dayIndex: number) => {
+    // Check if we have weekly mood data
+    const today = new Date();
+    const currentDay = today.getDay(); // 0=Sunday, 1=Monday, etc.
+    
+    // Only apply mood styling to the current day if user has selected a mood today
+    if (dayIndex === currentDay && currentMood) {
+      switch (currentMood.toLowerCase()) {
+        case 'medo':
+          return { 
+            backgroundColor: '#ef4444', 
+            borderWidth: '2px', 
+            borderStyle: 'solid', 
+            borderColor: '#ef4444',
+            color: 'white'
+          };
+        case 'estável':
+          return { 
+            backgroundColor: '#eab308', 
+            borderWidth: '2px', 
+            borderStyle: 'solid', 
+            borderColor: '#eab308',
+            color: 'black'
+          };
+        case 'feliz':
+          return { 
+            backgroundColor: '#22c55e', 
+            borderWidth: '2px', 
+            borderStyle: 'solid', 
+            borderColor: '#22c55e',
+            color: 'white'
+          };
+        default:
+          return {};
+      }
+    }
+    return {};
+  };
+
+  // Dynamically determine classes based on completion status
+  const getDayClasses = (index: number) => {
+    return `day-circle ${weeklyProgress?.dayCompleted[index] ? 'completed' : ''}`;
+  };
 
   const updateProgressMutation = useMutation({
     mutationFn: async (updatedDays: boolean[]) => {
@@ -122,9 +169,8 @@ function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
         {weekDays.map((day, index) => (
           <button
             key={index}
-            className={`day-circle ${
-              weeklyProgress?.dayCompleted[index] ? 'completed' : ''
-            }`}
+            className={getDayClasses(index)}
+            style={getDayMoodStyle(index)}
             onClick={() => handleDayClick(index)}
             title={`${dayNames[index]} - ${weeklyProgress?.dayCompleted[index] ? 'Concluído' : 'Pendente'}`}
             data-testid={`day-circle-${index}`}
@@ -380,6 +426,59 @@ interface PainelInterfaceProps {
   onSectionChange: (section: string) => void;
 }
 
+// --- New components and logic for mood tracking ---
+
+// Interface for user mood data, assuming it will be stored per day
+interface UserMood {
+  date: string;
+  mood: string | null; // 'Medo', 'Estável', 'Feliz', or null
+}
+
+// Custom hook to manage and persist user mood data
+function useUserMoodTracker() {
+  const [currentMood, setCurrentMood] = useState<string | null>(null);
+  const [currentDayIndex, setCurrentDayIndex] = useState<number>(0); // To track the current day of the week
+
+  useEffect(() => {
+    // Reset mood at the start of a new week (e.g., Sunday)
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 for Sunday, 1 for Monday, etc.
+    setCurrentDayIndex(dayOfWeek);
+
+    // Load persisted mood for the current day
+    const savedMood = localStorage.getItem(`mood_${today.toDateString()}`);
+    if (savedMood) {
+      setCurrentMood(JSON.parse(savedMood));
+    }
+
+    // Set up interval to check for week reset (optional, could also be done on app load)
+    const interval = setInterval(() => {
+      const checkDate = new Date();
+      if (checkDate.getDay() === 0) { // If it's Sunday
+        localStorage.removeItem(`mood_${checkDate.toDateString()}`); // Clear today's mood
+        setCurrentMood(null); // Reset current mood in state
+      }
+    }, 1000 * 60 * 60 * 24); // Check once a day
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const updateMood = (mood: string) => {
+    const today = new Date();
+    localStorage.setItem(`mood_${today.toDateString()}`, JSON.stringify(mood));
+    setCurrentMood(mood);
+    console.log(`🎭 Mood atualizado no tracker: ${mood} para ${today.toDateString()}`);
+    
+    // Force re-render by updating state
+    setTimeout(() => {
+      setCurrentMood(mood);
+    }, 100);
+  };
+
+  return { currentMood, currentDayIndex, updateMood };
+}
+
+
 export default function PainelInterface({
   user,
   weeklyProgress,
@@ -391,6 +490,62 @@ export default function PainelInterface({
   const [localUser, setLocalUser] = useState(user);
   const [isLoading, setIsLoading] = useState(true);
   const [timerStartDate, setTimerStartDate] = useState<string | null>(null);
+  const queryClient = useQueryClient(); // Import queryClient here
+  const { currentMood, currentDayIndex, updateMood } = useUserMoodTracker(); // Use the custom hook
+
+  // Fetch and update mood data from API on component mount or when user changes
+  useEffect(() => {
+    const fetchWeeklyMood = async () => {
+      if (!user?.id) return;
+
+      try {
+        // Assuming an endpoint to get the current week's mood data
+        const response = await fetch(`/api/weekly-mood/${user.id}`);
+        const data = await response.json();
+
+        if (response.ok && data.moods) {
+          // Find the mood for the current day
+          const today = new Date();
+          const todayString = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+          const moodForToday = data.moods.find((m: UserMood) => m.date === todayString);
+          if (moodForToday && moodForToday.mood) {
+            // Update local state if mood is found
+            updateMood(moodForToday.mood);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching weekly mood:', error);
+      }
+    };
+
+    fetchWeeklyMood();
+  }, [user?.id, updateMood]); // Re-fetch if user changes
+
+  // Effect to handle mood updates from AIAssistant
+  useEffect(() => {
+    const handleAIAssistantMoodUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.mood) {
+        updateMood(customEvent.detail.mood); // Update local state and persist
+      }
+    };
+
+    const handleMoodUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.mood) {
+        console.log(`🔄 Evento de atualização de humor recebido: ${customEvent.detail.mood}`);
+        updateMood(customEvent.detail.mood);
+      }
+    };
+
+    window.addEventListener('aiAssistantMoodSelected', handleAIAssistantMoodUpdate);
+    window.addEventListener('moodUpdated', handleMoodUpdate);
+
+    return () => {
+      window.removeEventListener('aiAssistantMoodSelected', handleAIAssistantMoodUpdate);
+      window.removeEventListener('moodUpdated', handleMoodUpdate);
+    };
+  }, [updateMood]); // Depend on updateMood
 
   // Check timer status from database when user loads
   useEffect(() => {
@@ -437,6 +592,41 @@ export default function PainelInterface({
     setTimerStartDate(updatedUser.startDate);
   };
 
+  // Handle AI Assistant mood selection and update backend/state
+  const handleAiAssistantMoodSelection = async (mood: string) => {
+    if (!user?.id) return;
+
+    try {
+      console.log(`🎯 Processando seleção de humor: ${mood}`);
+      
+      // Update local state immediately for instant feedback
+      updateMood(mood.toLowerCase());
+      
+      // Update backend
+      const response = await fetch('/api/save-mood', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, date: new Date().toISOString().split('T')[0], mood: mood.toLowerCase() }),
+      });
+
+      if (response.ok) {
+        console.log(`✅ Humor salvo no backend: ${mood}`);
+        
+        // Dispatch event for other components
+        window.dispatchEvent(new CustomEvent('tasksUpdated'));
+        window.dispatchEvent(new CustomEvent('moodUpdated', { detail: { mood: mood.toLowerCase() } }));
+
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['/api/weekly-mood'] });
+      } else {
+        console.error('Failed to save mood:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error saving mood:', error);
+    }
+  };
+
+
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
       <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
@@ -446,7 +636,11 @@ export default function PainelInterface({
         <main className="flex-1 px-4 pb-48">
           <div className="space-y-6">
             {/* Conditionally show WeeklyTracker */}
-            {hasStartedJourney && <WeeklyTracker weeklyProgress={weeklyProgress} />}
+            {hasStartedJourney && <WeeklyTracker
+              weeklyProgress={weeklyProgress}
+              userMood={currentMood} // Pass the current mood
+              dayIndex={currentDayIndex} // Pass the current day index
+            />}
 
             <section className="text-center">
               {isLoading ? (
@@ -481,7 +675,7 @@ export default function PainelInterface({
 
           {/* These components always show regardless of journey state */}
           <div className="mt-6">
-            <AIAssistant />
+            <AIAssistant onMoodSelected={handleAiAssistantMoodSelection} />
           </div>
 
           <div className="mt-6 flex flex-col space-y-6">
