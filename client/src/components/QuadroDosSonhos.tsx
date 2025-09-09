@@ -40,7 +40,7 @@ export default function QuadroDosSonhos() {
   return (
     <div className="w-full flex items-center justify-center py-4">
       {/* Container dos cards - Layout otimizado para mobile */}
-      <div className="grid grid-cols-2 gap-4 sm:gap-6 w-full max-w-sm sm:max-w-md">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full max-w-sm sm:max-w-md">
         {images.map((image, index) => (
           <div
             key={index}
