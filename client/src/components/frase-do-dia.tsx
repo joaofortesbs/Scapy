@@ -32,8 +32,9 @@ export default function FraseDoDia() {
   const fetchDailyPhrase = async () => {
     try {
       setLoading(true);
-      const response = await apiRequest('/api/daily-phrase');
-      setPhrase(response);
+      const response = await apiRequest('GET', '/api/daily-phrase');
+      const data = await response.json();
+      setPhrase(data);
     } catch (error) {
       console.error('Erro ao carregar frase do dia:', error);
       // Fallback phrase if API fails
