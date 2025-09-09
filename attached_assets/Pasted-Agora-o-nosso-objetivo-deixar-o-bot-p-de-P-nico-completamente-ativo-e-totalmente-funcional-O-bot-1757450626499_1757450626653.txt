@@ -1,0 +1,78 @@
+Agora o nosso objetivo é deixar o botãp de Pânico completamente ativo e totalmente funcional!
+
+O botão vai funcionar da seguinte maneira:
+
+Ao clicar em cima dele, toda a interface da plataforma vai ser subistituida com uma animação sauve para uma nova página, uma página que vai ter um arquivo dedicado e vai se chamar "Página de Pânico", a interface dessa página vai ser composta pela seguinte estrutura:
+
+- No topo da página, vai ter uma frase de "Relembre o porque 
+você começou essa jornada"! Como um titulo da cor branca!
+
+- Logo abaixo desse titulo, vai ter uma duplicata exata do componente de cronometro, mostrando ou somente o cronometro (A depender do tempo do usuário), ou mostrando a quantidade de dias e o cronometro abaixo! Vai ser uma duplicata exata, com exatamente o mesmo sistema e desing e funcionalidades!
+
+- Logo abaixo da duplicata do componente de cronometro, vai ter um componente chamado "Câmera da Vergonha"! Esse componente vai ter um arquivo dedicado! Camada de UI:
+
+Card com bordas arredondadas, sombra suave.
+
+Header opcional (ex: “Câmera Ativa”).
+
+Body: <video> exibindo o stream da câmera frontal.
+
+2. API de Acesso à Câmera
+
+O acesso à câmera é feito com a WebRTC API (navigator.mediaDevices.getUserMedia).
+
+Exemplo em React:
+
+import { useEffect, useRef } from "react";
+
+export default function CameraCard() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    async function initCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" }, // "user" = câmera frontal
+          audio: false,
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        console.error("Erro ao acessar a câmera:", err);
+      }
+    }
+    initCamera();
+  }, []);
+
+  return (
+    <div className="rounded-2xl shadow-lg p-4 bg-white">
+      <h2 className="text-lg font-bold mb-2">Câmera Ativa</h2>
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className="w-full rounded-xl"
+      />
+    </div>
+  );
+}
+
+3. Considerações Técnicas
+
+Performance:
+O streaming é local (não sobe pro servidor a não ser que você capture). Impacta apenas CPU/GPU.
+
+Privacidade:
+Sempre mostrar aviso claro pedindo permissão da câmera. Permissão deve ser explícita e revogável.
+
+Fallback:
+Caso o usuário negue o acesso, renderize mensagem (“Permissão da câmera negada”).
+
+Cross-Platform:
+Em apps mobile (React Native, Flutter), use plugins específicos:
+
+React Native: react-native-camera ou react-native-vision-camera.
+
+Flutter: camera package.
