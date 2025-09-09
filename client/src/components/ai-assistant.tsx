@@ -101,8 +101,11 @@ export default function AIAssistant() {
         description: `${suggestionData.tasks.length} atividades personalizadas foram adicionadas às suas metas do dia!`,
       });
 
-      // 4. Disparar evento para atualizar outros componentes
+      // 4. Disparar eventos para atualizar outros componentes
       window.dispatchEvent(new CustomEvent('tasksUpdated'));
+      window.dispatchEvent(new CustomEvent('moodUpdated'));
+      
+      console.log(`🔔 Eventos disparados: tasksUpdated e moodUpdated`);
 
     } catch (error) {
       console.error('Erro ao processar seleção de humor:', error);

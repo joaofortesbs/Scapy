@@ -79,15 +79,187 @@ function Header({ user }: HeaderInternalProps) {
   );
 }
 
+// Interface para dados de humor semanal
+interface WeeklyMood {
+  userId: string;
+  weekStart: string;
+  weekEnd: string;
+  moodByDay: (string | null)[]; // [domingo, segunda, terça, quarta, quinta, sexta, sábado]
+}
+
+// Sistema de persistência semanal com localStorage
+class WeeklyMoodStorage {
+  private static readonly STORAGE_KEY = 'scapy_weekly_moods';
+  private static readonly VERSION_KEY = 'scapy_mood_version';
+  private static readonly CURRENT_VERSION = '1.0.0';
+
+  // Salvar humor semanal no localStorage
+  static saveWeeklyMood(userId: string, weeklyMood: WeeklyMood): void {
+    try {
+      const weekKey = this.getWeekKey(new Date());
+      const storageData = this.getStorageData();
+      
+      if (!storageData[userId]) {
+        storageData[userId] = {};
+      }
+      
+      storageData[userId][weekKey] = weeklyMood;
+      
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(storageData));
+      localStorage.setItem(this.VERSION_KEY, this.CURRENT_VERSION);
+      
+      console.log(`💾 Humor semanal salvo para usuário ${userId}, semana: ${weekKey}`);
+    } catch (error) {
+      console.error('Erro ao salvar humor semanal:', error);
+    }
+  }
+
+  // Carregar humor semanal do localStorage
+  static loadWeeklyMood(userId: string): WeeklyMood | null {
+    try {
+      const weekKey = this.getWeekKey(new Date());
+      const storageData = this.getStorageData();
+      
+      return storageData[userId]?.[weekKey] || null;
+    } catch (error) {
+      console.error('Erro ao carregar humor semanal:', error);
+      return null;
+    }
+  }
+
+  // Limpar dados de semanas antigas (manter apenas últimas 4 semanas)
+  static cleanOldWeeks(): void {
+    try {
+      const storageData = this.getStorageData();
+      const currentDate = new Date();
+      const weeksToKeep = 4;
+      
+      Object.keys(storageData).forEach(userId => {
+        const userWeeks = storageData[userId];
+        const weekKeys = Object.keys(userWeeks);
+        
+        // Ordenar semanas por data e manter apenas as mais recentes
+        const sortedWeeks = weekKeys
+          .map(key => ({ key, date: this.getDateFromWeekKey(key) }))
+          .sort((a, b) => b.date.getTime() - a.date.getTime())
+          .slice(0, weeksToKeep);
+        
+        // Remover semanas antigas
+        const newUserWeeks: any = {};
+        sortedWeeks.forEach(({ key }) => {
+          newUserWeeks[key] = userWeeks[key];
+        });
+        
+        storageData[userId] = newUserWeeks;
+      });
+      
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(storageData));
+    } catch (error) {
+      console.error('Erro ao limpar semanas antigas:', error);
+    }
+  }
+
+  private static getStorageData(): any {
+    try {
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  private static getWeekKey(date: Date): string {
+    const startOfWeek = new Date(date);
+    startOfWeek.setDate(date.getDate() - date.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    return startOfWeek.toISOString().split('T')[0]; // YYYY-MM-DD
+  }
+
+  private static getDateFromWeekKey(weekKey: string): Date {
+    return new Date(weekKey);
+  }
+}
+
 // Weekly Tracker Component
 interface WeeklyTrackerProps {
   weeklyProgress?: WeeklyProgress;
+  user?: User;
 }
 
-function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
+function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
   const queryClient = useQueryClient();
+  const [weeklyMood, setWeeklyMood] = useState<WeeklyMood | null>(null);
+  const [isLoadingMood, setIsLoadingMood] = useState(true);
+  
   const weekDays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
   const dayNames = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+
+  // Carregar humor semanal
+  useEffect(() => {
+    const loadWeeklyMood = async () => {
+      if (!user?.id) return;
+
+      setIsLoadingMood(true);
+      
+      try {
+        // Primeiro, tentar carregar do localStorage
+        const localMood = WeeklyMoodStorage.loadWeeklyMood(user.id.toString());
+        
+        if (localMood) {
+          setWeeklyMood(localMood);
+          console.log(`📋 Humor semanal carregado do localStorage:`, localMood);
+        }
+
+        // Depois, buscar dados atualizados da API
+        const response = await apiRequest('GET', `/api/weekly-mood/${user.id}`);
+        const apiMood = await response.json();
+        
+        setWeeklyMood(apiMood);
+        
+        // Salvar no localStorage para persistência
+        WeeklyMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
+        
+        console.log(`🌐 Humor semanal atualizado da API:`, apiMood);
+        
+      } catch (error) {
+        console.error('Erro ao carregar humor semanal:', error);
+        // Se houver erro na API, usar dados do localStorage como fallback
+        const localMood = WeeklyMoodStorage.loadWeeklyMood(user.id.toString());
+        if (localMood) {
+          setWeeklyMood(localMood);
+        }
+      } finally {
+        setIsLoadingMood(false);
+      }
+    };
+
+    loadWeeklyMood();
+  }, [user?.id]);
+
+  // Escutar atualizações de humor e tarefas
+  useEffect(() => {
+    const handleMoodUpdated = () => {
+      if (user?.id) {
+        // Recarregar humor semanal quando há atualizações
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: [`/api/weekly-mood/${user.id}`] });
+        }, 500);
+      }
+    };
+
+    window.addEventListener('tasksUpdated', handleMoodUpdated);
+    window.addEventListener('moodUpdated', handleMoodUpdated);
+    
+    return () => {
+      window.removeEventListener('tasksUpdated', handleMoodUpdated);
+      window.removeEventListener('moodUpdated', handleMoodUpdated);
+    };
+  }, [user?.id, queryClient]);
+
+  // Limpeza periódica de semanas antigas (a cada acesso)
+  useEffect(() => {
+    WeeklyMoodStorage.cleanOldWeeks();
+  }, []);
 
   const updateProgressMutation = useMutation({
     mutationFn: async (updatedDays: boolean[]) => {
@@ -116,28 +288,89 @@ function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
     updateProgressMutation.mutate(updatedDays);
   };
 
+  // Função para determinar classes CSS baseadas no humor e status de conclusão
+  const getDayClasses = (dayIndex: number): string => {
+    const baseClass = 'day-circle';
+    const isCompleted = weeklyProgress?.dayCompleted[dayIndex];
+    const dayMood = weeklyMood?.moodByDay[dayIndex];
+
+    let classes = [baseClass];
+
+    // Se o dia está concluído, usar a classe completed (verde padrão)
+    if (isCompleted) {
+      classes.push('completed');
+    } 
+    // Caso contrário, aplicar estilo baseado no humor se existir
+    else if (dayMood) {
+      switch (dayMood) {
+        case 'medo':
+          classes.push('mood-medo');
+          break;
+        case 'estavel':
+          classes.push('mood-estavel');
+          break;
+        case 'feliz':
+          classes.push('mood-feliz');
+          break;
+      }
+    }
+
+    return classes.join(' ');
+  };
+
+  // Função para determinar o título do botão
+  const getDayTitle = (dayIndex: number): string => {
+    const dayName = dayNames[dayIndex];
+    const isCompleted = weeklyProgress?.dayCompleted[dayIndex];
+    const dayMood = weeklyMood?.moodByDay[dayIndex];
+
+    let title = `${dayName} - `;
+    
+    if (isCompleted) {
+      title += 'Concluído';
+    } else {
+      title += 'Pendente';
+    }
+
+    if (dayMood) {
+      const moodLabels = {
+        'medo': 'Medo',
+        'estavel': 'Estável', 
+        'feliz': 'Feliz'
+      };
+      title += ` | Humor: ${moodLabels[dayMood as keyof typeof moodLabels]}`;
+    }
+
+    return title;
+  };
+
   return (
     <section className="mb-8">
       <div className="flex justify-center space-x-2">
         {weekDays.map((day, index) => (
           <button
             key={index}
-            className={`day-circle ${
-              weeklyProgress?.dayCompleted[index] ? 'completed' : ''
-            }`}
+            className={getDayClasses(index)}
             onClick={() => handleDayClick(index)}
-            title={`${dayNames[index]} - ${weeklyProgress?.dayCompleted[index] ? 'Concluído' : 'Pendente'}`}
+            title={getDayTitle(index)}
             data-testid={`day-circle-${index}`}
-            disabled={updateProgressMutation.isPending}
+            disabled={updateProgressMutation.isPending || isLoadingMood}
           >
             {day}
           </button>
         ))}
       </div>
 
-      {updateProgressMutation.isPending && (
-        <div className="text-center mt-2 text-sm text-muted-foreground">
-          Atualizando...
+      {(updateProgressMutation.isPending || isLoadingMood) && (
+        <div className="text-center mt-2 text-xs text-muted-foreground">
+          {isLoadingMood ? 'Carregando humores...' : 'Atualizando...'}
+        </div>
+      )}
+
+      {/* Debug info - remover em produção */}
+      {process.env.NODE_ENV === 'development' && weeklyMood && (
+        <div className="text-center mt-2 text-xs text-muted-foreground">
+          Humores: {weeklyMood.moodByDay.map(mood => mood || '—').join(' | ')}
         </div>
       )}
     </section>
@@ -446,7 +679,7 @@ export default function PainelInterface({
         <main className="flex-1 px-4 pb-48">
           <div className="space-y-6">
             {/* Conditionally show WeeklyTracker */}
-            {hasStartedJourney && <WeeklyTracker weeklyProgress={weeklyProgress} />}
+            {hasStartedJourney && <WeeklyTracker weeklyProgress={weeklyProgress} user={localUser} />}
 
             <section className="text-center">
               {isLoading ? (

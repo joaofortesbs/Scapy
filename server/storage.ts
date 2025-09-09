@@ -228,6 +228,21 @@ export class MemStorage implements IStorage {
     return todaySelections[todaySelections.length - 1]; // Retorna a mais recente do dia
   }
 
+  // Buscar seleções de humor de uma semana específica
+  async getWeeklyMoodSelections(userId: string, startOfWeek: Date, endOfWeek: Date): Promise<MoodSelection[]> {
+    const selections = Array.from(this.moodSelections.values()).filter(
+      (selection) => {
+        const selectionDate = new Date(selection.date);
+        return selection.userId === userId && 
+               selectionDate >= startOfWeek && 
+               selectionDate <= endOfWeek;
+      }
+    );
+    
+    // Ordenar por data (mais recente por dia, caso tenha múltiplas seleções)
+    return selections.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+
   // User objectives
   async getUserObjectives(userId: string): Promise<UserObjective[] > {
     return Array.from(this.userObjectives.values()).filter(

@@ -997,6 +997,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== ROTAS DO SISTEMA DE HUMOR SEMANAL ==========
+
+  // Obter humor semanal do usuário
+  app.get("/api/weekly-mood/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      
+      // Calcular início e fim da semana atual
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay()); // Domingo
+      startOfWeek.setHours(0, 0, 0, 0);
+      
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6); // Sábado
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      // Buscar todas as seleções de humor da semana
+      const weeklyMoods = await storage.getWeeklyMoodSelections(userId, startOfWeek, endOfWeek);
+      
+      // Organizar por dia da semana (0-6, domingo a sábado)
+      const moodByDay = new Array(7).fill(null);
+      
+      weeklyMoods.forEach((mood: any) => {
+        const moodDate = new Date(mood.date);
+        const dayOfWeek = moodDate.getDay();
+        moodByDay[dayOfWeek] = mood.mood;
+      });
+
+      res.json({
+        userId,
+        weekStart: startOfWeek.toISOString(),
+        weekEnd: endOfWeek.toISOString(),
+        moodByDay // [domingo, segunda, terça, quarta, quinta, sexta, sábado]
+      });
+    } catch (error) {
+      console.error("Erro ao buscar humor semanal:", error);
+      res.status(500).json({ message: "Erro ao buscar humor semanal" });
+    }
+  });
+
   // ========== ROTAS PARA METAS PERSONALIZADAS DO USUÁRIO ==========
 
   // Criar meta personalizada
