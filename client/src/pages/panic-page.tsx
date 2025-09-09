@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { calculateTimeDifference } from "@/lib/timer-utils";
 import CameraShame from "../components/camera-shame";
 import ParticlesBackground from "@/components/particles-background";
+import ObjetivosCarousel from "@/components/objetivos-carousel";
 import type { User } from "@shared/schema";
 
 interface PanicPageProps {
@@ -181,7 +182,8 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
           className="w-full max-w-md" 
           style={{ marginTop: '45px' }}
         >
-          {/* Espaço vazio para manter layout */}
+          {/* Carrossel de Objetivos */}
+          <ObjetivosCarousel />
         </div>
       </div>
       </div>
