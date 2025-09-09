@@ -146,7 +146,7 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         animation: 'fadeIn 0.6s ease-out'
       }}
     >
-      <div className="flex flex-col items-center justify-start min-h-screen px-6 pt-8 pb-8 space-y-8">
+      <div className="flex flex-col items-center justify-start min-h-screen px-6 pt-8 pb-8">
         {/* Header com botão de voltar e título */}
         <div className="w-full flex items-center justify-between mb-4">
           <Link href="/">
@@ -164,17 +164,23 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
             className="text-xl md:text-2xl font-bold text-white text-center leading-tight flex-1 mr-10"
             data-testid="panic-title"
           >
-            Relembre o porque você<br />começou essa jornada
+            Relembre o porque você<br />começou essa jornada!
           </h1>
         </div>
 
         {/* Cronômetro sincronizado */}
-        <div className="w-full max-w-md -mt-16">
+        <div 
+          className="w-full max-w-md" 
+          style={{ marginTop: '-80px', zIndex: 10 }}
+        >
           <TimerDuplicate />
         </div>
 
         {/* Componente Câmera da Vergonha com espaçamento reduzido */}
-        <div className="w-full max-w-md -mt-12">
+        <div 
+          className="w-full max-w-md" 
+          style={{ marginTop: '-60px', zIndex: 10 }}
+        >
           <CameraShame autoActivate={true} />
         </div>
       </div>
