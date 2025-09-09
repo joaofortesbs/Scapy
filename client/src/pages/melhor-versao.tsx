@@ -90,16 +90,7 @@ export default function MelhorVersao() {
         </div>
 
         {/* Container do Quadro dos Sonhos - Otimizado para mobile */}
-        <div className="px-4 space-y-4">
-          <div className="text-center space-y-2">
-            <h3 className="text-base sm:text-lg font-semibold text-primary">
-              Quadro dos Sonhos
-            </h3>
-            <p className="text-xs sm:text-sm text-muted-foreground px-2 leading-relaxed">
-              Adicione imagens que representam seus objetivos e sonhos
-            </p>
-          </div>
-          
+        <div className="px-4">
           {/* Container do componente QuadroDosSonhos com padding ajustado */}
           <div className="w-full">
             <QuadroDosSonhos />
