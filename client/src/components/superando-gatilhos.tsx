@@ -116,7 +116,7 @@ export default function SuperandoGatilhos({ userId }: SuperandoGatilhosProps) {
               <p className="text-base text-red-500 font-medium flex-1">
                 {gatilho}
               </p>
-              <X className="w-5 h-5 text-red-500 ml-1" />
+              <X className="w-5 h-5 text-red-500" />
             </div>
           </div>
 
