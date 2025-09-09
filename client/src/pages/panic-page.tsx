@@ -171,15 +171,15 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         {/* Cronômetro sincronizado */}
         <div 
           className="w-full max-w-md" 
-          style={{ marginTop: '-80px', zIndex: 10 }}
+          style={{ marginTop: '20px' }}
         >
           <TimerDuplicate />
         </div>
 
-        {/* Componente Câmera da Vergonha com espaçamento reduzido */}
+        {/* Componente Câmera da Vergonha */}
         <div 
           className="w-full max-w-md" 
-          style={{ marginTop: '-60px', zIndex: 10 }}
+          style={{ marginTop: '30px' }}
         >
           <CameraShame autoActivate={true} />
         </div>
