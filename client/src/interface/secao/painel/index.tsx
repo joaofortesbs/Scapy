@@ -202,32 +202,21 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
       setIsLoadingMood(true);
       
       try {
-        // Primeiro, tentar carregar do localStorage
-        const localMood = WeeklyMoodStorage.loadWeeklyMood(user.id.toString());
+        console.log(`🔍 Carregando humor semanal para usuário ${user.id}`);
         
-        if (localMood) {
-          setWeeklyMood(localMood);
-          console.log(`📋 Humor semanal carregado do localStorage:`, localMood);
-        }
-
-        // Depois, buscar dados atualizados da API
-        const response = await apiRequest('GET', `/api/weekly-mood/${user.id}`);
-        const apiMood = await response.json();
+        // Buscar dados da API
+        const apiMood = await apiRequest('GET', `/api/weekly-mood/${user.id}`) as WeeklyMood;
+        
+        console.log(`🌐 Humor semanal recebido da API:`, apiMood);
         
         setWeeklyMood(apiMood);
         
         // Salvar no localStorage para persistência
         WeeklyMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
         
-        console.log(`🌐 Humor semanal atualizado da API:`, apiMood);
-        
       } catch (error) {
-        console.error('Erro ao carregar humor semanal:', error);
-        // Se houver erro na API, usar dados do localStorage como fallback
-        const localMood = WeeklyMoodStorage.loadWeeklyMood(user.id.toString());
-        if (localMood) {
-          setWeeklyMood(localMood);
-        }
+        console.error('❌ Erro ao carregar humor semanal:', error);
+        setWeeklyMood({ userId: user.id.toString(), weekStart: '', weekEnd: '', moodByDay: new Array(7).fill(null) });
       } finally {
         setIsLoadingMood(false);
       }
@@ -238,12 +227,18 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
 
   // Escutar atualizações de humor e tarefas
   useEffect(() => {
-    const handleMoodUpdated = () => {
+    const handleMoodUpdated = async () => {
       if (user?.id) {
-        // Recarregar humor semanal quando há atualizações
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: [`/api/weekly-mood/${user.id}`] });
-        }, 500);
+        console.log('🔔 Evento moodUpdated recebido, recarregando dados...');
+        // Recarregar humor semanal imediatamente quando há atualizações
+        try {
+          const apiMood = await apiRequest('GET', `/api/weekly-mood/${user.id}`) as WeeklyMood;
+          setWeeklyMood(apiMood);
+          WeeklyMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
+          console.log('✅ Humor semanal atualizado após evento:', apiMood);
+        } catch (error) {
+          console.error('❌ Erro ao atualizar humor após evento:', error);
+        }
       }
     };
 
@@ -254,7 +249,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
       window.removeEventListener('tasksUpdated', handleMoodUpdated);
       window.removeEventListener('moodUpdated', handleMoodUpdated);
     };
-  }, [user?.id, queryClient]);
+  }, [user?.id]);
 
   // Limpeza periódica de semanas antigas (a cada acesso)
   useEffect(() => {
@@ -292,7 +287,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
   const getDayClasses = (dayIndex: number): string => {
     const baseClass = 'day-circle';
     const isCompleted = weeklyProgress?.dayCompleted[dayIndex];
-    const dayMood = weeklyMood?.moodByDay[dayIndex];
+    const dayMood = weeklyMood?.moodByDay?.[dayIndex];
 
     let classes = [baseClass];
 
@@ -322,7 +317,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
   const getDayTitle = (dayIndex: number): string => {
     const dayName = dayNames[dayIndex];
     const isCompleted = weeklyProgress?.dayCompleted[dayIndex];
-    const dayMood = weeklyMood?.moodByDay[dayIndex];
+    const dayMood = weeklyMood?.moodByDay?.[dayIndex];
 
     let title = `${dayName} - `;
     
@@ -370,7 +365,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
       {/* Debug info - remover em produção */}
       {process.env.NODE_ENV === 'development' && weeklyMood && (
         <div className="text-center mt-2 text-xs text-muted-foreground">
-          Humores: {weeklyMood.moodByDay.map(mood => mood || '—').join(' | ')}
+          Humores: {weeklyMood.moodByDay?.map(mood => mood || '—').join(' | ') || 'Não carregados'}
         </div>
       )}
     </section>
