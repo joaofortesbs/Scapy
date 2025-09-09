@@ -24,7 +24,7 @@ export default function AIAssistant() {
     { id: 'feliz', label: 'Feliz', icon: Smile, color: 'bg-green-500/20 text-green-400 border-green-500/30' }
   ];
 
-  // Carregar dados do usuário
+  // Carregar dados do usuário e verificar humor
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
@@ -40,15 +40,35 @@ export default function AIAssistant() {
     }
   }, []);
 
+  // Escutar atualizações de humor para manter sincronizado
+  useEffect(() => {
+    const handleMoodUpdate = () => {
+      if (user) {
+        console.log('🔄 Recarregando humor após atualização...');
+        checkTodayMood(user.id);
+      }
+    };
+
+    window.addEventListener('moodUpdated', handleMoodUpdate);
+    return () => {
+      window.removeEventListener('moodUpdated', handleMoodUpdate);
+    };
+  }, [user]);
+
   const checkTodayMood = async (userId: number) => {
     try {
       const response = await apiRequest('GET', `/api/today-mood/${userId}`);
       const data = await response.json();
       if (data) {
         setTodayMood(data.mood);
+        console.log(`📋 Humor de hoje carregado: ${data.mood}`);
+      } else {
+        setTodayMood(null);
+        console.log(`📋 Nenhum humor registrado para hoje`);
       }
     } catch (error) {
       console.error('Erro ao verificar humor de hoje:', error);
+      setTodayMood(null);
     }
   };
 
@@ -93,8 +113,9 @@ export default function AIAssistant() {
       
       console.log(`✅ Sugestões geradas:`, suggestionData);
 
-      // 3. Mostrar sucesso
+      // 3. Atualizar estado do humor imediatamente
       setTodayMood(mood.toLowerCase());
+      console.log(`🎯 Estado todayMood atualizado para: ${mood.toLowerCase()}`);
       
       toast({
         title: "Sugestões criadas!",
@@ -147,6 +168,7 @@ export default function AIAssistant() {
         description: "Tente novamente em alguns instantes.",
         variant: "destructive",
       });
+      // Se houve erro, não atualizar o estado do humor
     } finally {
       setIsGenerating(false);
       setSelectedMood(null);

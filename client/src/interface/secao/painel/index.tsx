@@ -443,12 +443,6 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
         </div>
       )}
 
-      {/* Debug info - remover em produção */}
-      {process.env.NODE_ENV === 'development' && weeklyMood && (
-        <div className="text-center mt-2 text-xs text-muted-foreground">
-          Humores: {weeklyMood.moodByDay?.map(mood => mood || '—').join(' | ') || 'Não carregados'}
-        </div>
-      )}
     </section>
   );
 }
