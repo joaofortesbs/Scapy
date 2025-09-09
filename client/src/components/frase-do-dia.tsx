@@ -97,11 +97,6 @@ export default function FraseDoDia() {
 
   return (
     <section className="mb-8 relative">
-      {/* Título acima do card */}
-      <h2 className="text-lg font-semibold mb-3 text-left" style={{ color: '#F7F7F7' }}>
-        Frase do campeão!
-      </h2>
-      
       <div className="relative">
         {/* Ícone de salvamento no canto direito superior */}
         <div className="absolute top-0 right-10 transform translate-x-[30%] -translate-y-[30%] z-10">
