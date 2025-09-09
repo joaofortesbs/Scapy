@@ -177,25 +177,24 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
           <div 
             className="absolute left-1/2 transform -translate-x-1/2 w-4/5"
             style={{ 
-              bottom: '-75px', // Metade da altura do card para fora
+              bottom: '-25px', // 50% para fora do card de câmera
               zIndex: 10 
             }}
           >
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 shadow-lg border border-white/20" style={{ height: '150px' }}>
-              <div className="text-center text-white h-full flex flex-col justify-center">
-                <h3 className="text-lg font-bold mb-2">Mantenha o Foco!</h3>
-                <p className="text-sm opacity-90">Você consegue superar este momento</p>
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-2 shadow-lg border border-white/20" style={{ height: '50px' }}>
+              <div className="text-center text-white h-full flex items-center justify-center">
+                <TimerDuplicate />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Cronômetro sincronizado */}
+        {/* Espaçamento para compensar o card sobreposto */}
         <div 
           className="w-full max-w-md" 
-          style={{ marginTop: '95px' }}
+          style={{ marginTop: '45px' }}
         >
-          <TimerDuplicate />
+          {/* Espaço vazio para manter layout */}
         </div>
       </div>
 
