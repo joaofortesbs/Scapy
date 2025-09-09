@@ -125,21 +125,23 @@ export default function PanicPage({ user }: PanicPageProps) {
       </div>
 
       {/* Estilos para animação */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
-          to {
-            opacity: 1;
-            transform: translateY(0);
+          .animate-fade-in {
+            animation: fadeIn 0.6s ease-out;
           }
-        }
-        .animate-fade-in {
-          animation: fadeIn 0.6s ease-out;
-        }
-      `}</style>
+        `
+      }} />
     </div>
   );
 }
