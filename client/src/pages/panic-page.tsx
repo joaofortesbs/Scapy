@@ -161,8 +161,7 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
             className="text-white hover:bg-white/10 transition-all duration-300"
             data-testid="back-button"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
+            <ArrowLeft className="w-4 h-4" />
           </Button>
         </Link>
       </div>
@@ -170,7 +169,7 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
       <div className="flex flex-col items-center justify-start min-h-screen px-6 pt-20 pb-8 space-y-8">
         {/* Título */}
         <h1 
-          className="text-3xl md:text-4xl font-bold text-white text-center leading-tight"
+          className="text-xl md:text-2xl font-bold text-white text-center leading-tight"
           data-testid="panic-title"
         >
           Relembre o porque você começou essa jornada
