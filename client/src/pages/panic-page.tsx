@@ -168,23 +168,24 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
           </h1>
         </div>
 
-        {/* Componente Câmera da Vergonha */}
-        <div 
-          className="w-full max-w-md" 
-          style={{ marginTop: '15px' }}
-        >
+        {/* Container para Câmera da Vergonha e Card Sobreposto */}
+        <div className="w-full max-w-md relative" style={{ marginTop: '15px' }}>
+          {/* Componente Câmera da Vergonha */}
           <CameraShame autoActivate={true} />
-        </div>
-
-        {/* Novo card retangular sobreposto */}
-        <div 
-          className="w-full max-w-md relative" 
-          style={{ marginTop: '-175px', zIndex: 10 }}
-        >
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 mx-8 shadow-lg border border-white/20">
-            <div className="text-center text-white">
-              <h3 className="text-lg font-bold mb-2">Mantenha o Foco!</h3>
-              <p className="text-sm opacity-90">Você consegue superar este momento</p>
+          
+          {/* Novo card retangular sobreposto - 50% dentro, 50% fora */}
+          <div 
+            className="absolute left-1/2 transform -translate-x-1/2 w-4/5"
+            style={{ 
+              bottom: '-75px', // Metade da altura do card para fora
+              zIndex: 10 
+            }}
+          >
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 shadow-lg border border-white/20" style={{ height: '150px' }}>
+              <div className="text-center text-white h-full flex flex-col justify-center">
+                <h3 className="text-lg font-bold mb-2">Mantenha o Foco!</h3>
+                <p className="text-sm opacity-90">Você consegue superar este momento</p>
+              </div>
             </div>
           </div>
         </div>
@@ -192,7 +193,7 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         {/* Cronômetro sincronizado */}
         <div 
           className="w-full max-w-md" 
-          style={{ marginTop: '20px' }}
+          style={{ marginTop: '95px' }}
         >
           <TimerDuplicate />
         </div>
