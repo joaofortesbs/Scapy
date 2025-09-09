@@ -7,7 +7,13 @@ import type {
   InsertDailyTask 
 } from "@shared/schema";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error("GEMINI_API_KEY environment variable is required");
+}
+
+const ai = new GoogleGenAI({ 
+  apiKey: process.env.GEMINI_API_KEY
+});
 
 interface UserProfileData {
   mood: string;
@@ -44,7 +50,7 @@ export class AIProcessor {
       console.log(`🤖 Gerando sugestões para usuário com humor: ${userProfile.mood}`);
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-pro",
+        model: "gemini-2.0-flash",
         config: {
           systemInstruction: systemPrompt,
           responseMimeType: "application/json",
@@ -78,7 +84,7 @@ export class AIProcessor {
             required: ["activities", "message", "reasoning"]
           }
         },
-        contents: userPrompt,
+        contents: userPrompt
       });
 
       const rawJson = response.text;

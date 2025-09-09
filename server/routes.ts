@@ -877,14 +877,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Buscar dados do usuário
       const objectives = await storage.getUserObjectives(userId);
-      const quiz = await sql`
+      
+      // Buscar quiz do usuário usando SQL direto
+      const quizResult = await sql`
         SELECT * FROM quiz_contextualizacao 
         WHERE user_id = ${userId} AND completed = true
         ORDER BY created_at DESC
         LIMIT 1
       `;
-
-      const motivation = quiz.length > 0 ? quiz[0].motivacao : null;
+      
+      const motivation = quizResult.length > 0 ? quizResult[0].motivacao : null;
       const previousTasks = await storage.getUserDailyTasks(userId, new Date());
 
       // Preparar dados para a IA

@@ -156,6 +156,11 @@ export const taskProgress = pgTable("task_progress", {
 export const insertMoodSelectionSchema = createInsertSchema(moodSelections).omit({
   id: true,
   createdAt: true,
+  date: true,
+}).extend({
+  userId: z.string(),
+  mood: z.string(),
+  date: z.union([z.string(), z.date()]).optional(),
 });
 
 export const insertUserObjectiveSchema = createInsertSchema(userObjectives).omit({
@@ -167,18 +172,24 @@ export const insertUserObjectiveSchema = createInsertSchema(userObjectives).omit
 export const insertAiSuggestionSchema = createInsertSchema(aiSuggestions).omit({
   id: true,
   createdAt: true,
+}).extend({
+  date: z.string().datetime().optional().or(z.date().optional()),
 });
 
 export const insertDailyTaskSchema = createInsertSchema(dailyTasks).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  date: z.string().datetime().optional().or(z.date().optional()),
 });
 
 export const insertTaskProgressSchema = createInsertSchema(taskProgress).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  date: z.string().datetime().optional().or(z.date().optional()),
 });
 
 // Tipos TypeScript para as novas tabelas
