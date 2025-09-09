@@ -9,6 +9,7 @@ import AuthPage from "@/pages/auth";
 import PerfilUsuario from "@/pages/perfil-usuario";
 import QuizPersonalizacao from "@/pages/quiz-personalizacao";
 import MelhorVersao from "@/pages/melhor-versao";
+import PanicPage from "@/pages/panic-page";
 import { useState, useEffect } from "react";
 
 function AppRouter() {
@@ -104,6 +105,7 @@ function AppRouter() {
           <Switch>
             <Route path="/" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
             <Route path="/dashboard" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
+            <Route path="/panic" component={() => <PanicPage user={user} />} />
             <Route path="/perfil-usuario">
               <PerfilUsuario
                 user={user}
@@ -128,6 +130,7 @@ function AppRouter() {
       <Switch>
         <Route path="/" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
         <Route path="/dashboard" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
+        <Route path="/panic" component={() => <PanicPage user={user} />} />
         <Route path="/perfil-usuario">
           <PerfilUsuario
             user={user}

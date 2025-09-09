@@ -604,7 +604,13 @@ function Timer({ user, onUserUpdate }: TimerProps) {
 // Panic Button Component
 function PanicButton() {
   const handlePanicClick = () => {
-    alert("Botão de pânico ativado! Esta funcionalidade estará disponível em breve.");
+    // Animação suave para transição
+    document.body.style.transition = 'opacity 0.3s ease-out';
+    document.body.style.opacity = '0';
+    
+    setTimeout(() => {
+      window.location.href = '/panic';
+    }, 300);
   };
 
   return (
