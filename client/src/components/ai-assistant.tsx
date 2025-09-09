@@ -101,11 +101,44 @@ export default function AIAssistant() {
         description: `${suggestionData.tasks.length} atividades personalizadas foram adicionadas às suas metas do dia!`,
       });
 
-      // 4. Disparar eventos para atualizar outros componentes
-      window.dispatchEvent(new CustomEvent('tasksUpdated'));
-      window.dispatchEvent(new CustomEvent('moodUpdated'));
+      // 4. Salvar humor imediatamente no localStorage ultra-persistente
+      const todayKey = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const moodData = {
+        userId: user.id.toString(),
+        mood: mood.toLowerCase(),
+        date: todayKey,
+        timestamp: Date.now()
+      };
       
-      console.log(`🔔 Eventos disparados: tasksUpdated e moodUpdated`);
+      // Salvar humor individual
+      localStorage.setItem(`scapy_mood_${user.id}_${todayKey}`, JSON.stringify(moodData));
+      
+      // Salvar no registro geral de humores
+      const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
+      if (!allMoods[user.id.toString()]) {
+        allMoods[user.id.toString()] = {};
+      }
+      allMoods[user.id.toString()][todayKey] = mood.toLowerCase();
+      localStorage.setItem('scapy_all_moods', JSON.stringify(allMoods));
+      
+      console.log(`💾 Humor "${mood}" salvo persistentemente para ${todayKey}`);
+
+      // 5. Disparar evento com dados específicos para sincronização imediata
+      const moodEvent = new CustomEvent('moodUpdated', {
+        detail: {
+          userId: user.id.toString(),
+          mood: mood.toLowerCase(),
+          date: todayKey,
+          dayOfWeek: new Date().getDay(),
+          timestamp: Date.now()
+        }
+      });
+      window.dispatchEvent(moodEvent);
+      
+      // Também disparar evento de tarefas
+      window.dispatchEvent(new CustomEvent('tasksUpdated'));
+      
+      console.log(`🔔 Eventos disparados com dados específicos:`, moodEvent.detail);
 
     } catch (error) {
       console.error('Erro ao processar seleção de humor:', error);
