@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Hand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { calculateTimeDifference } from "@/lib/timer-utils";
 import CameraShame from "../components/camera-shame";
@@ -178,6 +178,22 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         >
           {/* Espaço vazio para manter layout */}
         </div>
+      </div>
+
+      {/* Botão flutuante de ajuda fixo */}
+      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+        <Button
+          className="bg-gradient-to-r from-red-400 to-red-600 hover:from-red-500 hover:to-red-700 text-white font-bold py-4 px-8 rounded-full shadow-2xl border-0 transition-all duration-300 transform hover:scale-105"
+          onClick={() => {
+            // Aqui você pode adicionar a lógica de ajuda
+            alert("Função de ajuda será implementada!");
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <Hand className="w-5 h-5" />
+            <span className="text-lg">AJUDA</span>
+          </div>
+        </Button>
       </div>
 
       {/* Estilos para animação */}
