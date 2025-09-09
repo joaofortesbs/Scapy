@@ -174,7 +174,7 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         </div>
 
         {/* Componente Câmera da Vergonha com espaçamento reduzido */}
-        <div className="w-full max-w-md -mt-4">
+        <div className="w-full max-w-md -mt-8">
           <CameraShame autoActivate={true} />
         </div>
       </div>
