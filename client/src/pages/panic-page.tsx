@@ -177,14 +177,14 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
           <div 
             className="absolute left-1/2 transform -translate-x-1/2 w-4/5"
             style={{ 
-              bottom: '-75px', // Metade da altura do card para fora
+              bottom: '-40px', // Ajustado para nova altura
               zIndex: 10 
             }}
           >
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 shadow-lg border border-white/20" style={{ height: '150px' }}>
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-3 shadow-lg border border-white/20" style={{ height: '80px' }}>
               <div className="text-center text-white h-full flex flex-col justify-center">
-                <h3 className="text-lg font-bold mb-2">Mantenha o Foco!</h3>
-                <p className="text-sm opacity-90">Você consegue superar este momento</p>
+                <h3 className="text-base font-bold mb-1">Mantenha o Foco!</h3>
+                <p className="text-xs opacity-90">Você consegue superar este momento</p>
               </div>
             </div>
           </div>
@@ -193,7 +193,7 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         {/* Cronômetro sincronizado */}
         <div 
           className="w-full max-w-md" 
-          style={{ marginTop: '95px' }}
+          style={{ marginTop: '60px' }}
         >
           <TimerDuplicate />
         </div>
