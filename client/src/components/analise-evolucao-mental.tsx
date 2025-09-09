@@ -67,8 +67,12 @@ export default function AnaliseEvolucaoMental() {
     };
   }, []);
 
+  // Determinar se deve usar espaçamento reduzido
+  const hasContent = hasQuadroDosSonhos || hasObjetivos;
+  const hasAllContent = hasQuadroDosSonhos && hasObjetivos;
+
   return (
-    <section className="mb-6">
+    <section className={hasAllContent ? "mb-3" : hasContent ? "mb-4" : "mb-6"}>
       <Link href="/melhor-versao">
         <Card className="border-border rounded-full evolucao-mental-card-natural-3d cursor-pointer hover:opacity-80 transition-opacity" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
           <CardContent className="p-4">
@@ -101,7 +105,7 @@ export default function AnaliseEvolucaoMental() {
       </Link>
       
       {/* Checklist com ícones de + */}
-      <div className="mt-4 space-y-3 ml-4">
+      <div className={`space-y-3 ml-4 ${(!hasQuadroDosSonhos || !hasObjetivos) ? 'mt-4' : 'mt-2'}`}>
         {!hasQuadroDosSonhos && (
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0">
