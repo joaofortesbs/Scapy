@@ -40,7 +40,7 @@ export default function QuadroDosSonhos() {
   return (
     <div className="w-full flex items-center justify-center py-4">
       {/* Container dos cards - Layout otimizado para mobile */}
-      <div className="grid grid-cols-2 gap-1 sm:gap-2 w-full max-w-xs sm:max-w-sm">
+      <div className="grid grid-cols-2 gap-x-1 gap-y-1 sm:gap-x-2 sm:gap-y-2 w-full max-w-xs sm:max-w-sm">
         {images.map((image, index) => (
           <div
             key={index}
@@ -48,6 +48,7 @@ export default function QuadroDosSonhos() {
               relative w-32 h-40 sm:w-36 sm:h-44 ${cardRotations[index]} 
               transform-gpu transition-all duration-300 active:scale-95 sm:hover:scale-110 
               shadow-2xl active:shadow-xl sm:hover:shadow-3xl touch-manipulation
+              ${index >= 2 ? 'mt-[-8px] sm:mt-[-12px]' : ''}
             `}
             style={{
               filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))'
