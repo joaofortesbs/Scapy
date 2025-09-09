@@ -81,9 +81,9 @@ export default function ObjetivosUsuario() {
       <Card className="border-border mb-3 rounded-3xl ai-assistant-card-natural-3d" style={{ backgroundColor: '#000515' }}>
         <CardContent className="p-6">
           {/* Header com título e período */}
-          <div className="flex items-center justify-center space-x-3 mb-6">
+          <div className="flex items-center justify-start space-x-3 mb-6">
             <Target className="w-6 h-6 text-primary" />
-            <div className="text-center">
+            <div className="text-left">
               <h3 className="text-lg text-foreground font-semibold">Meus Objetivos</h3>
               <div className="flex items-center justify-center space-x-2 mt-1">
                 {editandoPeriodo ? (
