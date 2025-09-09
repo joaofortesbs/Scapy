@@ -163,7 +163,7 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
               zIndex: 10 
             }}
           >
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-3 shadow-lg border border-white/20 ai-assistant-card-natural-3d" style={{ height: '50px', backgroundColor: '#000515' }}>
+            <div className="bg-gradient-to-r from-blue-600/80 to-purple-600/80 rounded-full p-3 shadow-lg border border-white/20 ai-assistant-card-natural-3d backdrop-blur-md" style={{ height: '50px', backgroundColor: 'rgba(0, 5, 21, 0.8)' }}>
               <div className="text-center text-white h-full flex items-center justify-center">
                 <TimerDuplicate />
               </div>
