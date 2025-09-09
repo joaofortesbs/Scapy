@@ -1004,6 +1004,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       
+      console.log(`🔍 Buscando humor semanal para usuário: ${userId}`);
+      
       // Calcular início e fim da semana atual
       const now = new Date();
       const startOfWeek = new Date(now);
@@ -1014,8 +1016,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       endOfWeek.setDate(startOfWeek.getDate() + 6); // Sábado
       endOfWeek.setHours(23, 59, 59, 999);
 
+      console.log(`📅 Período da semana: ${startOfWeek.toISOString()} até ${endOfWeek.toISOString()}`);
+      console.log(`📅 Hoje é: ${now.toISOString()} (dia da semana: ${now.getDay()})`);
+
       // Buscar todas as seleções de humor da semana
       const weeklyMoods = await storage.getWeeklyMoodSelections(userId, startOfWeek, endOfWeek);
+      
+      console.log(`📊 Encontradas ${weeklyMoods.length} seleções de humor para a semana`);
+      console.log(`📊 Dados brutos:`, weeklyMoods.map(m => ({ mood: m.mood, date: m.date, userId: m.userId })));
       
       // Organizar por dia da semana (0-6, domingo a sábado)
       const moodByDay = new Array(7).fill(null);
@@ -1023,17 +1031,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       weeklyMoods.forEach((mood: any) => {
         const moodDate = new Date(mood.date);
         const dayOfWeek = moodDate.getDay();
-        moodByDay[dayOfWeek] = mood.mood;
+        
+        console.log(`📅 Mapeando humor "${mood.mood}" de ${moodDate.toISOString()} -> dia da semana: ${dayOfWeek}`);
+        
+        // Pega apenas o mais recente humor para cada dia
+        if (!moodByDay[dayOfWeek]) {
+          moodByDay[dayOfWeek] = mood.mood;
+        }
       });
+      
+      console.log(`📋 Mapeamento final moodByDay:`, moodByDay);
 
-      res.json({
+      const result = {
         userId,
         weekStart: startOfWeek.toISOString(),
         weekEnd: endOfWeek.toISOString(),
         moodByDay // [domingo, segunda, terça, quarta, quinta, sexta, sábado]
-      });
+      };
+
+      console.log(`✅ Retornando resultado:`, result);
+
+      // Sempre retornar dados frescos (desabilitar cache)
+      res.set('Cache-Control', 'no-store');
+      res.json(result);
     } catch (error) {
-      console.error("Erro ao buscar humor semanal:", error);
+      console.error("❌ Erro ao buscar humor semanal:", error);
       res.status(500).json({ message: "Erro ao buscar humor semanal" });
     }
   });
