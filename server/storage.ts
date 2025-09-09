@@ -124,6 +124,8 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
+      fullName: insertUser.fullName || null,
+      profileImage: insertUser.profileImage || null,
       startDate: new Date(),
       createdAt: new Date()
     };
@@ -184,6 +186,7 @@ export class MemStorage implements IStorage {
     const selection: MoodSelection = {
       ...moodSelection,
       id,
+      date: moodSelection.date || new Date(),
       createdAt: new Date(),
     };
     this.moodSelections.set(id, selection);
@@ -223,6 +226,8 @@ export class MemStorage implements IStorage {
     const userObjective: UserObjective = {
       ...objective,
       id,
+      concluido: objective.concluido ?? false,
+      periodo: objective.periodo ?? 6,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -249,6 +254,9 @@ export class MemStorage implements IStorage {
     const aiSuggestion: AiSuggestion = {
       ...suggestion,
       id,
+      date: suggestion.date || new Date(),
+      motivation: suggestion.motivation || null,
+      objectives: suggestion.objectives || null,
       createdAt: new Date(),
     };
     this.aiSuggestions.set(id, aiSuggestion);
@@ -297,6 +305,12 @@ export class MemStorage implements IStorage {
     const dailyTask: DailyTask = {
       ...task,
       id,
+      date: task.date || new Date(),
+      suggestionId: task.suggestionId || null,
+      descricao: task.descricao || null,
+      categoria: task.categoria || null,
+      prioridade: task.prioridade ?? 1,
+      concluida: task.concluida ?? false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

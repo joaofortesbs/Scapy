@@ -211,21 +211,21 @@ Forneça sugestões variadas, práticas e motivadoras.`;
         titulo: "Exercício de respiração profunda",
         descricao: "Pratique 10 minutos de respiração consciente para acalmar a mente",
         categoria: "meditacao",
-        prioridade: 4,
+        prioridade: 4 as 1 | 2 | 3 | 4 | 5,
         duracaoEstimada: "10 minutos"
       },
       {
         titulo: "Caminhada ao ar livre",
         descricao: "Faça uma caminhada de 20-30 minutos para oxigenar o corpo e clarear a mente",
         categoria: "exercicio",
-        prioridade: 3,
+        prioridade: 3 as 1 | 2 | 3 | 4 | 5,
         duracaoEstimada: "30 minutos"
       },
       {
         titulo: "Leitura de desenvolvimento pessoal",
         descricao: "Leia um capítulo de um livro motivacional ou de autoajuda",
         categoria: "hobby",
-        prioridade: 2,
+        prioridade: 2 as 1 | 2 | 3 | 4 | 5,
         duracaoEstimada: "20 minutos"
       }
     ];
@@ -233,7 +233,7 @@ Forneça sugestões variadas, práticas e motivadoras.`;
     // Ajustar prioridades baseado no humor
     if (mood === 'medo') {
       baseSuggestions.forEach(suggestion => {
-        suggestion.prioridade = Math.min(5, suggestion.prioridade + 1);
+        suggestion.prioridade = Math.min(5, suggestion.prioridade + 1) as 1 | 2 | 3 | 4 | 5;
       });
     }
 
