@@ -288,28 +288,21 @@ export function DailyGoals() {
                                   {task.titulo}
                                 </h4>
                               </div>
-                              <div className="flex items-center space-x-2">
-                                <div className="flex items-center space-x-1">
-                                  {Array.from({ length: task.prioridade }, (_, i) => (
-                                    <Star key={i} className="w-3 h-3 text-yellow-400 fill-current" />
-                                  ))}
-                                </div>
-                                {hasDescription && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="p-1 h-6 w-6 hover:bg-primary/10"
-                                    onClick={() => toggleTaskExpanded(task.id)}
-                                    data-testid={`task-expand-${task.id}`}
-                                  >
-                                    {isExpanded ? (
-                                      <ChevronUp className="w-3 h-3 text-muted-foreground" />
-                                    ) : (
-                                      <ChevronDown className="w-3 h-3 text-muted-foreground" />
-                                    )}
-                                  </Button>
-                                )}
-                              </div>
+                              {hasDescription && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="p-1 h-6 w-6 hover:bg-primary/10"
+                                  onClick={() => toggleTaskExpanded(task.id)}
+                                  data-testid={`task-expand-${task.id}`}
+                                >
+                                  {isExpanded ? (
+                                    <ChevronUp className="w-3 h-3 text-muted-foreground" />
+                                  ) : (
+                                    <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                                  )}
+                                </Button>
+                              )}
                             </div>
                           </div>
                         </div>
