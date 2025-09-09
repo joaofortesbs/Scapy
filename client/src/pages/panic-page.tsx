@@ -152,28 +152,27 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         animation: 'fadeIn 0.6s ease-out'
       }}
     >
-      {/* Botão de voltar */}
-      <div className="absolute top-4 left-4 z-10">
-        <Link href="/">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white hover:bg-white/10 transition-all duration-300"
-            data-testid="back-button"
+      <div className="flex flex-col items-center justify-start min-h-screen px-6 pt-8 pb-8 space-y-8">
+        {/* Header com botão de voltar e título */}
+        <div className="w-full flex items-center justify-between mb-4">
+          <Link href="/">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/10 transition-all duration-300"
+              data-testid="back-button"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          </Link>
+          
+          <h1 
+            className="text-xl md:text-2xl font-bold text-white text-center leading-tight flex-1 mr-10"
+            data-testid="panic-title"
           >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-        </Link>
-      </div>
-
-      <div className="flex flex-col items-center justify-start min-h-screen px-6 pt-20 pb-8 space-y-8">
-        {/* Título */}
-        <h1 
-          className="text-xl md:text-2xl font-bold text-white text-center leading-tight"
-          data-testid="panic-title"
-        >
-          Relembre o porque você começou essa jornada
-        </h1>
+            Relembre o porque você<br />começou essa jornada
+          </h1>
+        </div>
 
         {/* Cronômetro sincronizado */}
         <div className="w-full max-w-md">
