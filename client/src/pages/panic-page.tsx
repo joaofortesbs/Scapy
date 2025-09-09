@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { calculateTimeDifference } from "@/lib/timer-utils";
-import CameraShame from "@/components/camera-shame";
+import CameraShame from "../components/camera-shame";
 
 interface PanicPageProps {
   user?: any;
