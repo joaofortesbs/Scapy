@@ -1,8 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, X } from 'lucide-react';
 
 export default function QuadroDosSonhos() {
   const [images, setImages] = useState<(string | null)[]>([null, null, null, null]);
+
+  // Carregar imagens do localStorage ao inicializar
+  useEffect(() => {
+    const savedImages = localStorage.getItem('quadroDosSonhosImages');
+    if (savedImages) {
+      try {
+        const parsedImages = JSON.parse(savedImages);
+        setImages(parsedImages);
+      } catch (error) {
+        console.error('Erro ao carregar imagens do quadro dos sonhos:', error);
+      }
+    }
+  }, []);
+
+  // Salvar imagens no localStorage sempre que mudarem
+  useEffect(() => {
+    localStorage.setItem('quadroDosSonhosImages', JSON.stringify(images));
+  }, [images]);
 
   const handleImageUpload = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

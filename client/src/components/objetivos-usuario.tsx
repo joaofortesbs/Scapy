@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Target, Plus, Edit2, Trash2, Check, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,40 @@ interface Objetivo {
 export default function ObjetivosUsuario() {
   const [objetivos, setObjetivos] = useState<Objetivo[]>([]);
   const [periodo, setPeriodo] = useState(6);
+
+  // Carregar objetivos do localStorage ao inicializar
+  useEffect(() => {
+    const savedObjetivos = localStorage.getItem('userObjetivos');
+    const savedPeriodo = localStorage.getItem('userPeriodo');
+    
+    if (savedObjetivos) {
+      try {
+        const parsedObjetivos = JSON.parse(savedObjetivos);
+        setObjetivos(parsedObjetivos);
+      } catch (error) {
+        console.error('Erro ao carregar objetivos:', error);
+      }
+    }
+    
+    if (savedPeriodo) {
+      try {
+        const parsedPeriodo = parseInt(savedPeriodo);
+        setPeriodo(parsedPeriodo);
+      } catch (error) {
+        console.error('Erro ao carregar período:', error);
+      }
+    }
+  }, []);
+
+  // Salvar objetivos no localStorage sempre que mudarem
+  useEffect(() => {
+    localStorage.setItem('userObjetivos', JSON.stringify(objetivos));
+  }, [objetivos]);
+
+  // Salvar período no localStorage sempre que mudar
+  useEffect(() => {
+    localStorage.setItem('userPeriodo', periodo.toString());
+  }, [periodo]);
   const [novoObjetivo, setNovoObjetivo] = useState('');
   const [editandoObjetivo, setEditandoObjetivo] = useState<string | null>(null);
   const [textoEdicao, setTextoEdicao] = useState('');
