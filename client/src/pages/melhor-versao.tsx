@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import QuadroDosSonhos from '@/components/QuadroDosSonhos';
 import ParticlesBackground from '@/components/particles-background';
 import ObjetivosUsuario from "@/components/objetivos-usuario";
+import SuperandoGatilhos from "@/components/superando-gatilhos";
 
 export default function MelhorVersao() {
   // Rolar para o topo quando a página carregar
@@ -98,6 +99,11 @@ export default function MelhorVersao() {
           {/* Objetivos do Usuário */}
           <div className="mt-8">
             <ObjetivosUsuario />
+          </div>
+
+          {/* Superando Gatilhos */}
+          <div className="mt-8">
+            <SuperandoGatilhos userId="1" />
           </div>
 
           {/* Seção de Controle de Humor */}
