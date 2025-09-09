@@ -46,30 +46,32 @@ export default function CameraShame() {
       })));
       
       streamRef.current = stream;
-
-      // 3) attach and play
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.muted = true; // ajuda autoplay
-        videoRef.current.playsInline = true;
-        
-        console.log("Video element:", videoRef.current);
-        console.log("SrcObject attached:", videoRef.current.srcObject === stream);
-        
-        try {
-          await videoRef.current.play();
-          setAtivo(true);
-          console.log("video play ok");
-        } catch (playErr) {
-          console.warn("Erro no play():", playErr);
-          // se autoplay for bloqueado, ainda mostramos vídeo; usuário deve interagir
-          setErro("Autoplay bloqueado — por favor toque no vídeo para ativar.");
-          setAtivo(true); // Ainda marcar como ativo para mostrar o vídeo
+      
+      // Primeiro, marcar como ativo para mostrar o elemento video
+      setAtivo(true);
+      
+      // Aguardar o próximo ciclo para garantir que o DOM foi atualizado
+      setTimeout(async () => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.muted = true;
+          videoRef.current.playsInline = true;
+          
+          console.log("Video element:", videoRef.current);
+          console.log("SrcObject attached:", videoRef.current.srcObject === stream);
+          
+          try {
+            await videoRef.current.play();
+            console.log("video play ok");
+          } catch (playErr) {
+            console.warn("Erro no play():", playErr);
+            setErro("Autoplay bloqueado — clique no vídeo para ativar.");
+          }
+        } else {
+          console.error("videoRef.current ainda é null após setTimeout");
+          setErro("Erro ao conectar com a câmera. Tente novamente.");
         }
-      } else {
-        console.error("videoRef.current é null");
-        setErro("Erro interno: elemento de vídeo não encontrado");
-      }
+      }, 100);
 
       // 4) checar estado do track
       const vt = stream.getVideoTracks()[0];
