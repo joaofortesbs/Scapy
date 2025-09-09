@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { HelpCircle } from "lucide-react";
+import { MousePointer } from "lucide-react";
 
 interface CameraShameProps {
   autoActivate?: boolean;
@@ -196,9 +196,9 @@ export default function CameraShame({ autoActivate = false }: CameraShameProps) 
           onClick={() => {
             alert("Esta é a Câmera da Vergonha. Ela foi projetada para te ajudar a manter o controle durante momentos de tentação. Ver seu próprio reflexo pode ser um lembrete poderoso dos seus objetivos e valores.");
           }}
-          className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+          className="w-full px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-red-500/25"
         >
-          <HelpCircle className="w-4 h-4" />
+          <MousePointer className="w-4 h-4" />
           Ajuda
         </button>
       </div>
