@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'wouter';
@@ -26,46 +27,45 @@ export default function MelhorVersao() {
       {/* Fundo com partículas igual ao painel */}
       <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
       
-      <div className="relative z-10">
-        {/* Header com botão voltar */}
-        <div className="flex items-center p-4 border-b border-border">
+      <div className="relative z-10 pb-20">
+        {/* Header com botão voltar - Otimizado para mobile */}
+        <div className="flex items-center justify-between p-3 border-b border-border">
           <Link href="/dashboard">
-            <button className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors">
+            <button className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors p-2">
               <ArrowLeft className="w-5 h-5" />
               <span className="text-sm font-medium">Voltar</span>
             </button>
           </Link>
-          <div className="w-16"></div> {/* Spacer para centralizar o título */}
         </div>
 
-        {/* Container da Barra de Progresso */}
-        <div className="p-4 mb-6">
-          <div className="text-center mb-4">
-            <h2 className="text-xl font-bold text-primary mb-2">
+        {/* Container da Barra de Progresso - Otimizado para mobile */}
+        <div className="px-4 py-6 space-y-6">
+          <div className="text-center space-y-3">
+            <h2 className="text-lg sm:text-xl font-bold text-primary leading-tight">
               Você já está {evolutionPercentage}% na sua jornada de evolução
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground px-2">
               Continue evoluindo e alcance sua melhor versão
             </p>
           </div>
 
-          {/* Barra de progresso dividida em 4 partes */}
-          <div className="relative">
+          {/* Barra de progresso dividida em 4 partes - Melhorada para mobile */}
+          <div className="space-y-4">
             <Progress 
               value={evolutionPercentage} 
-              className="h-6 bg-secondary/30 border border-border"
+              className="h-4 sm:h-6 bg-secondary/30 border border-border"
             />
             
-            {/* Labels das fases */}
-            <div className="flex justify-between mt-3 px-1">
+            {/* Labels das fases - Layout otimizado para mobile */}
+            <div className="grid grid-cols-4 gap-1 px-1">
               {fases.map((fase, index) => {
                 const isCompleted = evolutionPercentage > (index * 25);
                 const isCurrent = faseAtual === index;
                 
                 return (
-                  <div key={fase} className="flex flex-col items-center">
+                  <div key={fase} className="flex flex-col items-center space-y-2">
                     <div 
-                      className={`w-3 h-3 rounded-full border-2 mb-1 ${
+                      className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border-2 ${
                         isCompleted 
                           ? 'bg-primary border-primary' 
                           : isCurrent 
@@ -74,7 +74,7 @@ export default function MelhorVersao() {
                       }`}
                     />
                     <span 
-                      className={`text-xs font-medium text-center ${
+                      className={`text-[10px] sm:text-xs font-medium text-center leading-tight ${
                         isCompleted || isCurrent 
                           ? 'text-primary' 
                           : 'text-muted-foreground'
@@ -89,18 +89,21 @@ export default function MelhorVersao() {
           </div>
         </div>
 
-        {/* Container do Quadro dos Sonhos */}
-        <div className="px-4">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-center mb-2">
+        {/* Container do Quadro dos Sonhos - Otimizado para mobile */}
+        <div className="px-4 space-y-4">
+          <div className="text-center space-y-2">
+            <h3 className="text-base sm:text-lg font-semibold text-primary">
               Quadro dos Sonhos
             </h3>
-            <p className="text-sm text-muted-foreground text-center">
+            <p className="text-xs sm:text-sm text-muted-foreground px-2 leading-relaxed">
               Adicione imagens que representam seus objetivos e sonhos
             </p>
           </div>
           
-          <QuadroDosSonhos />
+          {/* Container do componente QuadroDosSonhos com padding ajustado */}
+          <div className="w-full">
+            <QuadroDosSonhos />
+          </div>
         </div>
       </div>
     </div>
