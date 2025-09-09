@@ -169,7 +169,7 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         </div>
 
         {/* Cronômetro sincronizado */}
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md -mt-6">
           <TimerDuplicate />
         </div>
 
