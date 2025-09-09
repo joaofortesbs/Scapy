@@ -73,8 +73,7 @@ export default function AIAssistant() {
       // 1. Registrar seleção de humor
       await apiRequest('POST', '/api/mood-selection', {
         userId: user.id.toString(),
-        mood: mood.toLowerCase(),
-        date: new Date()
+        mood: mood.toLowerCase()
       });
 
       console.log(`💭 Humor registrado com sucesso`);

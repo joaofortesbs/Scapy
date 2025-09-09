@@ -183,11 +183,12 @@ export class MemStorage implements IStorage {
   // Mood selections
   async createMoodSelection(moodSelection: InsertMoodSelection): Promise<MoodSelection> {
     const id = randomUUID();
+    const now = new Date();
     const selection: MoodSelection = {
       ...moodSelection,
       id,
-      date: moodSelection.date || new Date(),
-      createdAt: new Date(),
+      date: moodSelection.date ? (typeof moodSelection.date === 'string' ? new Date(moodSelection.date) : moodSelection.date) : now,
+      createdAt: now,
     };
     this.moodSelections.set(id, selection);
     return selection;
@@ -251,13 +252,14 @@ export class MemStorage implements IStorage {
   // AI suggestions
   async createAiSuggestion(suggestion: InsertAiSuggestion): Promise<AiSuggestion> {
     const id = randomUUID();
+    const now = new Date();
     const aiSuggestion: AiSuggestion = {
       ...suggestion,
       id,
-      date: suggestion.date || new Date(),
+      date: suggestion.date ? (typeof suggestion.date === 'string' ? new Date(suggestion.date) : suggestion.date) : now,
       motivation: suggestion.motivation || null,
       objectives: suggestion.objectives || null,
-      createdAt: new Date(),
+      createdAt: now,
     };
     this.aiSuggestions.set(id, aiSuggestion);
     return aiSuggestion;
@@ -302,17 +304,18 @@ export class MemStorage implements IStorage {
 
   async createDailyTask(task: InsertDailyTask): Promise<DailyTask> {
     const id = randomUUID();
+    const now = new Date();
     const dailyTask: DailyTask = {
       ...task,
       id,
-      date: task.date || new Date(),
+      date: task.date ? (typeof task.date === 'string' ? new Date(task.date) : task.date) : now,
       suggestionId: task.suggestionId || null,
       descricao: task.descricao || null,
       categoria: task.categoria || null,
       prioridade: task.prioridade ?? 1,
       concluida: task.concluida ?? false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     };
     this.dailyTasks.set(id, dailyTask);
     return dailyTask;
