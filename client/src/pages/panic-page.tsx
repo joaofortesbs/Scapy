@@ -173,9 +173,9 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
           <TimerDuplicate />
         </div>
 
-        {/* Componente Câmera da Vergonha */}
-        <div className="w-full max-w-md">
-          <CameraShame />
+        {/* Componente Câmera da Vergonha com espaçamento reduzido */}
+        <div className="w-full max-w-md -mt-4">
+          <CameraShame autoActivate={true} />
         </div>
       </div>
 

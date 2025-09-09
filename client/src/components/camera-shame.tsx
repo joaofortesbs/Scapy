@@ -1,10 +1,35 @@
 import React, { useRef, useState, useEffect } from "react";
 
-export default function CameraShame() {
+interface CameraShameProps {
+  autoActivate?: boolean;
+}
+
+export default function CameraShame({ autoActivate = false }: CameraShameProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [ativo, setAtivo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Auto-ativação da câmera se autoActivate for true
+    if (autoActivate && !ativo) {
+      console.log("🎥 Auto-ativando câmera na página de Pânico...");
+      // Pequeno delay para garantir que o componente foi montado completamente
+      const autoActivateTimer = setTimeout(() => {
+        startCamera();
+      }, 500);
+      
+      return () => clearTimeout(autoActivateTimer);
+    }
+
+    return () => {
+      // cleanup on unmount
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [autoActivate]);
 
   useEffect(() => {
     return () => {
@@ -171,7 +196,7 @@ export default function CameraShame() {
             onClick={startCamera} 
             className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition-colors"
           >
-            Ativar Câmera
+            {autoActivate ? "Ativando..." : "Ativar Câmera"}
           </button>
         ) : (
           <button 
