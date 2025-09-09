@@ -1,8 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, X } from 'lucide-react';
 
 export default function QuadroDosSonhos() {
   const [images, setImages] = useState<(string | null)[]>([null, null, null, null]);
+
+  // Carregar imagens do localStorage ao inicializar
+  useEffect(() => {
+    const savedImages = localStorage.getItem('quadroDosSonhosImages');
+    if (savedImages) {
+      try {
+        const parsedImages = JSON.parse(savedImages);
+        setImages(parsedImages);
+      } catch (error) {
+        console.error('Erro ao carregar imagens do quadro dos sonhos:', error);
+      }
+    }
+  }, []);
+
+  // Salvar imagens no localStorage sempre que mudarem
+  useEffect(() => {
+    localStorage.setItem('quadroDosSonhosImages', JSON.stringify(images));
+  }, [images]);
 
   const handleImageUpload = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -31,21 +49,21 @@ export default function QuadroDosSonhos() {
   ];
 
   const cardColors = [
-    'bg-gradient-to-br from-pink-100 to-purple-200',
+    'bg-gradient-to-br from-teal-100 to-cyan-200',
     'bg-gradient-to-br from-blue-100 to-cyan-200', 
-    'bg-gradient-to-br from-yellow-100 to-orange-200',
+    'bg-gradient-to-br from-purple-100 to-violet-200',
     'bg-gradient-to-br from-green-100 to-emerald-200'
   ];
 
   return (
-    <div className="min-h-screen p-2 sm:p-4 md:p-6 flex items-center justify-center">
+    <div className="w-full flex items-center justify-center py-4 mt-6 pl-4">
       {/* Container dos cards - Layout otimizado para mobile */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 max-w-sm sm:max-w-md md:max-w-2xl">
+      <div className="grid grid-cols-2 gap-1 sm:gap-2 w-full max-w-xs sm:max-w-sm">
         {images.map((image, index) => (
           <div
             key={index}
             className={`
-              relative w-32 h-40 sm:w-36 sm:h-44 md:w-44 md:h-52 lg:w-48 lg:h-56 ${cardRotations[index]} 
+              relative w-32 h-40 sm:w-36 sm:h-44 ${cardRotations[index]} 
               transform-gpu transition-all duration-300 active:scale-95 sm:hover:scale-110 
               shadow-2xl active:shadow-xl sm:hover:shadow-3xl touch-manipulation
             `}
@@ -55,8 +73,8 @@ export default function QuadroDosSonhos() {
           >
             {/* Card */}
             <div className={`
-              w-full h-full rounded-xl sm:rounded-2xl ${cardColors[index]}
-              border-2 sm:border-4 border-white p-2 sm:p-3 md:p-4 flex flex-col items-center justify-center
+              w-full h-full rounded-xl ${cardColors[index]}
+              border-3 border-white p-1 flex flex-col items-center justify-center
               relative overflow-hidden
             `}>
               {image ? (
@@ -65,7 +83,8 @@ export default function QuadroDosSonhos() {
                   <img
                     src={image}
                     alt={`Sonho ${index + 1}`}
-                    className="w-full h-full object-cover rounded-lg sm:rounded-xl"
+                    className="w-full h-full object-cover rounded-lg sm:rounded-xl opacity-100"
+                    style={{ opacity: 1 }}
                   />
                   {/* Botão remover - Design melhorado */}
                   <button
