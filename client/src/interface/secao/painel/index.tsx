@@ -378,7 +378,12 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
     } 
     // Caso contrário, aplicar estilo baseado no humor se existir
     else if (dayMood) {
-      switch (dayMood) {
+      // Normalizar humor removendo acentos para comparação
+      const normalizedMood = dayMood.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, ""); // Remove acentos
+        
+      switch (normalizedMood) {
         case 'medo':
           classes.push('mood-medo');
           break;
@@ -409,12 +414,19 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
     }
 
     if (dayMood) {
-      const moodLabels = {
+      // Normalizar humor removendo acentos para mapeamento
+      const normalizedMood = dayMood.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, ""); // Remove acentos
+        
+      const moodLabels: { [key: string]: string } = {
         'medo': 'Medo',
         'estavel': 'Estável', 
         'feliz': 'Feliz'
       };
-      title += ` | Humor: ${moodLabels[dayMood as keyof typeof moodLabels]}`;
+      
+      const label = moodLabels[normalizedMood] || dayMood;
+      title += ` | Humor: ${label}`;
     }
 
     return title;

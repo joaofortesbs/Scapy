@@ -90,10 +90,14 @@ export default function AIAssistant() {
     try {
       console.log(`🎯 Selecionando humor: ${mood} para usuário ${user.id}`);
 
-      // 1. Registrar seleção de humor
+      // 1. Registrar seleção de humor (normalizado sem acentos)
+      const normalizedMood = mood.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, ""); // Remove acentos
+        
       await apiRequest('POST', '/api/mood-selection', {
         userId: user.id.toString(),
-        mood: mood.toLowerCase()
+        mood: normalizedMood
       });
 
       console.log(`💭 Humor registrado com sucesso`);
@@ -106,7 +110,7 @@ export default function AIAssistant() {
 
       const suggestionResponse = await apiRequest('POST', '/api/generate-suggestions', {
         userId: user.id.toString(),
-        mood: mood.toLowerCase()
+        mood: normalizedMood
       });
 
       const suggestionData = await suggestionResponse.json();
@@ -114,8 +118,8 @@ export default function AIAssistant() {
       console.log(`✅ Sugestões geradas:`, suggestionData);
 
       // 3. Atualizar estado do humor imediatamente
-      setTodayMood(mood.toLowerCase());
-      console.log(`🎯 Estado todayMood atualizado para: ${mood.toLowerCase()}`);
+      setTodayMood(normalizedMood);
+      console.log(`🎯 Estado todayMood atualizado para: ${normalizedMood}`);
       
       toast({
         title: "Sugestões criadas!",
@@ -126,7 +130,7 @@ export default function AIAssistant() {
       const todayKey = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
       const moodData = {
         userId: user.id.toString(),
-        mood: mood.toLowerCase(),
+        mood: normalizedMood,
         date: todayKey,
         timestamp: Date.now()
       };
@@ -139,7 +143,7 @@ export default function AIAssistant() {
       if (!allMoods[user.id.toString()]) {
         allMoods[user.id.toString()] = {};
       }
-      allMoods[user.id.toString()][todayKey] = mood.toLowerCase();
+      allMoods[user.id.toString()][todayKey] = normalizedMood;
       localStorage.setItem('scapy_all_moods', JSON.stringify(allMoods));
       
       console.log(`💾 Humor "${mood}" salvo persistentemente para ${todayKey}`);
@@ -148,7 +152,7 @@ export default function AIAssistant() {
       const moodEvent = new CustomEvent('moodUpdated', {
         detail: {
           userId: user.id.toString(),
-          mood: mood.toLowerCase(),
+          mood: normalizedMood,
           date: todayKey,
           dayOfWeek: new Date().getDay(),
           timestamp: Date.now()
