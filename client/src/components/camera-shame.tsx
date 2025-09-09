@@ -27,6 +27,25 @@ export default function CameraShame() {
         videoRef.current.srcObject = mediaStream;
         setStream(mediaStream);
         setIsActive(true);
+        
+        console.log('🎥 Stream conectado ao elemento video');
+        
+        // Aguardar o metadata ser carregado antes de reproduzir
+        videoRef.current.onloadedmetadata = async () => {
+          try {
+            console.log('🎥 Metadata carregado, iniciando reprodução');
+            await videoRef.current!.play();
+            console.log('🎥 Vídeo reproduzindo com sucesso!');
+          } catch (playErr) {
+            console.warn('Auto-play blocked, video needs user interaction:', playErr);
+            // Tentar reproduzir na próxima interação do usuário
+            const playOnClick = () => {
+              videoRef.current?.play();
+              document.removeEventListener('click', playOnClick);
+            };
+            document.addEventListener('click', playOnClick);
+          }
+        };
       }
     } catch (err: any) {
       console.error("Erro ao acessar a câmera:", err);
@@ -58,6 +77,21 @@ export default function CameraShame() {
       stopCamera();
     };
   }, []);
+
+  // Debug effect para verificar estado do stream
+  useEffect(() => {
+    if (stream && videoRef.current) {
+      console.log('🎥 Stream ativo:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled, readyState: t.readyState })));
+      
+      // Verificar se o elemento video tem o stream correto
+      console.log('🎥 Video element srcObject:', videoRef.current.srcObject === stream ? 'OK' : 'PROBLEMA');
+      
+      // Force refresh do video element se necessário
+      if (videoRef.current.srcObject !== stream) {
+        videoRef.current.srcObject = stream;
+      }
+    }
+  }, [stream, isActive]);
 
   return (
     <div 
@@ -139,11 +173,25 @@ export default function CameraShame() {
           // Stream de vídeo ativo
           <video
             ref={videoRef}
-            autoPlay
-            playsInline
-            muted
+            autoPlay={true}
+            playsInline={true}
+            muted={true}
+            controls={false}
             className="w-full h-full object-cover"
             data-testid="camera-video"
+            onLoadedMetadata={() => {
+              console.log('🎥 Vídeo carregado com sucesso - metadata ready');
+            }}
+            onCanPlay={() => {
+              console.log('🎥 Vídeo pronto para reprodução');
+            }}
+            onPlaying={() => {
+              console.log('🎥 Vídeo está reproduzindo!');
+            }}
+            onError={(e) => {
+              console.error('Erro no elemento video:', e);
+              setError('Erro na reprodução do vídeo');
+            }}
           />
         )}
       </div>
