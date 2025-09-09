@@ -1,7 +1,16 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertWeeklyProgressSchema, insertUserGoalsSchema, quizContextualizacao, insertQuizContextualizacaoSchema } from "@shared/schema";
+import { 
+  insertWeeklyProgressSchema, 
+  insertUserGoalsSchema, 
+  quizContextualizacao, 
+  insertQuizContextualizacaoSchema,
+  insertMoodSelectionSchema,
+  insertUserObjectiveSchema,
+  insertDailyTaskSchema
+} from "@shared/schema";
+import { aiProcessor } from "./aiProcessor";
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import { neon } from '@neondatabase/serverless';
@@ -752,6 +761,236 @@ export async function registerRoutes(app: Express): Promise<Server> {
           createdAt: new Date()
         }
       });
+    }
+  });
+
+  // ========== ROTAS DO SISTEMA DE IA ==========
+
+  // Registrar seleção de humor do usuário
+  app.post("/api/mood-selection", async (req, res) => {
+    try {
+      const validatedData = insertMoodSelectionSchema.parse(req.body);
+      const moodSelection = await storage.createMoodSelection(validatedData);
+      
+      console.log(`💭 Humor registrado: ${moodSelection.mood} para usuário ${moodSelection.userId}`);
+      res.json(moodSelection);
+    } catch (error) {
+      console.error("Erro ao registrar humor:", error);
+      res.status(500).json({ message: "Erro ao registrar humor do usuário" });
+    }
+  });
+
+  // Obter seleções de humor do usuário
+  app.get("/api/mood-selections/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { date } = req.query;
+      
+      const targetDate = date ? new Date(date as string) : undefined;
+      const moodSelections = await storage.getUserMoodSelections(userId, targetDate);
+      
+      res.json(moodSelections);
+    } catch (error) {
+      console.error("Erro ao buscar seleções de humor:", error);
+      res.status(500).json({ message: "Erro ao buscar seleções de humor" });
+    }
+  });
+
+  // Obter humor de hoje do usuário
+  app.get("/api/today-mood/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const todayMood = await storage.getTodayMoodSelection(userId);
+      
+      res.json(todayMood || null);
+    } catch (error) {
+      console.error("Erro ao buscar humor de hoje:", error);
+      res.status(500).json({ message: "Erro ao buscar humor de hoje" });
+    }
+  });
+
+  // Gerenciar objetivos do usuário
+  app.get("/api/user-objectives/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const objectives = await storage.getUserObjectives(userId);
+      res.json(objectives);
+    } catch (error) {
+      console.error("Erro ao buscar objetivos:", error);
+      res.status(500).json({ message: "Erro ao buscar objetivos do usuário" });
+    }
+  });
+
+  app.post("/api/user-objectives", async (req, res) => {
+    try {
+      const validatedData = insertUserObjectiveSchema.parse(req.body);
+      const objective = await storage.createUserObjective(validatedData);
+      res.json(objective);
+    } catch (error) {
+      console.error("Erro ao criar objetivo:", error);
+      res.status(500).json({ message: "Erro ao criar objetivo" });
+    }
+  });
+
+  app.put("/api/user-objectives/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const objective = await storage.updateUserObjective(id, req.body);
+      
+      if (!objective) {
+        return res.status(404).json({ message: "Objetivo não encontrado" });
+      }
+      
+      res.json(objective);
+    } catch (error) {
+      console.error("Erro ao atualizar objetivo:", error);
+      res.status(500).json({ message: "Erro ao atualizar objetivo" });
+    }
+  });
+
+  app.delete("/api/user-objectives/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteUserObjective(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Objetivo não encontrado" });
+      }
+      
+      res.json({ message: "Objetivo deletado com sucesso" });
+    } catch (error) {
+      console.error("Erro ao deletar objetivo:", error);
+      res.status(500).json({ message: "Erro ao deletar objetivo" });
+    }
+  });
+
+  // Gerar sugestões personalizadas da IA
+  app.post("/api/generate-suggestions", async (req, res) => {
+    try {
+      const { userId, mood } = req.body;
+      
+      if (!userId || !mood) {
+        return res.status(400).json({ message: "UserId e mood são obrigatórios" });
+      }
+
+      console.log(`🤖 Iniciando geração de sugestões para usuário ${userId} com humor: ${mood}`);
+
+      // Buscar dados do usuário
+      const objectives = await storage.getUserObjectives(userId);
+      const quiz = await sql`
+        SELECT * FROM quiz_contextualizacao 
+        WHERE user_id = ${userId} AND completed = true
+        ORDER BY created_at DESC
+        LIMIT 1
+      `;
+
+      const motivation = quiz.length > 0 ? quiz[0].motivacao : null;
+      const previousTasks = await storage.getUserDailyTasks(userId, new Date());
+
+      // Preparar dados para a IA
+      const userProfile = {
+        mood,
+        motivation,
+        objectives,
+        previousTasks
+      };
+
+      // Gerar sugestões com a IA
+      const aiResponse = await aiProcessor.generatePersonalizedSuggestions(userProfile);
+      
+      // Salvar sugestões no banco
+      const suggestionData = {
+        userId,
+        mood,
+        motivation: motivation || '',
+        objectives: JSON.stringify(objectives),
+        suggestedActivities: JSON.stringify(aiResponse.activities),
+        date: new Date()
+      };
+
+      const savedSuggestion = await storage.createAiSuggestion(suggestionData);
+      
+      // Converter e salvar tarefas individuais
+      const tasks = aiProcessor.convertToTasks(aiResponse.activities, userId, savedSuggestion.id);
+      const savedTasks = await Promise.all(
+        tasks.map(task => storage.createDailyTask(task))
+      );
+
+      // Atualizar progresso do usuário
+      await storage.updateTaskProgress(userId, new Date());
+
+      console.log(`✅ Sugestões geradas: ${savedTasks.length} tarefas criadas`);
+
+      res.json({
+        suggestion: savedSuggestion,
+        tasks: savedTasks,
+        aiResponse: {
+          message: aiResponse.message,
+          reasoning: aiResponse.reasoning
+        }
+      });
+
+    } catch (error) {
+      console.error("Erro ao gerar sugestões:", error);
+      res.status(500).json({ message: "Erro ao gerar sugestões personalizadas" });
+    }
+  });
+
+  // Obter tarefas diárias do usuário
+  app.get("/api/daily-tasks/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { date } = req.query;
+      
+      const targetDate = date ? new Date(date as string) : new Date();
+      const tasks = await storage.getUserDailyTasks(userId, targetDate);
+      
+      res.json(tasks);
+    } catch (error) {
+      console.error("Erro ao buscar tarefas diárias:", error);
+      res.status(500).json({ message: "Erro ao buscar tarefas diárias" });
+    }
+  });
+
+  // Alternar conclusão de tarefa
+  app.put("/api/daily-tasks/:id/toggle", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const task = await storage.toggleTaskCompletion(id);
+      
+      if (!task) {
+        return res.status(404).json({ message: "Tarefa não encontrada" });
+      }
+
+      // Atualizar progresso do usuário
+      await storage.updateTaskProgress(task.userId, task.date);
+
+      console.log(`${task.concluida ? '✅' : '⭕'} Tarefa ${id} marcada como ${task.concluida ? 'concluída' : 'pendente'}`);
+      
+      res.json(task);
+    } catch (error) {
+      console.error("Erro ao alternar tarefa:", error);
+      res.status(500).json({ message: "Erro ao alternar conclusão da tarefa" });
+    }
+  });
+
+  // Obter progresso de tarefas do usuário
+  app.get("/api/task-progress/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { date } = req.query;
+      
+      const targetDate = date ? new Date(date as string) : new Date();
+      const progress = await storage.getUserTaskProgress(userId, targetDate);
+      
+      res.json(progress || { 
+        totalTasks: 0, 
+        completedTasks: 0, 
+        progressPercentage: 0 
+      });
+    } catch (error) {
+      console.error("Erro ao buscar progresso:", error);
+      res.status(500).json({ message: "Erro ao buscar progresso das tarefas" });
     }
   });
 
