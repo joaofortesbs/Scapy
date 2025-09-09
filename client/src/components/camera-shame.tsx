@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
+import { HelpCircle } from "lucide-react";
 
 interface CameraShameProps {
   autoActivate?: boolean;
@@ -190,22 +191,16 @@ export default function CameraShame({ autoActivate = false }: CameraShameProps) 
         )}
       </div>
 
-      <div className="controls mt-3 flex gap-2">
-        {!ativo ? (
-          <button 
-            onClick={startCamera} 
-            className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition-colors"
-          >
-            {autoActivate ? "Ativando..." : "Ativar Câmera"}
-          </button>
-        ) : (
-          <button 
-            onClick={stopCamera} 
-            className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-colors"
-          >
-            Desativar
-          </button>
-        )}
+      <div className="controls mt-3">
+        <button 
+          onClick={() => {
+            alert("Esta é a Câmera da Vergonha. Ela foi projetada para te ajudar a manter o controle durante momentos de tentação. Ver seu próprio reflexo pode ser um lembrete poderoso dos seus objetivos e valores.");
+          }}
+          className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+        >
+          <HelpCircle className="w-4 h-4" />
+          Ajuda
+        </button>
       </div>
 
       {erro && (
