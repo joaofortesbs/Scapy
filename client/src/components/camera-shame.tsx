@@ -138,16 +138,14 @@ export default function CameraShame({ autoActivate = false }: CameraShameProps) 
   };
 
   return (
-    <div className="camera-card border border-border rounded-2xl p-4 bg-black text-white" style={{ backgroundColor: '#000515' }}>
+    <div className="camera-card border border-border rounded-2xl bg-black text-white overflow-hidden" style={{ backgroundColor: '#000515' }}>
       <div 
         className="video-wrap" 
         style={{ 
           width: "100%", 
-          height: 300, 
+          height: 350, 
           background: "#111", 
-          borderRadius: 12, 
-          overflow: "hidden",
-          border: "2px solid rgba(255,255,255,0.1)"
+          overflow: "hidden"
         }}
       >
         {ativo ? (
@@ -191,17 +189,7 @@ export default function CameraShame({ autoActivate = false }: CameraShameProps) 
         )}
       </div>
 
-      <div className="controls mt-3">
-        <button 
-          onClick={() => {
-            alert("Esta é a Câmera da Vergonha. Ela foi projetada para te ajudar a manter o controle durante momentos de tentação. Ver seu próprio reflexo pode ser um lembrete poderoso dos seus objetivos e valores.");
-          }}
-          className="w-full px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-red-500/25"
-        >
-          <Hand className="w-4 h-4" />
-          Ajuda
-        </button>
-      </div>
+      
 
       {erro && (
         <div className="mt-2 p-2 bg-red-900/20 border border-red-500/30 rounded">
