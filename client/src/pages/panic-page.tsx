@@ -78,29 +78,16 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
   const TimerDuplicate = () => {
     if (isLoading) {
       return (
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground mb-3">
-            Carregando dados do cronômetro...
-          </p>
-          <div className="timer-display">
-            00:00:00
-          </div>
+        <div className="text-xs text-white font-mono">
+          00:00:00
         </div>
       );
     }
 
     if (!user || !user.startDate) {
       return (
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground mb-3">
-            Cronômetro ainda não foi iniciado
-          </p>
-          <div className="timer-display">
-            00:00:00
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Inicie sua jornada no painel principal
-          </p>
+        <div className="text-xs text-white font-mono">
+          00:00:00
         </div>
       );
     }
@@ -112,27 +99,17 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
     return (
       <div className="text-center">
         {!hasCompletedOneDay ? (
-          // Timer original para menos de 24 horas
-          <>
-            <p className="text-sm text-muted-foreground mb-0">
-              Você está livre da pornografia há:
-            </p>
-            <div className="timer-display" data-testid="timer-display">
-              <span data-testid="timer-hours">{String(timeDiff.hours).padStart(2, '0')}</span>:
-              <span data-testid="timer-minutes">{String(timeDiff.minutes).padStart(2, '0')}</span>:
-              <span data-testid="timer-seconds">{String(timeDiff.seconds).padStart(2, '0')}</span>
-            </div>
-          </>
+          // Timer compacto para menos de 24 horas
+          <div className="text-xs text-white font-mono font-bold" data-testid="timer-display">
+            <span data-testid="timer-hours">{String(timeDiff.hours).padStart(2, '0')}</span>:
+            <span data-testid="timer-minutes">{String(timeDiff.minutes).padStart(2, '0')}</span>:
+            <span data-testid="timer-seconds">{String(timeDiff.seconds).padStart(2, '0')}</span>
+          </div>
         ) : (
-          // Design para 1+ dias - apenas texto, sem componente retangular
-          <>
-            <p className="text-sm text-muted-foreground mb-3">
-              Você está livre da pornografia há:
-            </p>
-            <div className="text-7xl font-bold text-primary mb-4" data-testid="days-display">
-              {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'}
-            </div>
-          </>
+          // Design compacto para 1+ dias
+          <div className="text-sm font-bold text-white" data-testid="days-display">
+            {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'}
+          </div>
         )}
       </div>
     );
