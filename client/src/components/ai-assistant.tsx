@@ -76,15 +76,6 @@ export default function AIAssistant() {
         mood: mood.toLowerCase()
       });
 
-      // 1.1. Atualizar humor da semana para o dia atual
-      const today = new Date();
-      const dayOfWeek = today.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
-      
-      await apiRequest('PUT', `/api/weekly-mood/${user.id}`, {
-        dayOfWeek,
-        mood: mood.toLowerCase()
-      });
-
       console.log(`💭 Humor registrado com sucesso`);
 
       // 2. Gerar sugestões personalizadas
@@ -110,8 +101,11 @@ export default function AIAssistant() {
         description: `${suggestionData.tasks.length} atividades personalizadas foram adicionadas às suas metas do dia!`,
       });
 
-      // 4. Disparar evento para atualizar outros componentes
+      // 4. Disparar eventos para atualizar outros componentes
       window.dispatchEvent(new CustomEvent('tasksUpdated'));
+      window.dispatchEvent(new CustomEvent('moodUpdated'));
+      
+      console.log(`🔔 Eventos disparados: tasksUpdated e moodUpdated`);
 
     } catch (error) {
       console.error('Erro ao processar seleção de humor:', error);
