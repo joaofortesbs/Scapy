@@ -478,9 +478,14 @@ function Timer({ user, onUserUpdate }: TimerProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Update local user when prop changes
+  // Update local user when prop changes and sync with localStorage
   useEffect(() => {
     setLocalUser(user);
+    // Sync with localStorage whenever user data changes
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+      console.log('🔄 Dados do usuário sincronizados no localStorage:', user);
+    }
   }, [user]);
 
   const handleStartTimer = async () => {
@@ -511,7 +516,7 @@ function Timer({ user, onUserUpdate }: TimerProps) {
           onUserUpdate(data.user);
         }
 
-        console.log('Cronômetro iniciado com sucesso!');
+        console.log('✅ Cronômetro iniciado com sucesso! Dados sincronizados:', data.user);
       } else {
         console.error('Erro ao iniciar cronômetro:', data.message);
         alert('Erro ao iniciar cronômetro: ' + data.message);

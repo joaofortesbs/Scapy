@@ -392,28 +392,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
 
-      // Check if user has an active timer using direct SQL to bypass Supabase cache
-      try {
-        const timerData = await sql`
-          SELECT * FROM timers 
-          WHERE user_id = ${userId} AND is_active = true 
-          ORDER BY created_at DESC 
-          LIMIT 1
-        `;
-
-        const hasActiveTimer = timerData.length > 0;
-        const latestTimer = hasActiveTimer ? timerData[0] : null;
-
-        res.json({
-          hasActiveTimer,
-          timer: latestTimer,
-          startDate: latestTimer ? latestTimer.start_date : null
-        });
-      } catch (sqlError) {
-        console.error('Erro ao verificar timer via SQL:', sqlError);
-        return res.status(500).json({ message: 'Erro ao verificar timer' });
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
       }
 
+      const timerData = await sql`
+        SELECT * FROM timers 
+        WHERE user_id = ${userId} AND is_active = true 
+        ORDER BY created_at DESC 
+        LIMIT 1
+      `;
+
+      const hasActiveTimer = timerData.length > 0;
+      const latestTimer = hasActiveTimer ? timerData[0] : null;
+
+      // Set cache headers to ensure fresh data
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+
+      res.json({
+        hasActiveTimer,
+        timer: latestTimer,
+        startDate: latestTimer ? latestTimer.start_date : null
+      });
     } catch (error) {
       console.error('Erro ao verificar status do timer:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
@@ -772,7 +774,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertMoodSelectionSchema.parse(req.body);
       const moodSelection = await storage.createMoodSelection(validatedData);
-      
+
       console.log(`💭 Humor registrado: ${moodSelection.mood} para usuário ${moodSelection.userId}`);
       res.json(moodSelection);
     } catch (error) {
@@ -786,10 +788,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const { date } = req.query;
-      
+
       const targetDate = date ? new Date(date as string) : undefined;
       const moodSelections = await storage.getUserMoodSelections(userId, targetDate);
-      
+
       res.json(moodSelections);
     } catch (error) {
       console.error("Erro ao buscar seleções de humor:", error);
@@ -802,7 +804,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const todayMood = await storage.getTodayMoodSelection(userId);
-      
+
       res.json(todayMood || null);
     } catch (error) {
       console.error("Erro ao buscar humor de hoje:", error);
@@ -837,11 +839,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const objective = await storage.updateUserObjective(id, req.body);
-      
+
       if (!objective) {
         return res.status(404).json({ message: "Objetivo não encontrado" });
       }
-      
+
       res.json(objective);
     } catch (error) {
       console.error("Erro ao atualizar objetivo:", error);
@@ -853,11 +855,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const deleted = await storage.deleteUserObjective(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Objetivo não encontrado" });
       }
-      
+
       res.json({ message: "Objetivo deletado com sucesso" });
     } catch (error) {
       console.error("Erro ao deletar objetivo:", error);
@@ -869,7 +871,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/generate-suggestions", async (req, res) => {
     try {
       const { userId, mood } = req.body;
-      
+
       if (!userId || !mood) {
         return res.status(400).json({ message: "UserId e mood são obrigatórios" });
       }
@@ -878,7 +880,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Buscar dados do usuário
       const objectives = await storage.getUserObjectives(userId);
-      
+
       // Buscar quiz do usuário usando SQL direto
       const quizResult = await sql`
         SELECT * FROM quiz_contextualizacao 
@@ -886,7 +888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ORDER BY created_at DESC
         LIMIT 1
       `;
-      
+
       const motivation = quizResult.length > 0 ? quizResult[0].motivacao : null;
       const previousTasks = await storage.getUserDailyTasks(userId, new Date());
 
@@ -900,7 +902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Gerar sugestões com a IA
       const aiResponse = await aiProcessor.generatePersonalizedSuggestions(userProfile);
-      
+
       // Salvar sugestões no banco
       const suggestionData = {
         userId,
@@ -912,7 +914,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const savedSuggestion = await storage.createAiSuggestion(suggestionData);
-      
+
       // Converter e salvar tarefas individuais
       const tasks = aiProcessor.convertToTasks(aiResponse.activities, userId, savedSuggestion.id);
       const savedTasks = await Promise.all(
@@ -944,10 +946,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const { date } = req.query;
-      
+
       const targetDate = date ? new Date(date as string) : new Date();
       const tasks = await storage.getUserDailyTasks(userId, targetDate);
-      
+
       res.json(tasks);
     } catch (error) {
       console.error("Erro ao buscar tarefas diárias:", error);
@@ -960,7 +962,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const task = await storage.toggleTaskCompletion(id);
-      
+
       if (!task) {
         return res.status(404).json({ message: "Tarefa não encontrada" });
       }
@@ -969,7 +971,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateTaskProgress(task.userId, task.date);
 
       console.log(`${task.concluida ? '✅' : '⭕'} Tarefa ${id} marcada como ${task.concluida ? 'concluída' : 'pendente'}`);
-      
+
       res.json(task);
     } catch (error) {
       console.error("Erro ao alternar tarefa:", error);
@@ -982,10 +984,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const { date } = req.query;
-      
+
       const targetDate = date ? new Date(date as string) : new Date();
       const progress = await storage.getUserTaskProgress(userId, targetDate);
-      
+
       res.json(progress || { 
         totalTasks: 0, 
         completedTasks: 0, 
@@ -1003,15 +1005,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/weekly-mood/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
-      
+
       console.log(`🔍 Buscando humor semanal para usuário: ${userId}`);
-      
+
       // Calcular início e fim da semana atual
       const now = new Date();
       const startOfWeek = new Date(now);
       startOfWeek.setDate(now.getDate() - now.getDay()); // Domingo
       startOfWeek.setHours(0, 0, 0, 0);
-      
+
       const endOfWeek = new Date(startOfWeek);
       endOfWeek.setDate(startOfWeek.getDate() + 6); // Sábado
       endOfWeek.setHours(23, 59, 59, 999);
@@ -1021,25 +1023,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Buscar todas as seleções de humor da semana
       const weeklyMoods = await storage.getWeeklyMoodSelections(userId, startOfWeek, endOfWeek);
-      
+
       console.log(`📊 Encontradas ${weeklyMoods.length} seleções de humor para a semana`);
       console.log(`📊 Dados brutos:`, weeklyMoods.map(m => ({ mood: m.mood, date: m.date, userId: m.userId })));
-      
+
       // Organizar por dia da semana (0-6, domingo a sábado)
       const moodByDay = new Array(7).fill(null);
-      
+
       weeklyMoods.forEach((mood: any) => {
         const moodDate = new Date(mood.date);
         const dayOfWeek = moodDate.getDay();
-        
+
         console.log(`📅 Mapeando humor "${mood.mood}" de ${moodDate.toISOString()} -> dia da semana: ${dayOfWeek}`);
-        
+
         // Pega apenas o mais recente humor para cada dia
         if (!moodByDay[dayOfWeek]) {
           moodByDay[dayOfWeek] = mood.mood;
         }
       });
-      
+
       console.log(`📋 Mapeamento final moodByDay:`, moodByDay);
 
       const result = {
@@ -1053,6 +1055,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Sempre retornar dados frescos (desabilitar cache)
       res.set('Cache-Control', 'no-store');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       res.json(result);
     } catch (error) {
       console.error("❌ Erro ao buscar humor semanal:", error);
@@ -1067,10 +1071,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertUserCustomGoalSchema.parse(req.body);
       const customGoal = await storage.createUserCustomGoal(validatedData);
-      
+
       // Atualizar progresso do usuário
       await storage.updateTaskProgress(customGoal.userId, customGoal.date);
-      
+
       console.log(`📝 Meta personalizada criada: "${customGoal.titulo}" para usuário ${customGoal.userId}`);
       res.json(customGoal);
     } catch (error) {
@@ -1084,10 +1088,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const { date } = req.query;
-      
+
       const targetDate = date ? new Date(date as string) : new Date();
       const customGoals = await storage.getUserCustomGoals(userId, targetDate);
-      
+
       res.json(customGoals);
     } catch (error) {
       console.error("Erro ao buscar metas personalizadas:", error);
@@ -1100,7 +1104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const goal = await storage.toggleCustomGoalCompletion(id);
-      
+
       if (!goal) {
         return res.status(404).json({ message: "Meta não encontrada" });
       }
@@ -1109,7 +1113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateTaskProgress(goal.userId, goal.date);
 
       console.log(`${goal.concluida ? '✅' : '⭕'} Meta personalizada ${id} marcada como ${goal.concluida ? 'concluída' : 'pendente'}`);
-      
+
       res.json(goal);
     } catch (error) {
       console.error("Erro ao alternar meta personalizada:", error);
@@ -1122,11 +1126,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const deleted = await storage.deleteUserCustomGoal(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Meta não encontrada" });
       }
-      
+
       res.json({ message: "Meta deletada com sucesso" });
     } catch (error) {
       console.error("Erro ao deletar meta personalizada:", error);
@@ -1138,14 +1142,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/cleanup-daily-data", async (req, res) => {
     try {
       const { userId, date } = req.body;
-      
+
       if (!userId) {
         return res.status(400).json({ message: "UserId é obrigatório" });
       }
-      
+
       const targetDate = date ? new Date(date) : new Date();
       await storage.cleanupDailyData(userId, targetDate);
-      
+
       res.json({ message: "Dados do dia limpos com sucesso" });
     } catch (error) {
       console.error("Erro ao limpar dados do dia:", error);
@@ -1162,29 +1166,29 @@ export function scheduleDailyCleanup() {
   const now = new Date();
   const midnight = new Date();
   midnight.setHours(24, 0, 0, 0); // Next midnight
-  
+
   const msUntilMidnight = midnight.getTime() - now.getTime();
-  
+
   // Set timeout for first cleanup at midnight
   setTimeout(() => {
     performDailyCleanup();
-    
+
     // Then set interval for every 24 hours
     setInterval(performDailyCleanup, 24 * 60 * 60 * 1000);
   }, msUntilMidnight);
-  
+
   console.log(`🧹 Agendamento de limpeza diária configurado. Próxima limpeza em: ${Math.round(msUntilMidnight / 1000 / 60)} minutos`);
 }
 
 async function performDailyCleanup() {
   try {
     console.log('🌅 Iniciando limpeza diária automática...');
-    
+
     // Note: In a real implementation, you would want to get all user IDs from the database
     // For now, we'll just clean up data for all users that have data in memory storage
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     // This is a simplified cleanup - in production you'd want to iterate through all users
     console.log('✅ Limpeza diária concluída');
   } catch (error) {

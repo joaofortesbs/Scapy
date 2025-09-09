@@ -1,12 +1,14 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { calculateTimeDifference } from "@/lib/timer-utils";
 import CameraShame from "../components/camera-shame";
+import type { User } from "@shared/schema";
 
 interface PanicPageProps {
-  user?: any;
+  user?: User;
 }
 
 interface CalculatedTime {
@@ -16,9 +18,54 @@ interface CalculatedTime {
   seconds: number;
 }
 
-export default function PanicPage({ user }: PanicPageProps) {
+export default function PanicPage({ user: propUser }: PanicPageProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [user, setUser] = useState<User | null>(propUser || null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Load user data from localStorage and API
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        // First try to get from localStorage
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          console.log('👤 Usuário carregado do localStorage:', parsedUser);
+        }
+
+        // If we have a user ID, fetch fresh data from API
+        const userToCheck = propUser || (storedUser ? JSON.parse(storedUser) : null);
+        if (userToCheck?.id) {
+          try {
+            const response = await fetch(`/api/timer/status/${userToCheck.id}`);
+            const data = await response.json();
+
+            if (response.ok && data.hasActiveTimer) {
+              const updatedUser = {
+                ...userToCheck,
+                startDate: data.startDate
+              };
+              setUser(updatedUser);
+              localStorage.setItem('user', JSON.stringify(updatedUser));
+              console.log('🔄 Dados do usuário atualizados da API:', updatedUser);
+            }
+          } catch (error) {
+            console.error('❌ Erro ao buscar dados do timer:', error);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Erro ao carregar dados do usuário:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [propUser]);
+
+  // Update timer every second
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -27,17 +74,33 @@ export default function PanicPage({ user }: PanicPageProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Duplicata exata do componente Timer
+  // Timer component that mirrors exactly the main timer logic
   const TimerDuplicate = () => {
-    if (!user || !user.startDate) {
+    if (isLoading) {
       return (
         <div className="text-center">
           <p className="text-sm text-muted-foreground mb-3">
-            Dados do usuário não disponíveis
+            Carregando dados do cronômetro...
           </p>
           <div className="timer-display">
             00:00:00
           </div>
+        </div>
+      );
+    }
+
+    if (!user || !user.startDate) {
+      return (
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground mb-3">
+            Cronômetro ainda não foi iniciado
+          </p>
+          <div className="timer-display">
+            00:00:00
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Inicie sua jornada no painel principal
+          </p>
         </div>
       );
     }
@@ -113,7 +176,7 @@ export default function PanicPage({ user }: PanicPageProps) {
           Relembre o porque você começou essa jornada
         </h1>
 
-        {/* Duplicata do cronômetro */}
+        {/* Cronômetro sincronizado */}
         <div className="w-full max-w-md">
           <TimerDuplicate />
         </div>
