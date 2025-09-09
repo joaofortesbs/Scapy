@@ -31,7 +31,7 @@ export default function QuadroDosSonhos() {
   ];
 
   const cardColors = [
-    'bg-gradient-to-br from-teal-100 to-emerald-200',
+    'bg-gradient-to-br from-pink-100 to-purple-200',
     'bg-gradient-to-br from-blue-100 to-cyan-200', 
     'bg-gradient-to-br from-yellow-100 to-orange-200',
     'bg-gradient-to-br from-green-100 to-emerald-200'
