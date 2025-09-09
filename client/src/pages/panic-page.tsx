@@ -111,7 +111,7 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
             <div className="text-sm font-bold text-white">
               {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'}
             </div>
-            <div className="text-xs font-bold text-white">
+            <div className="text-sm font-bold text-white">
               DE LIBERDADE!
             </div>
           </div>
@@ -157,13 +157,13 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
           
           {/* Novo card retangular sobreposto - 50% dentro, 50% fora */}
           <div 
-            className="absolute left-1/2 transform -translate-x-1/2 w-4/5"
+            className="absolute left-1/2 transform -translate-x-1/2 w-3/5"
             style={{ 
               bottom: '-25px', // 50% para fora do card de câmera
               zIndex: 10 
             }}
           >
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-2 shadow-lg border border-white/20" style={{ height: '50px' }}>
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-3 shadow-lg border border-white/20 ai-assistant-card-natural-3d" style={{ height: '50px', backgroundColor: '#000515' }}>
               <div className="text-center text-white h-full flex items-center justify-center">
                 <TimerDuplicate />
               </div>
