@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import { neon } from '@neondatabase/serverless';
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { getDailyPhrase } from "./gemini-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -13,10 +14,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const supabaseUrl = process.env.SUPABASE_URL || 'https://ddatgvruplfcutjwores.supabase.co';
   const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkYXRndnJ1cGxmY3V0andvcmVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxMzQ3NjcsImV4cCI6MjA3MjcxMDc2N30.gkE2EWLU7gvxonWptK_bbiRuAm1d6xIxLVeCYegA5es';
   const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkYXRndnJ1cGxmY3V0andvcmVzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzEzNDc2NywiZXhwIjoyMDcyNzEwNzY3fQ.MWY548tNrRJsr-uIxSwWz4Vd6q9YE58bf9XQrKvhAZE';
-  
+
   const supabase = createClient(supabaseUrl, supabaseKey);
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole);
-  
+
   // Direct PostgreSQL connection for bypassing Supabase cache issues
   const sql = neon(process.env.DATABASE_URL!);
 
@@ -226,7 +227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // ========== VERIFICAR SE USUÁRIO EXISTE PRIMEIRO ==========
       const checkUserQuery = `SELECT id, email FROM auth_users WHERE id = $1`;
       console.log('🔍 DEBUG - Verificando usuário:', userId);
-      
+
       const userCheck = await sql(checkUserQuery, [userId]);
       console.log('🔍 DEBUG - Resultado da verificação:', userCheck);
 
@@ -252,7 +253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let updateFields = [];
       let values = [];
       let placeholderIndex = 1;
-      
+
       if (updateData.profileImage) {
         updateFields.push(`profile_image = $${placeholderIndex++}`);
         values.push(updateData.profileImage);
@@ -261,19 +262,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateFields.push(`full_name = $${placeholderIndex++}`);
         values.push(updateData.fullName);
       }
-      
+
       values.push(userId); // Add userId as the last parameter
-      
+
       const updateQuery = `
         UPDATE auth_users 
         SET ${updateFields.join(', ')}
         WHERE id = $${placeholderIndex}
         RETURNING id, email, full_name, profile_image
       `;
-      
+
       console.log('🔍 DEBUG - Query de update:', updateQuery);
       console.log('🔍 DEBUG - Valores:', values);
-      
+
       const result = await sql(updateQuery, values);
       console.log('🔍 DEBUG - Resultado do update:', result);
 
@@ -732,6 +733,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Erro ao deletar quiz:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Daily Phrase Routes
+  app.get("/api/daily-phrase", async (req, res) => {
+    try {
+      const phrase = await getDailyPhrase();
+      res.json(phrase);
+    } catch (error) {
+      console.error("Error fetching daily phrase:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch daily phrase",
+        fallback: {
+          id: "fallback",
+          phrase: "Sua determinação de hoje constrói a liberdade de amanhã. Continue firme!",
+          date: new Date().toISOString().split('T')[0],
+          createdAt: new Date()
+        }
+      });
     }
   });
 
