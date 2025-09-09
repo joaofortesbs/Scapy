@@ -25,7 +25,7 @@ export default function ObjetivosCarousel() {
       try {
         const savedObjetivos = localStorage.getItem('userObjetivos');
         if (savedObjetivos) {
-          const parsedObjetivos = JSON.JSON.parse(savedObjetivos);
+          const parsedObjetivos = JSON.parse(savedObjetivos);
           setObjetivos(parsedObjetivos);
           setIsVisible(parsedObjetivos.length > 0);
         } else {
