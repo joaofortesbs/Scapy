@@ -96,7 +96,9 @@ export default function MelhorVersao() {
             <QuadroDosSonhos />
           </div>
           {/* Objetivos do Usuário */}
-          <ObjetivosUsuario />
+          <div className="mt-8">
+            <ObjetivosUsuario />
+          </div>
 
           {/* Seção de Controle de Humor */}
           <section className="mb-8"
