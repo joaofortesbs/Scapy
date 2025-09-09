@@ -42,6 +42,8 @@ export default function ObjetivosUsuario() {
   // Salvar objetivos no localStorage sempre que mudarem
   useEffect(() => {
     localStorage.setItem('userObjetivos', JSON.stringify(objetivos));
+    // Disparar evento customizado para sincronização com outras páginas
+    window.dispatchEvent(new CustomEvent('objetivosUpdated'));
   }, [objetivos]);
 
   // Salvar período no localStorage sempre que mudar

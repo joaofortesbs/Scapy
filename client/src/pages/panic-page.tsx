@@ -1,10 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Hand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { calculateTimeDifference } from "@/lib/timer-utils";
 import CameraShame from "../components/camera-shame";
+import ParticlesBackground from "@/components/particles-background";
+import ObjetivosCarousel from "@/components/objetivos-carousel";
 import type { User } from "@shared/schema";
 
 interface PanicPageProps {
@@ -122,13 +124,17 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
 
   return (
     <div 
-      className="min-h-screen bg-background text-foreground relative animate-fade-in"
+      className="min-h-screen bg-background text-foreground relative animate-fade-in overflow-hidden"
       style={{ 
         background: 'linear-gradient(180deg, #000515 0%, #001122 100%)',
         animation: 'fadeIn 0.6s ease-out'
       }}
     >
-      <div className="flex flex-col items-center justify-start min-h-screen px-6 pt-8 pb-8">
+      {/* Fundo com partículas igual ao painel */}
+      <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
+      
+      <div className="relative z-10">
+        <div className="flex flex-col items-center justify-start min-h-screen px-6 pt-8 pb-8">
         {/* Header com botão de voltar e título */}
         <div className="w-full flex items-center justify-between mb-4">
           <Link href="/">
@@ -163,7 +169,7 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
               zIndex: 10 
             }}
           >
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-3 shadow-lg border border-white/20 ai-assistant-card-natural-3d" style={{ height: '50px', backgroundColor: '#000515' }}>
+            <div className="bg-gradient-to-r from-blue-600/80 to-purple-600/80 rounded-full p-3 shadow-lg border border-white/20 ai-assistant-card-natural-3d backdrop-blur-md" style={{ height: '50px', backgroundColor: 'rgba(0, 5, 21, 0.8)' }}>
               <div className="text-center text-white h-full flex items-center justify-center">
                 <TimerDuplicate />
               </div>
@@ -176,8 +182,26 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
           className="w-full max-w-md" 
           style={{ marginTop: '45px' }}
         >
-          {/* Espaço vazio para manter layout */}
+          {/* Carrossel de Objetivos */}
+          <ObjetivosCarousel />
         </div>
+      </div>
+      </div>
+
+      {/* Botão flutuante de ajuda fixo */}
+      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+        <Button
+          className="panic-button text-white font-bold py-6 px-12 rounded-full shadow-2xl border-2 border-red-800 transition-all duration-300 transform hover:scale-105"
+          onClick={() => {
+            // Aqui você pode adicionar a lógica de ajuda
+            alert("Função de ajuda será implementada!");
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <Hand className="w-10 h-10 font-bold stroke-2" />
+            <span className="text-xl font-bold">AJUDA</span>
+          </div>
+        </Button>
       </div>
 
       {/* Estilos para animação */}
