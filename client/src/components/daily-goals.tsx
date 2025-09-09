@@ -1,4 +1,4 @@
-import { Target, Plus, CheckCircle2, Circle, Clock, Star, User, Dumbbell, Book, Coffee, Heart, Brain } from "lucide-react";
+import { Target, Plus, CheckCircle2, Circle, Clock, Star, User, Dumbbell, Book, Coffee, Heart, Brain, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -36,6 +36,7 @@ export function DailyGoals() {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [progress, setProgress] = useState<TaskProgress>({ totalTasks: 0, completedTasks: 0, progressPercentage: 0 });
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   // Ícones para diferentes categorias
@@ -131,6 +132,18 @@ export function DailyGoals() {
         variant: "destructive",
       });
     }
+  };
+
+  const toggleTaskExpanded = (taskId: string) => {
+    setExpandedTasks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(taskId)) {
+        newSet.delete(taskId);
+      } else {
+        newSet.add(taskId);
+      }
+      return newSet;
+    });
   };
 
   const handleAddGoal = () => {
@@ -238,53 +251,78 @@ export function DailyGoals() {
                 <div className="space-y-3">
                   {tasks.map((task) => {
                     const CategoryIcon = getCategoryIcon(task.categoria);
+                    const isExpanded = expandedTasks.has(task.id);
+                    const hasDescription = task.descricao && task.descricao.trim().length > 0;
+                    
                     return (
                       <div
                         key={task.id}
-                        className={`flex items-start space-x-3 p-3 rounded-lg border transition-all duration-200 ${
+                        className={`p-3 rounded-lg border transition-all duration-200 ${
                           task.concluida 
                             ? 'bg-green-500/10 border-green-500/30' 
                             : 'bg-muted/10 border-muted/30 hover:bg-muted/20'
                         }`}
                       >
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="p-0 h-6 w-6 hover:bg-transparent"
-                          onClick={() => toggleTask(task.id)}
-                          data-testid={`task-toggle-${task.id}`}
-                        >
-                          {task.concluida ? (
-                            <CheckCircle2 className="w-5 h-5 text-green-400" />
-                          ) : (
-                            <Circle className="w-5 h-5 text-muted-foreground hover:text-primary" />
-                          )}
-                        </Button>
+                        <div className="flex items-start space-x-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-0 h-6 w-6 hover:bg-transparent"
+                            onClick={() => toggleTask(task.id)}
+                            data-testid={`task-toggle-${task.id}`}
+                          >
+                            {task.concluida ? (
+                              <CheckCircle2 className="w-5 h-5 text-green-400" />
+                            ) : (
+                              <Circle className="w-5 h-5 text-muted-foreground hover:text-primary" />
+                            )}
+                          </Button>
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center space-x-2">
-                              <CategoryIcon className="w-4 h-4 text-primary flex-shrink-0" />
-                              <h4 className={`text-sm font-medium ${
-                                task.concluida ? 'line-through text-muted-foreground' : 'text-foreground'
-                              }`}>
-                                {task.titulo}
-                              </h4>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              {Array.from({ length: task.prioridade }, (_, i) => (
-                                <Star key={i} className="w-3 h-3 text-yellow-400 fill-current" />
-                              ))}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center space-x-2 flex-1">
+                                <CategoryIcon className="w-4 h-4 text-primary flex-shrink-0" />
+                                <h4 className={`text-sm font-medium ${
+                                  task.concluida ? 'line-through text-muted-foreground' : 'text-foreground'
+                                }`}>
+                                  {task.titulo}
+                                </h4>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-1">
+                                  {Array.from({ length: task.prioridade }, (_, i) => (
+                                    <Star key={i} className="w-3 h-3 text-yellow-400 fill-current" />
+                                  ))}
+                                </div>
+                                {hasDescription && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="p-1 h-6 w-6 hover:bg-primary/10"
+                                    onClick={() => toggleTaskExpanded(task.id)}
+                                    data-testid={`task-expand-${task.id}`}
+                                  >
+                                    {isExpanded ? (
+                                      <ChevronUp className="w-3 h-3 text-muted-foreground" />
+                                    ) : (
+                                      <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                                    )}
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          {task.descricao && (
-                            <p className={`text-xs mt-1 ${
+                        </div>
+                        
+                        {hasDescription && isExpanded && (
+                          <div className="mt-2 ml-9 animate-in slide-in-from-top-1 duration-200">
+                            <p className={`text-xs ${
                               task.concluida ? 'line-through text-muted-foreground' : 'text-muted-foreground'
-                            }`}>
+                            } bg-muted/20 p-2 rounded-md`}>
                               {task.descricao}
                             </p>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
