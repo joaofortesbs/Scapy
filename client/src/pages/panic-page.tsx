@@ -168,20 +168,33 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
           </h1>
         </div>
 
-        {/* Cronômetro sincronizado */}
-        <div 
-          className="w-full max-w-md" 
-          style={{ marginTop: '10px' }}
-        >
-          <TimerDuplicate />
-        </div>
-
         {/* Componente Câmera da Vergonha */}
         <div 
           className="w-full max-w-md" 
           style={{ marginTop: '15px' }}
         >
           <CameraShame autoActivate={true} />
+        </div>
+
+        {/* Novo card retangular sobreposto */}
+        <div 
+          className="w-full max-w-md relative" 
+          style={{ marginTop: '-175px', zIndex: 10 }}
+        >
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 mx-8 shadow-lg border border-white/20">
+            <div className="text-center text-white">
+              <h3 className="text-lg font-bold mb-2">Mantenha o Foco!</h3>
+              <p className="text-sm opacity-90">Você consegue superar este momento</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Cronômetro sincronizado */}
+        <div 
+          className="w-full max-w-md" 
+          style={{ marginTop: '20px' }}
+        >
+          <TimerDuplicate />
         </div>
       </div>
 
