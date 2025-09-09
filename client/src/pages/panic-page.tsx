@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -75,14 +75,14 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
   }, []);
 
   // Timer component that mirrors exactly the main timer logic
-  const TimerDuplicate = () => {
+  const TimerDuplicate = React.memo(() => {
     if (isLoading) {
       return (
         <div className="text-center">
-          <p className="text-sm text-muted-foreground mb-3">
-            Carregando dados do cronômetro...
+          <p className="text-xs text-muted-foreground mb-2">
+            Carregando...
           </p>
-          <div className="timer-display">
+          <div className="text-2xl font-mono font-bold text-primary">
             00:00:00
           </div>
         </div>
@@ -92,14 +92,14 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
     if (!user || !user.startDate) {
       return (
         <div className="text-center">
-          <p className="text-sm text-muted-foreground mb-3">
-            Cronômetro ainda não foi iniciado
+          <p className="text-xs text-muted-foreground mb-2">
+            Cronômetro não iniciado
           </p>
-          <div className="timer-display">
+          <div className="text-2xl font-mono font-bold text-primary">
             00:00:00
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Inicie sua jornada no painel principal
+          <p className="text-xs text-muted-foreground mt-1 opacity-70">
+            Inicie no painel principal
           </p>
         </div>
       );
@@ -114,10 +114,10 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         {!hasCompletedOneDay ? (
           // Timer original para menos de 24 horas
           <>
-            <p className="text-sm text-muted-foreground mb-0">
-              Você está livre da pornografia há:
+            <p className="text-xs text-muted-foreground mb-1">
+              Livre da pornografia há:
             </p>
-            <div className="timer-display" data-testid="timer-display">
+            <div className="text-3xl font-mono font-bold text-primary" data-testid="timer-display">
               <span data-testid="timer-hours">{String(timeDiff.hours).padStart(2, '0')}</span>:
               <span data-testid="timer-minutes">{String(timeDiff.minutes).padStart(2, '0')}</span>:
               <span data-testid="timer-seconds">{String(timeDiff.seconds).padStart(2, '0')}</span>
@@ -126,15 +126,15 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         ) : (
           // Design para 1+ dias
           <>
-            <p className="text-sm text-muted-foreground mb-3">
-              Você está livre da pornografia há:
+            <p className="text-xs text-muted-foreground mb-2">
+              Livre da pornografia há:
             </p>
-            <div className="text-7xl font-bold text-primary mb-4" data-testid="days-display">
+            <div className="text-4xl font-bold text-primary mb-2" data-testid="days-display">
               {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'}
             </div>
 
-            <div className="ai-assistant-card-natural-3d border border-border rounded-full p-2 px-3 inline-block" style={{ backgroundColor: '#000515' }}>
-              <div className="text-lg font-mono text-primary font-semibold" data-testid="time-component">
+            <div className="border border-border rounded-full px-3 py-1 inline-block" style={{ backgroundColor: '#000515' }}>
+              <div className="text-sm font-mono text-primary font-semibold" data-testid="time-component">
                 {String(timeDiff.hours).padStart(2, '0')}h {String(timeDiff.minutes).padStart(2, '0')}m {String(timeDiff.seconds).padStart(2, '0')}s
               </div>
             </div>
@@ -142,7 +142,7 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         )}
       </div>
     );
-  };
+  });
 
   return (
     <div 
@@ -167,22 +167,22 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         </Link>
       </div>
 
-      <div className="flex flex-col items-center justify-start min-h-screen px-6 pt-20 pb-8 space-y-8">
+      <div className="flex flex-col items-center justify-start min-h-screen px-4 pt-16 pb-6 space-y-6">
         {/* Título */}
         <h1 
-          className="text-3xl md:text-4xl font-bold text-white text-center leading-tight"
+          className="text-xl md:text-2xl font-bold text-white text-center leading-tight"
           data-testid="panic-title"
         >
           Relembre o porque você começou essa jornada
         </h1>
 
         {/* Cronômetro sincronizado */}
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-sm">
           <TimerDuplicate />
         </div>
 
         {/* Componente Câmera da Vergonha */}
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-sm">
           <CameraShame />
         </div>
       </div>
