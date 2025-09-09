@@ -45,7 +45,7 @@ export default function QuadroDosSonhos() {
           <div
             key={index}
             className={`
-              relative w-28 h-40 sm:w-32 sm:h-44 ${cardRotations[index]} 
+              relative w-32 h-40 sm:w-36 sm:h-44 ${cardRotations[index]} 
               transform-gpu transition-all duration-300 active:scale-95 sm:hover:scale-110 
               shadow-2xl active:shadow-xl sm:hover:shadow-3xl touch-manipulation
               ${index >= 2 ? 'mt-[-8px] sm:mt-[-12px]' : ''}
