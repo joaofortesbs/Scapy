@@ -176,10 +176,10 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
           <CameraShame autoActivate={true} />
         </div>
 
-        {/* Novo card retangular sobreposto */}
+        {/* Novo card retangular */}
         <div 
-          className="w-full max-w-md relative" 
-          style={{ marginTop: '-175px', zIndex: 10 }}
+          className="w-full max-w-md" 
+          style={{ marginTop: '20px' }}
         >
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 mx-8 shadow-lg border border-white/20">
             <div className="text-center text-white">
