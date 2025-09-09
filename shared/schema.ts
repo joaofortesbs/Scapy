@@ -188,8 +188,26 @@ export const insertTaskProgressSchema = createInsertSchema(taskProgress).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-}).extend({
-  date: z.string().datetime().optional().or(z.date().optional()),
+});
+
+// Tabela para metas personalizadas criadas pelo usuário
+export const userCustomGoals = pgTable("user_custom_goals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  titulo: varchar("titulo", { length: 200 }).notNull(),
+  descricao: text("descricao"),
+  categoria: varchar("categoria", { length: 50 }).default("personal"),
+  prioridade: integer("prioridade").default(3).notNull(),
+  concluida: boolean("concluida").default(false).notNull(),
+  date: timestamp("date").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertUserCustomGoalSchema = createInsertSchema(userCustomGoals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 // Tipos TypeScript para as novas tabelas
@@ -203,3 +221,5 @@ export type DailyTask = typeof dailyTasks.$inferSelect;
 export type InsertDailyTask = z.infer<typeof insertDailyTaskSchema>;
 export type TaskProgress = typeof taskProgress.$inferSelect;
 export type InsertTaskProgress = z.infer<typeof insertTaskProgressSchema>;
+export type UserCustomGoal = typeof userCustomGoals.$inferSelect;
+export type InsertUserCustomGoal = z.infer<typeof insertUserCustomGoalSchema>;

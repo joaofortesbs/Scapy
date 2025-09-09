@@ -1,9 +1,9 @@
-import { 
-  type User, 
-  type InsertUser, 
-  type WeeklyProgress, 
-  type InsertWeeklyProgress, 
-  type UserGoals, 
+import {
+  type User,
+  type InsertUser,
+  type WeeklyProgress,
+  type InsertWeeklyProgress,
+  type UserGoals,
   type InsertUserGoals,
   type MoodSelection,
   type InsertMoodSelection,
@@ -14,7 +14,9 @@ import {
   type DailyTask,
   type InsertDailyTask,
   type TaskProgress,
-  type InsertTaskProgress
+  type InsertTaskProgress,
+  UserCustomGoal,
+  InsertUserCustomGoal
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -22,10 +24,10 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   getWeeklyProgress(userId: string, weekStart: Date): Promise<WeeklyProgress | undefined>;
   upsertWeeklyProgress(progress: InsertWeeklyProgress): Promise<WeeklyProgress>;
-  
+
   getUserGoals(userId: string): Promise<UserGoals[]>;
   createUserGoal(goal: InsertUserGoals): Promise<UserGoals>;
   updateUserGoal(id: string, goal: Partial<UserGoals>): Promise<UserGoals | undefined>;
@@ -55,7 +57,16 @@ export interface IStorage {
 
   // Task progress
   getUserTaskProgress(userId: string, date?: Date): Promise<TaskProgress | undefined>;
-  updateTaskProgress(userId: string, date: Date): Promise<TaskProgress>;
+  updateTaskProgress(userId: string, date: Date): Promise<void>;
+
+  // User Custom Goals management
+  createUserCustomGoal(goal: InsertUserCustomGoal): Promise<UserCustomGoal>;
+  getUserCustomGoals(userId: string, date?: Date): Promise<UserCustomGoal[]>;
+  toggleCustomGoalCompletion(id: string): Promise<UserCustomGoal | undefined>;
+  deleteUserCustomGoal(id: string): Promise<boolean>;
+
+  // Data cleanup
+  cleanupDailyData(userId: string, date: Date): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -67,6 +78,7 @@ export class MemStorage implements IStorage {
   private aiSuggestions: Map<string, AiSuggestion>;
   private dailyTasks: Map<string, DailyTask>;
   private taskProgress: Map<string, TaskProgress>;
+  private userCustomGoals: Map<string, UserCustomGoal>; // Added for custom goals
 
   constructor() {
     this.users = new Map();
@@ -77,7 +89,8 @@ export class MemStorage implements IStorage {
     this.aiSuggestions = new Map();
     this.dailyTasks = new Map();
     this.taskProgress = new Map();
-    
+    this.userCustomGoals = new Map(); // Initialize custom goals map
+
     // Initialize with default user for demo
     this.initializeDefaultUser();
   }
@@ -91,7 +104,7 @@ export class MemStorage implements IStorage {
     // Create initial weekly progress
     const startOfWeek = new Date();
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-    
+
     await this.upsertWeeklyProgress({
       userId: defaultUser.id,
       weekStart: startOfWeek,
@@ -121,8 +134,8 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { 
-      ...insertUser, 
+    const user: User = {
+      ...insertUser,
       id,
       fullName: insertUser.fullName || null,
       profileImage: insertUser.profileImage || null,
@@ -141,14 +154,14 @@ export class MemStorage implements IStorage {
   async upsertWeeklyProgress(progress: InsertWeeklyProgress): Promise<WeeklyProgress> {
     const key = `${progress.userId}-${progress.weekStart.toISOString()}`;
     const existing = this.weeklyProgress.get(key);
-    
+
     const weeklyProgress: WeeklyProgress = {
       id: existing?.id || randomUUID(),
       ...progress,
       currentStreak: progress.currentStreak ?? 0,
       bestStreak: progress.bestStreak ?? 0,
     };
-    
+
     this.weeklyProgress.set(key, weeklyProgress);
     return weeklyProgress;
   }
@@ -174,7 +187,7 @@ export class MemStorage implements IStorage {
   async updateUserGoal(id: string, goal: Partial<UserGoals>): Promise<UserGoals | undefined> {
     const existing = this.userGoals.get(id);
     if (!existing) return undefined;
-    
+
     const updated = { ...existing, ...goal };
     this.userGoals.set(id, updated);
     return updated;
@@ -198,14 +211,14 @@ export class MemStorage implements IStorage {
     const selections = Array.from(this.moodSelections.values()).filter(
       (selection) => selection.userId === userId
     );
-    
+
     if (date) {
       const targetDate = date.toISOString().split('T')[0];
       return selections.filter(
         (selection) => selection.date.toISOString().split('T')[0] === targetDate
       );
     }
-    
+
     return selections;
   }
 
@@ -216,7 +229,7 @@ export class MemStorage implements IStorage {
   }
 
   // User objectives
-  async getUserObjectives(userId: string): Promise<UserObjective[]> {
+  async getUserObjectives(userId: string): Promise<UserObjective[] > {
     return Array.from(this.userObjectives.values()).filter(
       (objective) => objective.userId === userId
     );
@@ -239,7 +252,7 @@ export class MemStorage implements IStorage {
   async updateUserObjective(id: string, objective: Partial<UserObjective>): Promise<UserObjective | undefined> {
     const existing = this.userObjectives.get(id);
     if (!existing) return undefined;
-    
+
     const updated = { ...existing, ...objective, updatedAt: new Date() };
     this.userObjectives.set(id, updated);
     return updated;
@@ -269,14 +282,14 @@ export class MemStorage implements IStorage {
     const suggestions = Array.from(this.aiSuggestions.values()).filter(
       (suggestion) => suggestion.userId === userId
     );
-    
+
     if (date) {
       const targetDate = date.toISOString().split('T')[0];
       return suggestions.filter(
         (suggestion) => suggestion.date.toISOString().split('T')[0] === targetDate
       );
     }
-    
+
     return suggestions;
   }
 
@@ -291,14 +304,14 @@ export class MemStorage implements IStorage {
     const tasks = Array.from(this.dailyTasks.values()).filter(
       (task) => task.userId === userId
     );
-    
+
     if (date) {
       const targetDate = date.toISOString().split('T')[0];
       return tasks.filter(
         (task) => task.date.toISOString().split('T')[0] === targetDate
       );
     }
-    
+
     return tasks;
   }
 
@@ -324,7 +337,7 @@ export class MemStorage implements IStorage {
   async updateDailyTask(id: string, task: Partial<DailyTask>): Promise<DailyTask | undefined> {
     const existing = this.dailyTasks.get(id);
     if (!existing) return undefined;
-    
+
     const updated = { ...existing, ...task, updatedAt: new Date() };
     this.dailyTasks.set(id, updated);
     return updated;
@@ -337,11 +350,11 @@ export class MemStorage implements IStorage {
   async toggleTaskCompletion(id: string): Promise<DailyTask | undefined> {
     const existing = this.dailyTasks.get(id);
     if (!existing) return undefined;
-    
-    const updated = { 
-      ...existing, 
-      concluida: !existing.concluida, 
-      updatedAt: new Date() 
+
+    const updated = {
+      ...existing,
+      concluida: !existing.concluida,
+      updatedAt: new Date()
     };
     this.dailyTasks.set(id, updated);
     return updated;
@@ -350,47 +363,125 @@ export class MemStorage implements IStorage {
   // Task progress
   async getUserTaskProgress(userId: string, date?: Date): Promise<TaskProgress | undefined> {
     const targetDate = date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-    
+
     return Array.from(this.taskProgress.values()).find(
-      (progress) => 
-        progress.userId === userId && 
+      (progress) =>
+        progress.userId === userId &&
         progress.date.toISOString().split('T')[0] === targetDate
     );
   }
 
-  async updateTaskProgress(userId: string, date: Date): Promise<TaskProgress> {
-    const existingProgress = await this.getUserTaskProgress(userId, date);
-    const todayTasks = await this.getUserDailyTasks(userId, date);
-    
-    const totalTasks = todayTasks.length;
-    const completedTasks = todayTasks.filter(task => task.concluida).length;
+  async updateTaskProgress(userId: string, date: Date): Promise<void> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const tasks = Array.from(this.dailyTasks.values()).filter(
+      task => task.userId === userId &&
+      task.date >= startOfDay &&
+      task.date <= endOfDay
+    );
+
+    // Include custom goals in the progress calculation
+    const customGoals = Array.from(this.userCustomGoals.values()).filter(
+      goal => goal.userId === userId &&
+      goal.date >= startOfDay &&
+      goal.date <= endOfDay
+    );
+
+    const totalTasks = tasks.length + customGoals.length;
+    const completedTasks = tasks.filter(task => task.concluida).length +
+                          customGoals.filter(goal => goal.concluida).length;
     const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-    if (existingProgress) {
-      const updated = {
-        ...existingProgress,
-        totalTasks,
-        completedTasks,
-        progressPercentage,
-        updatedAt: new Date(),
-      };
-      this.taskProgress.set(existingProgress.id, updated);
-      return updated;
-    } else {
-      const id = randomUUID();
-      const newProgress: TaskProgress = {
-        id,
-        userId,
-        date,
-        totalTasks,
-        completedTasks,
-        progressPercentage,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      this.taskProgress.set(id, newProgress);
-      return newProgress;
+    const progressId = `${userId}-${date.toISOString().split('T')[0]}`;
+    const progress: TaskProgress = {
+      id: progressId,
+      userId,
+      date,
+      totalTasks,
+      completedTasks,
+      progressPercentage,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    this.taskProgress.set(progressId, progress);
+  }
+
+  // User Custom Goals management
+  async createUserCustomGoal(goal: InsertUserCustomGoal): Promise<UserCustomGoal> {
+    const id = randomUUID();
+    const now = new Date();
+    const customGoal: UserCustomGoal = {
+      ...goal,
+      id,
+      date: goal.date ? (typeof goal.date === 'string' ? new Date(goal.date) : goal.date) : now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.userCustomGoals.set(id, customGoal);
+    return customGoal;
+  }
+
+  async getUserCustomGoals(userId: string, date?: Date): Promise<UserCustomGoal[]> {
+    const goals = Array.from(this.userCustomGoals.values()).filter(
+      (goal) => goal.userId === userId
+    );
+
+    if (date) {
+      const targetDate = date.toISOString().split('T')[0];
+      return goals.filter(
+        (goal) => goal.date.toISOString().split('T')[0] === targetDate
+      );
     }
+
+    return goals;
+  }
+
+  async toggleCustomGoalCompletion(id: string): Promise<UserCustomGoal | undefined> {
+    const goal = this.userCustomGoals.get(id);
+    if (!goal) return undefined;
+
+    const updatedGoal = {
+      ...goal,
+      concluida: !goal.concluida,
+      updatedAt: new Date()
+    };
+    this.userCustomGoals.set(id, updatedGoal);
+    return updatedGoal;
+  }
+
+  async deleteUserCustomGoal(id: string): Promise<boolean> {
+    return this.userCustomGoals.delete(id);
+  }
+
+  async cleanupDailyData(userId: string, date: Date): Promise<void> {
+    const targetDate = date.toISOString().split('T')[0];
+
+    // Remove daily tasks for the date
+    for (const [id, task] of this.dailyTasks.entries()) {
+      if (task.userId === userId && task.date.toISOString().split('T')[0] === targetDate) {
+        this.dailyTasks.delete(id);
+      }
+    }
+
+    // Remove custom goals for the date
+    for (const [id, goal] of this.userCustomGoals.entries()) {
+      if (goal.userId === userId && goal.date.toISOString().split('T')[0] === targetDate) {
+        this.userCustomGoals.delete(id);
+      }
+    }
+
+    // Remove mood selections for the date
+    for (const [id, mood] of this.moodSelections.entries()) {
+      if (mood.userId === userId && mood.date.toISOString().split('T')[0] === targetDate) {
+        this.moodSelections.delete(id);
+      }
+    }
+
+    console.log(`🧹 Dados do dia ${targetDate} limpos para usuário ${userId}`);
   }
 }
 
