@@ -1,10 +1,36 @@
 import React, { useRef, useState, useEffect } from "react";
+import { MousePointer } from "lucide-react";
 
-export default function CameraShame() {
+interface CameraShameProps {
+  autoActivate?: boolean;
+}
+
+export default function CameraShame({ autoActivate = false }: CameraShameProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [ativo, setAtivo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Auto-ativação da câmera se autoActivate for true
+    if (autoActivate && !ativo) {
+      console.log("🎥 Auto-ativando câmera na página de Pânico...");
+      // Pequeno delay para garantir que o componente foi montado completamente
+      const autoActivateTimer = setTimeout(() => {
+        startCamera();
+      }, 500);
+      
+      return () => clearTimeout(autoActivateTimer);
+    }
+
+    return () => {
+      // cleanup on unmount
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [autoActivate]);
 
   useEffect(() => {
     return () => {
@@ -113,10 +139,6 @@ export default function CameraShame() {
 
   return (
     <div className="camera-card border border-border rounded-2xl p-4 bg-black text-white" style={{ backgroundColor: '#000515' }}>
-      <h3 className="font-semibold text-lg mb-3 flex items-center">
-        📷 Câmera da Vergonha
-      </h3>
-
       <div 
         className="video-wrap" 
         style={{ 
@@ -164,28 +186,21 @@ export default function CameraShame() {
             <div className="text-center">
               <div className="text-5xl mb-3">📷</div>
               <p className="text-sm">Clique abaixo para ativar sua câmera</p>
-              <p className="text-xs mt-1 opacity-60">Lembre-se do seu propósito</p>
             </div>
           </div>
         )}
       </div>
 
-      <div className="controls mt-3 flex gap-2">
-        {!ativo ? (
-          <button 
-            onClick={startCamera} 
-            className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition-colors"
-          >
-            Ativar Câmera
-          </button>
-        ) : (
-          <button 
-            onClick={stopCamera} 
-            className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition-colors"
-          >
-            Desativar
-          </button>
-        )}
+      <div className="controls mt-3">
+        <button 
+          onClick={() => {
+            alert("Esta é a Câmera da Vergonha. Ela foi projetada para te ajudar a manter o controle durante momentos de tentação. Ver seu próprio reflexo pode ser um lembrete poderoso dos seus objetivos e valores.");
+          }}
+          className="w-full px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-red-500/25"
+        >
+          <MousePointer className="w-4 h-4" />
+          Ajuda
+        </button>
       </div>
 
       {erro && (
@@ -196,17 +211,6 @@ export default function CameraShame() {
               💡 Dica: Clique no ícone de cadeado na barra de endereços e permita o acesso à câmera.
             </p>
           )}
-        </div>
-      )}
-
-      {ativo && !erro && (
-        <div className="mt-3 text-center">
-          <p className="text-white/90 text-sm font-medium">
-            Lembre-se: Você é mais forte que seus impulsos
-          </p>
-          <p className="text-white/60 text-xs mt-1">
-            Esta é a pessoa que você quer proteger
-          </p>
         </div>
       )}
     </div>

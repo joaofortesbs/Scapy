@@ -26,17 +26,17 @@ function AppRouter() {
     if (savedAuth === 'true' && savedUser) {
       try {
         const userData = JSON.parse(savedUser);
-        
+
         // Normalizar dados do usuário
         const normalizedUser = {
           ...userData,
           full_name: userData.full_name || userData.fullName || userData.username || 'Usuário'
         };
-        
+
         console.log('🔍 Usuário autenticado carregado:', normalizedUser);
         setIsAuthenticated(true);
         setUser(normalizedUser);
-        
+
         // Salvar dados normalizados
         localStorage.setItem('user', JSON.stringify(normalizedUser));
       } catch (error) {

@@ -1,12 +1,14 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { calculateTimeDifference } from "@/lib/timer-utils";
 import CameraShame from "../components/camera-shame";
+import type { User } from "@shared/schema";
 
 interface PanicPageProps {
-  user?: any;
+  user?: User;
 }
 
 interface CalculatedTime {
@@ -16,9 +18,54 @@ interface CalculatedTime {
   seconds: number;
 }
 
-export default function PanicPage({ user }: PanicPageProps) {
+export default function PanicPage({ user: propUser }: PanicPageProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [user, setUser] = useState<User | null>(propUser || null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Load user data from localStorage and API
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        // First try to get from localStorage
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          console.log('👤 Usuário carregado do localStorage:', parsedUser);
+        }
+
+        // If we have a user ID, fetch fresh data from API
+        const userToCheck = propUser || (storedUser ? JSON.parse(storedUser) : null);
+        if (userToCheck?.id) {
+          try {
+            const response = await fetch(`/api/timer/status/${userToCheck.id}`);
+            const data = await response.json();
+
+            if (response.ok && data.hasActiveTimer) {
+              const updatedUser = {
+                ...userToCheck,
+                startDate: data.startDate
+              };
+              setUser(updatedUser);
+              localStorage.setItem('user', JSON.stringify(updatedUser));
+              console.log('🔄 Dados do usuário atualizados da API:', updatedUser);
+            }
+          } catch (error) {
+            console.error('❌ Erro ao buscar dados do timer:', error);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Erro ao carregar dados do usuário:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [propUser]);
+
+  // Update timer every second
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -27,17 +74,33 @@ export default function PanicPage({ user }: PanicPageProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Duplicata exata do componente Timer
+  // Timer component that mirrors exactly the main timer logic
   const TimerDuplicate = () => {
-    if (!user || !user.startDate) {
+    if (isLoading) {
       return (
         <div className="text-center">
           <p className="text-sm text-muted-foreground mb-3">
-            Dados do usuário não disponíveis
+            Carregando dados do cronômetro...
           </p>
           <div className="timer-display">
             00:00:00
           </div>
+        </div>
+      );
+    }
+
+    if (!user || !user.startDate) {
+      return (
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground mb-3">
+            Cronômetro ainda não foi iniciado
+          </p>
+          <div className="timer-display">
+            00:00:00
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Inicie sua jornada no painel principal
+          </p>
         </div>
       );
     }
@@ -61,19 +124,13 @@ export default function PanicPage({ user }: PanicPageProps) {
             </div>
           </>
         ) : (
-          // Design para 1+ dias
+          // Design para 1+ dias - apenas texto, sem componente retangular
           <>
             <p className="text-sm text-muted-foreground mb-3">
               Você está livre da pornografia há:
             </p>
             <div className="text-7xl font-bold text-primary mb-4" data-testid="days-display">
               {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'}
-            </div>
-
-            <div className="ai-assistant-card-natural-3d border border-border rounded-full p-2 px-3 inline-block" style={{ backgroundColor: '#000515' }}>
-              <div className="text-lg font-mono text-primary font-semibold" data-testid="time-component">
-                {String(timeDiff.hours).padStart(2, '0')}h {String(timeDiff.minutes).padStart(2, '0')}m {String(timeDiff.seconds).padStart(2, '0')}s
-              </div>
             </div>
           </>
         )}
@@ -89,38 +146,36 @@ export default function PanicPage({ user }: PanicPageProps) {
         animation: 'fadeIn 0.6s ease-out'
       }}
     >
-      {/* Botão de voltar */}
-      <div className="absolute top-4 left-4 z-10">
-        <Link href="/">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white hover:bg-white/10 transition-all duration-300"
-            data-testid="back-button"
+      <div className="flex flex-col items-center justify-start min-h-screen px-6 pt-8 pb-8 space-y-8">
+        {/* Header com botão de voltar e título */}
+        <div className="w-full flex items-center justify-between mb-4">
+          <Link href="/">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/10 transition-all duration-300"
+              data-testid="back-button"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          </Link>
+          
+          <h1 
+            className="text-xl md:text-2xl font-bold text-white text-center leading-tight flex-1 mr-10"
+            data-testid="panic-title"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
-        </Link>
-      </div>
+            Relembre o porque você<br />começou essa jornada
+          </h1>
+        </div>
 
-      <div className="flex flex-col items-center justify-start min-h-screen px-6 pt-20 pb-8 space-y-8">
-        {/* Título */}
-        <h1 
-          className="text-3xl md:text-4xl font-bold text-white text-center leading-tight"
-          data-testid="panic-title"
-        >
-          Relembre o porque você começou essa jornada
-        </h1>
-
-        {/* Duplicata do cronômetro */}
+        {/* Cronômetro sincronizado */}
         <div className="w-full max-w-md">
           <TimerDuplicate />
         </div>
 
-        {/* Componente Câmera da Vergonha */}
-        <div className="w-full max-w-md">
-          <CameraShame />
+        {/* Componente Câmera da Vergonha com espaçamento reduzido */}
+        <div className="w-full max-w-md -mt-4">
+          <CameraShame autoActivate={true} />
         </div>
       </div>
 
