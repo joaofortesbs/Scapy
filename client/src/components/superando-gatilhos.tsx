@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle, Circle, Target } from 'lucide-react';
+import { CheckCircle, Circle, Target, X } from 'lucide-react';
 
 interface SuperandoGatilhosProps {
   userId?: string;
@@ -112,9 +112,12 @@ export default function SuperandoGatilhos({ userId }: SuperandoGatilhosProps) {
             <p className="text-sm text-muted-foreground mb-2">
               Seu principal gatilho identificado:
             </p>
-            <p className="text-base text-foreground font-medium">
-              {gatilho}
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-base text-red-500 font-medium flex-1">
+                {gatilho}
+              </p>
+              <X className="w-5 h-5 text-red-500 ml-3" />
+            </div>
           </div>
 
           {/* Checkbox para marcar se superou hoje */}
