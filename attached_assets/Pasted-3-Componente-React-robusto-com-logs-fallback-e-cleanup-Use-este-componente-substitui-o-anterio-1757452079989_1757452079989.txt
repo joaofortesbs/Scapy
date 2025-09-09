@@ -1,0 +1,193 @@
+3) Componente React robusto — com logs, fallback e cleanup
+
+Use este componente (substitui o anterior). Ele cobre SSR, autoplay, fallback de constraints, logs e cleanup:
+
+import React, { useRef, useState, useEffect } from "react";
+
+export default function CameraDaVergonhaCard() {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [ativo, setAtivo] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      // cleanup on unmount
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
+    };
+  }, []);
+
+  const startCamera = async () => {
+    setErro(null);
+    if (typeof navigator === "undefined" || !navigator.mediaDevices) {
+      setErro("Navegador não suporta navigator.mediaDevices");
+      return;
+    }
+
+    try {
+      // 1) tentar constraint com facingMode
+      let stream = null;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        });
+      } catch (innerErr) {
+        console.warn("facingMode falhou, tentando fallback:", innerErr);
+        // 2) fallback simples
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+
+      console.log("Stream obtido:", stream);
+      streamRef.current = stream;
+
+      // 3) attach and play
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.muted = true; // ajuda autoplay
+        videoRef.current.playsInline = true;
+        try {
+          await videoRef.current.play();
+          setAtivo(true);
+          console.log("video play ok");
+        } catch (playErr) {
+          console.warn("Erro no play():", playErr);
+          // se autoplay for bloqueado, ainda mostramos vídeo; usuário deve interagir
+          setErro("Autoplay bloqueado — por favor toque no vídeo para ativar.");
+        }
+      } else {
+        console.error("videoRef.current é null");
+        setErro("Erro interno: elemento de vídeo não encontrado");
+      }
+
+      // 4) checar estado do track
+      const vt = stream.getVideoTracks()[0];
+      console.log("VideoTrack readyState, enabled, muted", vt.readyState, vt.enabled);
+    } catch (err: any) {
+      console.error("Falha ao iniciar câmera:", err);
+      setErro(err?.name ? `${err.name}: ${err.message}` : String(err));
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      try { videoRef.current.srcObject = null; } catch(e) {}
+    }
+    setAtivo(false);
+  };
+
+  return (
+    <div className="camera-card border rounded-lg p-4 bg-black text-white">
+      <h3 className="font-semibold mb-2">Câmera da Vergonha</h3>
+
+      <div className="video-wrap" style={{ width: "100%", height: 260, background: "#111", borderRadius: 12, overflow: "hidden" }}>
+        {ativo ? (
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#8892a6" }}>
+            <div>
+              <p>Clique abaixo para ativar sua câmera</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="controls mt-3 flex gap-2">
+        {!ativo ? (
+          <button onClick={startCamera} className="px-4 py-2 bg-red-600 rounded">Ativar Câmera</button>
+        ) : (
+          <button onClick={stopCamera} className="px-4 py-2 bg-gray-700 rounded">Desativar</button>
+        )}
+      </div>
+
+      {erro && <p className="mt-2 text-sm text-red-400">{erro}</p>}
+    </div>
+  );
+}
+
+
+Pontos-chave desse componente:
+
+Faz getUserMedia apenas no clique (startCamera) — evita autoplay policy.
+
+Tenta facingMode e faz fallback para {video:true}.
+
+Liga srcObject e chama video.play() com await, tratando erros.
+
+Faz cleanup (para evitar câmera “presa”).
+
+Exibe mensagens de erro detalhadas (úteis para debug).
+
+4) CSS e layout: problemas comuns que bloqueiam a visualização
+
+Container com display:none: vídeo não inicia quando oculto. Garanta que o card esteja visível quando chamar startCamera.
+
+Altura zero: se container for flex com itens que não definem altura, vídeo pode ter 0px. Defina height ou aspect-ratio.
+
+object-fit: usar object-fit: cover para preencher o card.
+
+z-index / opacity: certifique-se que não há overlay cobrindo o vídeo.
+
+mix-blend-mode / filter: test temporarily removing complex CSS.
+
+Mobile iOS: garantir atributo playsInline. iOS tende a exigir interação do usuário.
+
+Exemplo CSS debug rápido:
+
+.video-wrap { border: 2px dashed lime; min-height: 260px; }
+video { display:block; width:100%; height:100%; object-fit:cover; }
+
+5) Mensagens de erro comuns e como interpretá-las
+
+NotAllowedError → permissão negada (configurações browser/OS).
+
+NotFoundError → não há câmera disponível (hardware ou driver).
+
+NotReadableError → câmera ocupada por outro app.
+
+OverconstrainedError → constraints incompatíveis; faça fallback.
+
+SecurityError → não em contexto seguro (HTTPS).
+
+TypeError / NotSupportedError → browser muito antigo.
+
+6) Fluxo ideal de debug que eu recomendo agora (executar nessa ordem)
+
+Abra DevTools → Console. Cole o teste getUserMedia (veja seção 2).
+
+Se getUserMedia falhar, leia o erro e resolva (permissão, https, dispositivo).
+
+Se stream OK, execute o snippet que anexa ao <video>. Se funcionar, problema é código React/CSS.
+
+Teste o componente React que te passei — inspecione console logs (stream obtido? play OK?).
+
+Se play() falhar com NotAllowedError, garanta que a chamada foi disparada por um clique, e que <video muted> está setado.
+
+Se parece tudo OK mas a miniatura fica preta, verifique CSS e videoRef.current.srcObject em console.
+
+Teste em outro browser/dispositivo para verificar se é problema local.
+
+7) Últimas recomendações práticas
+
+Garanta https em homolog/produção.
+
+Instrua testadores a checar permissões no cadeado do navegador.
+
+Adicione logs detalhados (console.log stream, tracks, readyState).
+
+Para testes rápidos, adicione um botão “Anexar stream ao DOM (debug)” que executa document.body.appendChild(video) para ver se o elemento fora do layout funciona.
+
+Se for PWA/mobile app (WebView), verifique se o WebView dá suporte a getUserMedia; em iOS WebView (WKWebView) é necessário habilitar permissões específicas.
