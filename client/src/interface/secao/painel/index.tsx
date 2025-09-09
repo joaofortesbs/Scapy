@@ -82,11 +82,10 @@ function Header({ user }: HeaderInternalProps) {
 // Weekly Tracker Component
 interface WeeklyTrackerProps {
   weeklyProgress?: WeeklyProgress;
-  userMood?: string | null; // Prop to receive user's mood
-  dayIndex: number; // To identify which day to style
+  currentMood?: string | null; // Current user mood
 }
 
-function WeeklyTracker({ weeklyProgress, userMood, dayIndex }: WeeklyTrackerProps) {
+function WeeklyTracker({ weeklyProgress, currentMood }: WeeklyTrackerProps) {
   const queryClient = useQueryClient();
   const weekDays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
   const dayNames = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
@@ -638,8 +637,7 @@ export default function PainelInterface({
             {/* Conditionally show WeeklyTracker */}
             {hasStartedJourney && <WeeklyTracker
               weeklyProgress={weeklyProgress}
-              userMood={currentMood} // Pass the current mood
-              dayIndex={currentDayIndex} // Pass the current day index
+              currentMood={currentMood} // Pass the current mood
             />}
 
             <section className="text-center">
