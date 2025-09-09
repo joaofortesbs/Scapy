@@ -106,9 +106,14 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
             <span data-testid="timer-seconds">{String(timeDiff.seconds).padStart(2, '0')}</span>
           </div>
         ) : (
-          // Design compacto para 1+ dias
-          <div className="text-sm font-bold text-white" data-testid="days-display">
-            {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'}
+          // Design compacto para 1+ dias com texto de liberdade
+          <div className="flex items-center justify-center gap-2" data-testid="days-display">
+            <div className="text-sm font-bold text-white">
+              {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'}
+            </div>
+            <div className="text-xs font-bold text-white">
+              DE LIBERDADE!
+            </div>
           </div>
         )}
       </div>
