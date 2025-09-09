@@ -103,10 +103,10 @@ export default function FraseDoDia() {
           <button
             onClick={handleSavePhrase}
             disabled={loading || !phrase}
-            className="p-1 rounded border transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-1 rounded transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ 
               backgroundColor: saved ? 'rgba(0, 246, 255, 0.2)' : 'rgba(0, 5, 21, 0.73)', 
-              borderColor: saved ? 'rgba(0, 246, 255, 0.5)' : 'rgba(0, 5, 21, 0.73)' 
+              border: saved ? '1px solid rgba(0, 246, 255, 0.3)' : '1px solid rgba(0, 5, 21, 0.5)' 
             }}
           >
             <Bookmark 
