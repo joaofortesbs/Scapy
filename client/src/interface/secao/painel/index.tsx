@@ -480,23 +480,16 @@ export default function PainelInterface({
           const moodForToday = data.moods.find((m: UserMood) => m.date === todayString);
           if (moodForToday && moodForToday.mood) {
             // Update local state if mood is found
-            setCurrentMood(moodForToday.mood);
-          } else {
-            // If no mood data for today, reset local state
-            setCurrentMood(null);
+            updateMood(moodForToday.mood);
           }
-        } else {
-          // If API call fails or no data, reset local state
-          setCurrentMood(null);
         }
       } catch (error) {
         console.error('Error fetching weekly mood:', error);
-        setCurrentMood(null); // Reset on error
       }
     };
 
     fetchWeeklyMood();
-  }, [user?.id]); // Re-fetch if user changes
+  }, [user?.id, updateMood]); // Re-fetch if user changes
 
   // Effect to handle mood updates from AIAssistant
   useEffect(() => {
