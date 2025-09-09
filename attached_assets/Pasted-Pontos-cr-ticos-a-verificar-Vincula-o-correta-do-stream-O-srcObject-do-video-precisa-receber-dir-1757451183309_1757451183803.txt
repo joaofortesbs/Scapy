@@ -1,0 +1,120 @@
+Pontos críticos a verificar
+
+Vinculação correta do stream
+O srcObject do <video> precisa receber diretamente o objeto de mídia retornado por navigator.mediaDevices.getUserMedia.
+
+if (videoRef.current) {
+  videoRef.current.srcObject = stream;
+  videoRef.current.play().catch(err => console.error("Erro ao dar play:", err));
+}
+
+
+Atributos do <video>
+
+autoPlay → precisa estar definido.
+
+playsInline → obrigatório em mobile (iOS/Android) para exibir dentro do card.
+
+muted → alguns navegadores só permitem autoplay se o vídeo estiver mudo.
+
+Exemplo:
+
+<video
+  ref={videoRef}
+  autoPlay
+  playsInline
+  muted
+  className="w-full h-full object-cover rounded-xl"
+/>
+
+
+Política de Autoplay do navegador
+Se não estiver funcionando, geralmente é porque o vídeo precisa ser iniciado dentro de um evento de interação do usuário (ex: clique no botão “Ativar câmera da vergonha”).
+
+Solução: amarrar a chamada getUserMedia() a um evento de clique.
+
+const handleStart = async () => {
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+  if (videoRef.current) {
+    videoRef.current.srcObject = stream;
+    await videoRef.current.play();
+  }
+};
+
+
+Container do Card
+
+Se o card estiver com display: none ou for montado dinamicamente, o navegador pode travar o autoplay.
+
+Melhor prática: iniciar o stream após o card estar montado.
+
+Erros de permissão
+Sempre capturar erros:
+
+try {
+  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+} catch (err) {
+  console.error("Permissão da câmera negada ou erro:", err);
+}
+
+🛠 Estrutura recomendada para o Card da Câmera da Vergonha
+import { useRef, useState } from "react";
+
+export default function CameraDaVergonha() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [ativo, setAtivo] = useState(false);
+
+  const iniciarCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        setAtivo(true);
+      }
+    } catch (err) {
+      console.error("Erro ao iniciar câmera:", err);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl shadow-xl p-4 bg-black text-white relative">
+      <h2 className="text-lg font-bold mb-2">Câmera da Vergonha</h2>
+
+      <div className="aspect-video bg-gray-900 rounded-xl flex items-center justify-center">
+        {ativo ? (
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover rounded-xl"
+          />
+        ) : (
+          <p className="text-gray-400">Clique abaixo para ativar sua câmera</p>
+        )}
+      </div>
+
+      {!ativo && (
+        <button
+          onClick={iniciarCamera}
+          className="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold w-full"
+        >
+          Ativar Câmera
+        </button>
+      )}
+    </div>
+  );
+}
+
+
+⚡ Resumo:
+A transmissão não aparece porque o srcObject não está vinculado corretamente ao <video> ou porque o autoplay está sendo bloqueado. A solução é:
+
+Garantir videoRef.current.srcObject = stream.
+
+Usar autoPlay playsInline muted.
+
+Acionar a captura dentro de uma interação do usuário (ex: botão).
