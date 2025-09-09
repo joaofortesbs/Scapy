@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle, Circle, Target } from 'lucide-react';
@@ -16,20 +17,36 @@ export default function SuperandoGatilhos({ userId }: SuperandoGatilhosProps) {
   useEffect(() => {
     const fetchGatilho = async () => {
       if (!userId) {
+        console.log('SuperandoGatilhos: userId não fornecido');
         setLoading(false);
         return;
       }
 
       try {
+        console.log('SuperandoGatilhos: Buscando dados do quiz para userId:', userId);
         const response = await fetch(`/api/quiz/${userId}`);
+        
         if (response.ok) {
           const data = await response.json();
+          console.log('SuperandoGatilhos: Dados do quiz recebidos:', data);
+          
           if (data.quiz && data.quiz.gatilhos) {
+            console.log('SuperandoGatilhos: Gatilho encontrado:', data.quiz.gatilhos);
             setGatilho(data.quiz.gatilhos);
+          } else {
+            console.log('SuperandoGatilhos: Nenhum gatilho encontrado no quiz');
+            setGatilho('');
           }
+        } else if (response.status === 404) {
+          console.log('SuperandoGatilhos: Quiz não encontrado para este usuário');
+          setGatilho('');
+        } else {
+          console.error('SuperandoGatilhos: Erro na resposta da API:', response.status, response.statusText);
+          setGatilho('');
         }
       } catch (error) {
-        console.error('Erro ao buscar gatilho:', error);
+        console.error('SuperandoGatilhos: Erro ao buscar gatilho:', error);
+        setGatilho('');
       }
       setLoading(false);
     };
@@ -39,19 +56,26 @@ export default function SuperandoGatilhos({ userId }: SuperandoGatilhosProps) {
 
   // Verificar se já superou hoje (usando localStorage para persistência local)
   useEffect(() => {
+    if (!userId) return;
+    
     const hoje = new Date().toDateString();
     const chave = `superou_gatilho_${hoje}_${userId}`;
     const superouHoje = localStorage.getItem(chave) === 'true';
     setSuperouHoje(superouHoje);
+    console.log('SuperandoGatilhos: Status hoje carregado:', superouHoje);
   }, [userId]);
 
   const handleToggleSuperar = () => {
+    if (!userId) return;
+    
     const hoje = new Date().toDateString();
     const chave = `superou_gatilho_${hoje}_${userId}`;
     const novoStatus = !superouHoje;
     
     setSuperouHoje(novoStatus);
     localStorage.setItem(chave, novoStatus.toString());
+    
+    console.log('SuperandoGatilhos: Status atualizado para:', novoStatus);
   };
 
   if (loading) {
@@ -66,8 +90,9 @@ export default function SuperandoGatilhos({ userId }: SuperandoGatilhosProps) {
     );
   }
 
-  if (!gatilho) {
-    return null; // Não mostrar se não há gatilho definido
+  if (!gatilho || !userId) {
+    console.log('SuperandoGatilhos: Não renderizando - gatilho:', gatilho, 'userId:', userId);
+    return null; // Não mostrar se não há gatilho definido ou userId
   }
 
   return (
@@ -133,3 +158,4 @@ export default function SuperandoGatilhos({ userId }: SuperandoGatilhosProps) {
     </Card>
   );
 }
+

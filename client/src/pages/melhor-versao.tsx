@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'wouter';
 import { Progress } from '@/components/ui/progress';
@@ -8,6 +8,20 @@ import ObjetivosUsuario from "@/components/objetivos-usuario";
 import SuperandoGatilhos from "@/components/superando-gatilhos";
 
 export default function MelhorVersao() {
+  const [user, setUser] = useState<any>(null);
+
+  // Carregar dados do usuário do localStorage
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        setUser(userData);
+      } catch (error) {
+        console.error('Erro ao carregar dados do usuário:', error);
+      }
+    }
+  }, []);
   // Rolar para o topo quando a página carregar
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -103,7 +117,7 @@ export default function MelhorVersao() {
 
           {/* Superando Gatilhos */}
           <div className="mt-8">
-            <SuperandoGatilhos userId="1" />
+            <SuperandoGatilhos userId={user?.id} />
           </div>
 
           {/* Seção de Controle de Humor */}
