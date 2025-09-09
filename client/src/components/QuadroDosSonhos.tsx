@@ -56,7 +56,7 @@ export default function QuadroDosSonhos() {
             {/* Card */}
             <div className={`
               w-full h-full rounded-xl ${cardColors[index]}
-              border-3 border-white p-3 flex flex-col items-center justify-center
+              border-3 border-white p-1 flex flex-col items-center justify-center
               relative overflow-hidden
             `}>
               {image ? (
@@ -65,7 +65,8 @@ export default function QuadroDosSonhos() {
                   <img
                     src={image}
                     alt={`Sonho ${index + 1}`}
-                    className="w-full h-full object-cover rounded-lg sm:rounded-xl"
+                    className="w-full h-full object-cover rounded-lg sm:rounded-xl opacity-100"
+                    style={{ opacity: 1 }}
                   />
                   {/* Botão remover - Design melhorado */}
                   <button
