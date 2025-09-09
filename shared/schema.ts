@@ -210,6 +210,28 @@ export const insertUserCustomGoalSchema = createInsertSchema(userCustomGoals).om
   updatedAt: true,
 });
 
+// Tabela para tracking de humor semanal (para visualização nos dias da semana)
+export const weeklyMoodTracking = pgTable("weekly_mood_tracking", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  weekStart: timestamp("week_start").notNull(), // Início da semana (domingo)
+  mondayMood: varchar("monday_mood", { length: 50 }), // "medo", "estavel", "feliz"
+  tuesdayMood: varchar("tuesday_mood", { length: 50 }),
+  wednesdayMood: varchar("wednesday_mood", { length: 50 }),
+  thursdayMood: varchar("thursday_mood", { length: 50 }),
+  fridayMood: varchar("friday_mood", { length: 50 }),
+  saturdayMood: varchar("saturday_mood", { length: 50 }),
+  sundayMood: varchar("sunday_mood", { length: 50 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertWeeklyMoodTrackingSchema = createInsertSchema(weeklyMoodTracking).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Tipos TypeScript para as novas tabelas
 export type MoodSelection = typeof moodSelections.$inferSelect;
 export type InsertMoodSelection = z.infer<typeof insertMoodSelectionSchema>;
@@ -223,3 +245,5 @@ export type TaskProgress = typeof taskProgress.$inferSelect;
 export type InsertTaskProgress = z.infer<typeof insertTaskProgressSchema>;
 export type UserCustomGoal = typeof userCustomGoals.$inferSelect;
 export type InsertUserCustomGoal = z.infer<typeof insertUserCustomGoalSchema>;
+export type WeeklyMoodTracking = typeof weeklyMoodTracking.$inferSelect;
+export type InsertWeeklyMoodTracking = z.infer<typeof insertWeeklyMoodTrackingSchema>;

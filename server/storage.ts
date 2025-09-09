@@ -16,7 +16,9 @@ import {
   type TaskProgress,
   type InsertTaskProgress,
   UserCustomGoal,
-  InsertUserCustomGoal
+  InsertUserCustomGoal,
+  WeeklyMoodTracking,
+  InsertWeeklyMoodTracking
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -67,6 +69,10 @@ export interface IStorage {
 
   // Data cleanup
   cleanupDailyData(userId: string, date: Date): Promise<void>;
+
+  // Weekly mood tracking
+  getWeeklyMoodTracking(userId: string, weekStart: Date): Promise<WeeklyMoodTracking | undefined>;
+  updateWeeklyMoodTracking(userId: string, dayOfWeek: number, mood: string): Promise<WeeklyMoodTracking>;
 }
 
 export class MemStorage implements IStorage {
@@ -79,6 +85,7 @@ export class MemStorage implements IStorage {
   private dailyTasks: Map<string, DailyTask>;
   private taskProgress: Map<string, TaskProgress>;
   private userCustomGoals: Map<string, UserCustomGoal>; // Added for custom goals
+  private weeklyMoodTracking: Map<string, WeeklyMoodTracking>; // Added for weekly mood tracking
 
   constructor() {
     this.users = new Map();
@@ -90,6 +97,7 @@ export class MemStorage implements IStorage {
     this.dailyTasks = new Map();
     this.taskProgress = new Map();
     this.userCustomGoals = new Map(); // Initialize custom goals map
+    this.weeklyMoodTracking = new Map(); // Initialize weekly mood tracking map
 
     // Initialize with default user for demo
     this.initializeDefaultUser();
@@ -482,6 +490,58 @@ export class MemStorage implements IStorage {
     }
 
     console.log(`🧹 Dados do dia ${targetDate} limpos para usuário ${userId}`);
+  }
+
+  // Weekly mood tracking methods
+  async getWeeklyMoodTracking(userId: string, weekStart: Date): Promise<WeeklyMoodTracking | undefined> {
+    const key = `${userId}-${weekStart.toISOString()}`;
+    return this.weeklyMoodTracking.get(key);
+  }
+
+  async updateWeeklyMoodTracking(userId: string, dayOfWeek: number, mood: string): Promise<WeeklyMoodTracking> {
+    // Get start of current week (Sunday)
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+
+    const key = `${userId}-${weekStart.toISOString()}`;
+    let weeklyMood = this.weeklyMoodTracking.get(key);
+
+    if (!weeklyMood) {
+      weeklyMood = {
+        id: randomUUID(),
+        userId,
+        weekStart,
+        mondayMood: null,
+        tuesdayMood: null,
+        wednesdayMood: null,
+        thursdayMood: null,
+        fridayMood: null,
+        saturdayMood: null,
+        sundayMood: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
+
+    // Update the specific day mood (0=Sunday, 1=Monday, ..., 6=Saturday)
+    switch (dayOfWeek) {
+      case 0: weeklyMood.sundayMood = mood; break;
+      case 1: weeklyMood.mondayMood = mood; break;
+      case 2: weeklyMood.tuesdayMood = mood; break;
+      case 3: weeklyMood.wednesdayMood = mood; break;
+      case 4: weeklyMood.thursdayMood = mood; break;
+      case 5: weeklyMood.fridayMood = mood; break;
+      case 6: weeklyMood.saturdayMood = mood; break;
+    }
+
+    weeklyMood.updatedAt = new Date();
+    this.weeklyMoodTracking.set(key, weeklyMood);
+    
+    console.log(`🎭 Humor da semana atualizado: ${['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][dayOfWeek]} = ${mood}`);
+    
+    return weeklyMood;
   }
 }
 

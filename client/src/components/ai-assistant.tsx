@@ -76,6 +76,15 @@ export default function AIAssistant() {
         mood: mood.toLowerCase()
       });
 
+      // 1.1. Atualizar humor da semana para o dia atual
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+      
+      await apiRequest('PUT', `/api/weekly-mood/${user.id}`, {
+        dayOfWeek,
+        mood: mood.toLowerCase()
+      });
+
       console.log(`💭 Humor registrado com sucesso`);
 
       // 2. Gerar sugestões personalizadas
