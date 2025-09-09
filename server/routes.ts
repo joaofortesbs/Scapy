@@ -9,8 +9,7 @@ import {
   insertMoodSelectionSchema,
   insertUserObjectiveSchema,
   insertDailyTaskSchema,
-  insertUserCustomGoalSchema,
-  insertWeeklyMoodTrackingSchema
+  insertUserCustomGoalSchema
 } from "@shared/schema";
 import { aiProcessor } from "./aiProcessor";
 import { createClient } from '@supabase/supabase-js';
@@ -1088,57 +1087,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Erro ao limpar dados do dia:", error);
       res.status(500).json({ message: "Erro ao limpar dados do dia" });
-    }
-  });
-
-  // ========== ROTAS PARA TRACKING DE HUMOR SEMANAL ==========
-
-  // Obter humor da semana atual
-  app.get("/api/weekly-mood/:userId", async (req, res) => {
-    try {
-      const { userId } = req.params;
-      
-      // Get start of current week (Sunday)
-      const now = new Date();
-      const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - now.getDay());
-      weekStart.setHours(0, 0, 0, 0);
-      
-      const weeklyMood = await storage.getWeeklyMoodTracking(userId, weekStart);
-      
-      res.json(weeklyMood || {
-        userId,
-        weekStart,
-        mondayMood: null,
-        tuesdayMood: null,
-        wednesdayMood: null,
-        thursdayMood: null,
-        fridayMood: null,
-        saturdayMood: null,
-        sundayMood: null
-      });
-    } catch (error) {
-      console.error("Erro ao buscar humor da semana:", error);
-      res.status(500).json({ message: "Erro ao buscar humor da semana" });
-    }
-  });
-
-  // Atualizar humor do dia na semana
-  app.put("/api/weekly-mood/:userId", async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const { dayOfWeek, mood } = req.body;
-      
-      if (dayOfWeek === undefined || !mood) {
-        return res.status(400).json({ message: "Day of week e mood são obrigatórios" });
-      }
-      
-      const weeklyMood = await storage.updateWeeklyMoodTracking(userId, dayOfWeek, mood);
-      
-      res.json(weeklyMood);
-    } catch (error) {
-      console.error("Erro ao atualizar humor da semana:", error);
-      res.status(500).json({ message: "Erro ao atualizar humor da semana" });
     }
   });
 
