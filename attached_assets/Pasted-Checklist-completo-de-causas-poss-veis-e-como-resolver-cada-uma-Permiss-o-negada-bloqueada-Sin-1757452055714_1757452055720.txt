@@ -1,0 +1,94 @@
+Checklist completo de causas possíveis (e como resolver cada uma)
+
+Permissão negada / bloqueada
+
+Sintoma: getUserMedia rejeita com NotAllowedError ou não pede permissão.
+
+Ação: checar navigator.permissions.query({ name: 'camera' }) (nem todos os browsers suportam) e instruir o usuário a permitir nas configurações do site (ícone de cadeado). Resetar permissões no browser.
+
+Nota: em macOS/Windows também há permissão do SO (System Preferences → Camera).
+
+Contexto não seguro (HTTP vs HTTPS / localhost)
+
+Sintoma: getUserMedia lança SecurityError ou não funciona.
+
+Ação: rodar em https:// ou http://localhost. Arquivos file:// não funcionam.
+
+Autoplay bloqueado / vídeo não dá play
+
+Sintoma: stream está presente (console mostra MediaStream), mas <video> fica preto.
+
+Ação: garantir atributos muted, playsInline, autoPlay. Chamar await video.play() dentro do evento de clique do usuário (ou logo após, mas preferível no handler de clique). Tratar play() promise rejection.
+
+Elemento <video> não montado ou invisível
+
+Sintoma: videoRef.current é null, ou display:none, ou container tem height:0.
+
+Ação: iniciar o stream após o componente/DOM estar montado; verificar CSS: display, visibility, height, width, aspect-ratio. Temporariamente adicione border e background para depurar.
+
+Constraints inválidos / facingMode não suportado
+
+Sintoma: OverconstrainedError ou NotFoundError (nenhuma câmera encontrada).
+
+Ação: fallback para { video: true } se facingMode: 'user' falhar; enumerar devices com enumerateDevices().
+
+Câmera em uso por outro processo
+
+Sintoma: NotReadableError ou stream não é ativado.
+
+Ação: fechar apps que usam câmera; reiniciar navegador/SO; tentar novamente.
+
+Stream criado, mas tracks inativas/ended
+
+Sintoma: stream.active === false ou stream.getVideoTracks()[0].readyState === 'ended'.
+
+Ação: logar stream.getTracks() e reiniciar getUserMedia se tracks ended.
+
+Problema de SSR (Next.js/etc.)
+
+Sintoma: erro no servidor ou navigator undefined.
+
+Ação: executar todo código de câmera dentro de useEffect/client-side only.
+
+CSS/Stacking / z-index / mix-blend-mode
+
+Sintoma: vídeo existe mas não visível (preto ou transparente).
+
+Ação: checar z-index, opacity, mix-blend-mode, filter, backdrop-filter. Temporariamente defina z-index:9999; opacity:1.
+
+Bloqueio por política corporativa ou flags do browser
+
+Sintoma: erros estranhos em ambientes corporativos.
+
+Ação: testar em outro browser/dispositivo.
+
+2) Debug rápido — comandos para rodar agora no console (isolar problema)
+
+Cole estes trechos no console do DevTools para diagnóstico rápido:
+
+Testar getUserMedia diretamente:
+
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(s => { console.log('stream OK', s); window._testStream = s; })
+  .catch(e => console.error('getUserMedia erro:', e));
+
+
+Enumerar dispositivos:
+
+navigator.mediaDevices.enumerateDevices()
+  .then(devs => console.log(devs.filter(d=>d.kind==='videoinput')))
+  .catch(e=>console.error(e));
+
+
+Se você já tem um <video> na página (selecionar e vincular manualmente):
+
+const v = document.querySelector('video');
+if (window._testStream && v) { v.srcObject = window._testStream; v.muted = true; v.playsInline = true; v.play().catch(e=>console.error('play error',e)); console.log('attached'); }
+
+
+Verificar permissões (se suportado):
+
+if (navigator.permissions) navigator.permissions.query({name:'camera'}).then(p => console.log('camera permission state:', p.state));
+
+
+Esses testes mostram se o getUserMedia retorna algo e se o video aceita o srcObject. Se getUserMedia falhar, confira o erro (NotAllowedError / NotFoundError / NotReadableError / OverconstrainedError) — cada um já mapeado no checklist.
