@@ -169,12 +169,12 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         </div>
 
         {/* Cronômetro sincronizado */}
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md -mt-16">
           <TimerDuplicate />
         </div>
 
         {/* Componente Câmera da Vergonha com espaçamento reduzido */}
-        <div className="w-full max-w-md -mt-4">
+        <div className="w-full max-w-md -mt-12">
           <CameraShame autoActivate={true} />
         </div>
       </div>

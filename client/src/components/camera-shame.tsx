@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { MousePointer } from "lucide-react";
+import { Hand } from "lucide-react";
 
 interface CameraShameProps {
   autoActivate?: boolean;
@@ -198,7 +198,7 @@ export default function CameraShame({ autoActivate = false }: CameraShameProps) 
           }}
           className="w-full px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-red-500/25"
         >
-          <MousePointer className="w-4 h-4" />
+          <Hand className="w-4 h-4" />
           Ajuda
         </button>
       </div>
