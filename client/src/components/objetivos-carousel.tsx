@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import { Target, Check } from 'lucide-react';
+import Autoplay from 'embla-carousel-autoplay';
 
 interface Objetivo {
   id: string;
@@ -14,13 +14,18 @@ export default function ObjetivosCarousel() {
   const [objetivos, setObjetivos] = useState<Objetivo[]>([]);
   const [isVisible, setIsVisible] = useState(false);
 
+  // Plugin de autoplay para carrossel automático
+  const autoplayPlugin = React.useRef(
+    Autoplay({ delay: 3000, stopOnInteraction: true })
+  );
+
   // Carregar objetivos do localStorage
   useEffect(() => {
     const loadObjetivos = () => {
       try {
         const savedObjetivos = localStorage.getItem('userObjetivos');
         if (savedObjetivos) {
-          const parsedObjetivos = JSON.parse(savedObjetivos);
+          const parsedObjetivos = JSON.JSON.parse(savedObjetivos);
           setObjetivos(parsedObjetivos);
           setIsVisible(parsedObjetivos.length > 0);
         } else {
@@ -65,15 +70,18 @@ export default function ObjetivosCarousel() {
     <div className="w-full max-w-md mt-6" data-testid="objetivos-carousel">
       <div className="mb-3 flex items-center space-x-2 px-2">
         <Target className="w-5 h-5 text-primary" />
-        <h3 className="text-lg font-semibold text-white">Seus Objetivos</h3>
+        <h3 className="text-lg font-semibold text-white">Você prometeu...</h3>
       </div>
       
       <Carousel
+        plugins={[autoplayPlugin.current]}
         opts={{
           align: "start",
           loop: true,
         }}
         className="w-full"
+        onMouseEnter={autoplayPlugin.current.stop}
+        onMouseLeave={autoplayPlugin.current.reset}
       >
         <CarouselContent className="-ml-2 md:-ml-4">
           {objetivos.map((objetivo) => (
