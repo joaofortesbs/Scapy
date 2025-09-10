@@ -24,7 +24,7 @@ export default function ObjetivosCarousel() {
       try {
         const savedObjetivos = localStorage.getItem('userObjetivos');
         if (savedObjetivos) {
-          const parsedObjetivos = JSON.JSON.parse(savedObjetivos);
+          const parsedObjetivos = JSON.parse(savedObjetivos);
           setObjetivos(parsedObjetivos);
           setIsVisible(parsedObjetivos.length > 0);
         } else {
@@ -83,8 +83,8 @@ export default function ObjetivosCarousel() {
           {objetivos.map((objetivo) => (
             <CarouselItem key={objetivo.id} className="pl-2 md:pl-4 basis-4/5">
               <Card 
-                className="border-2 rounded-3xl transition-all duration-300 bg-blue-500/10 border-blue-500/30 backdrop-blur-md"
-                style={{ backgroundColor: 'rgba(0, 5, 21, 0.8)' }}
+                className="border-2 rounded-3xl transition-all duration-300 ai-assistant-card-natural-3d border-border backdrop-blur-md"
+                style={{ backgroundColor: '#000515' }}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-center">
