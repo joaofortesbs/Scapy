@@ -11,6 +11,7 @@ import QuizPersonalizacao from "@/pages/quiz-personalizacao";
 import MelhorVersao from "@/pages/melhor-versao";
 import PanicPage from "@/pages/panic-page";
 import { useState, useEffect } from "react";
+import { initializeStorageCleanup } from "@/utils/localStorage-sync";
 
 function AppRouter() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -18,8 +19,12 @@ function AppRouter() {
   const [showQuiz, setShowQuiz] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Estado para controlar o carregamento inicial
 
-  // Verificar autenticação ao carregar
+  // Inicializar sistema de sincronização global e verificar autenticação
   useEffect(() => {
+    // Inicializar sistema de limpeza automática do localStorage
+    initializeStorageCleanup();
+    console.log('🚀 Sistema de persistência robusta inicializado!');
+    
     const savedAuth = localStorage.getItem('isAuthenticated');
     const savedUser = localStorage.getItem('user');
 
