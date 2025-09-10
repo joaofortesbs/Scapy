@@ -7,6 +7,7 @@ import { calculateTimeDifference } from "@/lib/timer-utils";
 import CameraShame from "../components/camera-shame";
 import ParticlesBackground from "@/components/particles-background";
 import ObjetivosCarousel from "@/components/objetivos-carousel";
+import SonhosCarousel from "@/components/sonhos-carousel";
 import type { User } from "@shared/schema";
 
 interface PanicPageProps {
@@ -184,6 +185,9 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         >
           {/* Carrossel de Objetivos */}
           <ObjetivosCarousel />
+          
+          {/* Carrossel de Sonhos */}
+          <SonhosCarousel />
         </div>
       </div>
       </div>
