@@ -84,13 +84,93 @@ export function DailyGoals() {
     }
   };
 
-  // Carregar dados do usuário
+  // ============================================
+  // SISTEMA DE PERSISTÊNCIA ROBUSTA PARA METAS DIÁRIAS
+  // ============================================
+  
+  const saveToLocalStorage = (key: string, data: any) => {
+    try {
+      const timestamp = Date.now();
+      const dataWithTimestamp = {
+        ...data,
+        timestamp,
+        userId: user?.id?.toString() || 'unknown'
+      };
+      localStorage.setItem(key, JSON.stringify(dataWithTimestamp));
+      console.log(`💾 [DailyGoals] Dados salvos no localStorage: ${key}`, dataWithTimestamp);
+    } catch (error) {
+      console.error('Erro ao salvar no localStorage:', error);
+    }
+  };
+
+  const loadFromLocalStorage = (key: string) => {
+    try {
+      const data = localStorage.getItem(key);
+      if (data) {
+        const parsed = JSON.parse(data);
+        console.log(`📖 [DailyGoals] Dados carregados do localStorage: ${key}`, parsed);
+        return parsed;
+      }
+    } catch (error) {
+      console.error('Erro ao carregar do localStorage:', error);
+    }
+    return null;
+  };
+
+  // Salvar metas personalizadas sempre que mudarem
+  useEffect(() => {
+    if (user && customGoals.length > 0) {
+      const todayKey = new Date().toISOString().split('T')[0];
+      const localGoalsKey = `scapy_custom_goals_${user.id}_${todayKey}`;
+      saveToLocalStorage(localGoalsKey, { goals: customGoals });
+      
+      // Disparar evento para sincronização com outras abas
+      const goalEvent = new CustomEvent('customGoalsUpdated', {
+        detail: {
+          userId: user.id.toString(),
+          goals: customGoals,
+          date: todayKey,
+          timestamp: Date.now()
+        }
+      });
+      window.dispatchEvent(goalEvent);
+    }
+  }, [customGoals, user]);
+
+  // Escutar mudanças do localStorage de outras abas
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (user && e.key?.includes(`scapy_custom_goals_${user.id}`)) {
+        const data = loadFromLocalStorage(e.key);
+        if (data && data.goals) {
+          setCustomGoals(data.goals);
+          console.log('🔄 [DailyGoals] Metas sincronizadas de outra aba:', data.goals);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [user]);
+
+  // Carregar dados do usuário e dados persistentes
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       try {
         const userData = JSON.parse(savedUser);
         setUser(userData);
+        
+        // Carregar metas personalizadas do localStorage primeiro
+        const todayKey = new Date().toISOString().split('T')[0];
+        const localGoalsKey = `scapy_custom_goals_${userData.id}_${todayKey}`;
+        const savedLocalGoals = loadFromLocalStorage(localGoalsKey);
+        
+        if (savedLocalGoals && savedLocalGoals.goals) {
+          setCustomGoals(savedLocalGoals.goals);
+          console.log(`🎯 [DailyGoals] Metas personalizadas carregadas do localStorage para ${todayKey}:`, savedLocalGoals.goals.length);
+        }
+        
         loadTasks(userData.id);
       } catch (error) {
         console.error('Erro ao carregar dados do usuário:', error);
@@ -197,24 +277,24 @@ export function DailyGoals() {
     }
 
     try {
-      const response = await apiRequest('POST', '/api/custom-goals', {
+      // Criar meta local primeiro para resposta imediata
+      const localGoal: CustomGoal = {
+        id: `local_${Date.now()}`, // ID temporário
         userId: user.id.toString(),
         titulo: newGoal.titulo.trim(),
         descricao: newGoal.descricao.trim() || null,
         categoria: newGoal.categoria,
         prioridade: newGoal.prioridade,
-        date: new Date()
-      });
+        concluida: false,
+        date: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
 
-      const createdGoal = await response.json();
-      setCustomGoals(prev => [...prev, createdGoal]);
+      // Adicionar à lista local imediatamente
+      setCustomGoals(prev => [...prev, localGoal]);
 
-      // Atualizar progresso
-      const progressResponse = await apiRequest('GET', `/api/task-progress/${user.id}`);
-      const progressData = await progressResponse.json();
-      setProgress(progressData);
-
-      // Reset form
+      // Reset form e fechar modal
       setNewGoal({
         titulo: '',
         descricao: '',
@@ -223,10 +303,43 @@ export function DailyGoals() {
       });
       setIsAddingGoal(false);
 
+      // Mostrar toast de sucesso imediato
       toast({
         title: "Meta adicionada!",
         description: "Sua meta personalizada foi criada com sucesso.",
       });
+
+      console.log(`🎯 [DailyGoals] Meta adicionada localmente:`, localGoal);
+
+      // Tentar salvar no servidor em segundo plano
+      try {
+        const response = await apiRequest('POST', '/api/custom-goals', {
+          userId: user.id.toString(),
+          titulo: newGoal.titulo.trim(),
+          descricao: newGoal.descricao.trim() || null,
+          categoria: newGoal.categoria,
+          prioridade: newGoal.prioridade,
+          date: new Date()
+        });
+
+        const createdGoal = await response.json();
+        
+        // Substituir o item local pelo item do servidor
+        setCustomGoals(prev => prev.map(goal => 
+          goal.id === localGoal.id ? createdGoal : goal
+        ));
+
+        console.log(`✅ [DailyGoals] Meta sincronizada com servidor:`, createdGoal);
+
+        // Atualizar progresso
+        const progressResponse = await apiRequest('GET', `/api/task-progress/${user.id}`);
+        const progressData = await progressResponse.json();
+        setProgress(progressData);
+
+      } catch (serverError) {
+        console.warn('⚠️ [DailyGoals] Erro ao sincronizar com servidor, mantendo versão local:', serverError);
+        // Meta permanece salva localmente mesmo se o servidor falhar
+      }
 
     } catch (error) {
       console.error('Erro ao adicionar meta personalizada:', error);
@@ -240,26 +353,56 @@ export function DailyGoals() {
 
   const toggleCustomGoal = async (goalId: string) => {
     try {
-      const response = await apiRequest('PUT', `/api/custom-goals/${goalId}/toggle`);
-      const updatedGoal = await response.json();
+      // Atualizar estado local imediatamente para resposta rápida
+      setCustomGoals(prev => prev.map(goal => {
+        if (goal.id === goalId) {
+          const updatedGoal = { ...goal, concluida: !goal.concluida };
+          console.log(`🔄 [DailyGoals] Meta ${goalId} ${updatedGoal.concluida ? 'concluída' : 'desmarcada'} localmente`);
+          return updatedGoal;
+        }
+        return goal;
+      }));
 
-      setCustomGoals(prev => prev.map(goal => 
-        goal.id === goalId ? updatedGoal : goal
-      ));
+      const currentGoal = customGoals.find(goal => goal.id === goalId);
+      const newStatus = !currentGoal?.concluida;
 
-      // Atualizar progresso
-      if (user) {
-        const progressResponse = await apiRequest('GET', `/api/task-progress/${user.id}`);
-        const progressData = await progressResponse.json();
-        setProgress(progressData);
-      }
-
+      // Mostrar toast imediato
       toast({
-        title: updatedGoal.concluida ? "Meta concluída!" : "Meta desmarcada",
-        description: updatedGoal.concluida 
+        title: newStatus ? "Meta concluída!" : "Meta desmarcada",
+        description: newStatus 
           ? "Parabéns! Continue assim!" 
           : "Meta desmarcada, você pode tentar novamente.",
       });
+
+      // Tentar sincronizar com o servidor em segundo plano
+      if (!goalId.startsWith('local_')) {
+        try {
+          const response = await apiRequest('PUT', `/api/custom-goals/${goalId}/toggle`);
+          const updatedGoal = await response.json();
+
+          setCustomGoals(prev => prev.map(goal => 
+            goal.id === goalId ? updatedGoal : goal
+          ));
+
+          console.log(`✅ [DailyGoals] Meta ${goalId} sincronizada com servidor`);
+
+          // Atualizar progresso
+          if (user) {
+            const progressResponse = await apiRequest('GET', `/api/task-progress/${user.id}`);
+            const progressData = await progressResponse.json();
+            setProgress(progressData);
+          }
+        } catch (serverError) {
+          console.warn('⚠️ [DailyGoals] Erro ao sincronizar toggle com servidor:', serverError);
+          // Reverter para estado anterior se servidor falhar
+          setCustomGoals(prev => prev.map(goal => {
+            if (goal.id === goalId) {
+              return { ...goal, concluida: !newStatus };
+            }
+            return goal;
+          }));
+        }
+      }
 
     } catch (error) {
       console.error('Erro ao alternar meta personalizada:', error);
