@@ -135,7 +135,8 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                       <img
                         src="/avatar-guerreiro-tribo.webp"
                         alt="Guerreiro da Tribo"
-                        className="w-48 h-48 rounded-xl object-contain"
+                        className="w-48 h-48 rounded-xl object-cover"
+                        style={{ aspectRatio: '1 / 1' }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=warrior&backgroundColor=000515";
