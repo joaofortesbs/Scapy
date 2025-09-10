@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Target, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLocation } from "wouter";
@@ -14,7 +14,6 @@ interface User {
 export default function AvatareEsEvolutivos(): JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [, setLocation] = useLocation();
-  const [expandedCards, setExpandedCards] = useState<{ [key: number]: boolean }>({});
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -30,13 +29,6 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
   const handleBackToDashboard = () => {
     setLocation('/dashboard');
-  };
-
-  const toggleCardExpansion = (cardIndex: number) => {
-    setExpandedCards(prev => ({
-      ...prev,
-      [cardIndex]: !prev[cardIndex]
-    }));
   };
 
   return (
@@ -90,16 +82,18 @@ export default function AvatareEsEvolutivos(): JSX.Element {
             <div className="space-y-12 ml-20">
               {/* Card 1 - Homem das Cavernas (Atual) */}
               <Card 
-                className="border-border/30 bg-background/5 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02] cursor-pointer"
+                className="border-border/30 bg-background/5 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02]"
                 style={{ 
                   background: 'linear-gradient(135deg, rgba(0, 246, 255, 0.1) 0%, rgba(0, 5, 21, 0.8) 100%)',
                   borderColor: 'rgba(0, 246, 255, 0.3)'
                 }}
                 data-testid="avatar-card-1"
-                onClick={() => toggleCardExpansion(1)}
               >
                 <CardContent className="p-8">
-                  <div className="flex items-center space-x-6">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    {/* Título no topo */}
+                    <h3 className="text-xl font-bold text-foreground">Homem das Cavernas</h3>
+                    
                     {/* Imagem do avatar */}
                     <div className="relative">
                       <img
@@ -114,23 +108,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                       />
                     </div>
 
-                    {/* Conteúdo do card */}
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-xl font-bold text-foreground">Homem das Cavernas</h3>
-                        <div className="flex items-center space-x-2">
-                          {expandedCards[1] ? (
-                            <ChevronUp className="w-5 h-5 text-primary" />
-                          ) : (
-                            <ChevronDown className="w-5 h-5 text-primary" />
-                          )}
-                        </div>
-                      </div>
-                      {expandedCards[1] && (
-                        <p className="text-foreground/80 leading-relaxed transition-all duration-300">
-                          Você deu os primeiros passos. Como um caçador das origens, está aprendendo a lutar contra seus instintos mais primitivos e provar que consegue sobreviver ao vício.
-                        </p>
-                      )}
+                    {/* Tag de dias */}
+                    <div className="bg-primary/20 text-primary px-4 py-2 rounded-full border border-primary/30">
+                      <span className="text-sm font-semibold">3 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
@@ -138,48 +118,26 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
               {/* Card 2 - Próximo nível (Bloqueado) */}
               <Card 
-                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-60 cursor-pointer hover:opacity-70 transition-opacity duration-300"
+                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-60 hover:opacity-70 transition-opacity duration-300"
                 style={{ 
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 5, 21, 0.6) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.1)'
                 }}
                 data-testid="avatar-card-2"
-                onClick={() => toggleCardExpansion(2)}
               >
                 <CardContent className="p-8">
-                  <div className="flex items-center space-x-6">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    {/* Título placeholder */}
+                    <div className="h-6 bg-border/20 rounded w-48 animate-pulse"></div>
+                    
                     {/* Placeholder para imagem */}
-                    <div className="relative">
-                      <div className="w-24 h-24 rounded-xl border-2 border-border/30 bg-background/10 flex items-center justify-center">
-                        <div className="w-8 h-8 rounded-full bg-border/30 animate-pulse"></div>
-                      </div>
-                      {/* Badge de bloqueado */}
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-border/50 rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-foreground/30 rounded-full"></div>
-                      </div>
+                    <div className="w-32 h-32 rounded-xl border-2 border-border/30 bg-background/10 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-border/30 animate-pulse"></div>
                     </div>
 
-                    {/* Conteúdo placeholder */}
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="h-6 bg-border/20 rounded w-48 animate-pulse"></div>
-                        <div className="flex items-center space-x-2">
-                          <span className="px-3 py-1 bg-border/10 text-foreground/30 text-sm rounded-full border border-border/20">
-                            Bloqueado
-                          </span>
-                          {expandedCards[2] ? (
-                            <ChevronUp className="w-5 h-5 text-foreground/30" />
-                          ) : (
-                            <ChevronDown className="w-5 h-5 text-foreground/30" />
-                          )}
-                        </div>
-                      </div>
-                      {expandedCards[2] && (
-                        <div className="space-y-2 transition-all duration-300">
-                          <div className="h-4 bg-border/15 rounded w-full animate-pulse"></div>
-                          <div className="h-4 bg-border/15 rounded w-3/4 animate-pulse"></div>
-                        </div>
-                      )}
+                    {/* Tag de bloqueado */}
+                    <div className="bg-border/10 text-foreground/30 px-4 py-2 rounded-full border border-border/20">
+                      <span className="text-sm font-semibold">Bloqueado</span>
                     </div>
                   </div>
                 </CardContent>
@@ -187,48 +145,26 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
               {/* Card 3 - Futuro distante (Bloqueado) */}
               <Card 
-                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 cursor-pointer hover:opacity-50 transition-opacity duration-300"
+                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
                 style={{ 
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.08)'
                 }}
                 data-testid="avatar-card-3"
-                onClick={() => toggleCardExpansion(3)}
               >
                 <CardContent className="p-8">
-                  <div className="flex items-center space-x-6">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    {/* Título placeholder */}
+                    <div className="h-6 bg-border/15 rounded w-40 animate-pulse"></div>
+                    
                     {/* Placeholder para imagem */}
-                    <div className="relative">
-                      <div className="w-24 h-24 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
-                        <div className="w-6 h-6 rounded-full bg-border/20 animate-pulse"></div>
-                      </div>
-                      {/* Badge de muito bloqueado */}
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-border/30 rounded-full flex items-center justify-center">
-                        <div className="w-1 h-1 bg-foreground/20 rounded-full"></div>
-                      </div>
+                    <div className="w-32 h-32 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
+                      <div className="w-6 h-6 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
 
-                    {/* Conteúdo placeholder */}
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="h-6 bg-border/15 rounded w-40 animate-pulse"></div>
-                        <div className="flex items-center space-x-2">
-                          <span className="px-3 py-1 bg-border/5 text-foreground/20 text-sm rounded-full border border-border/10">
-                            Em breve
-                          </span>
-                          {expandedCards[3] ? (
-                            <ChevronUp className="w-5 h-5 text-foreground/20" />
-                          ) : (
-                            <ChevronDown className="w-5 h-5 text-foreground/20" />
-                          )}
-                        </div>
-                      </div>
-                      {expandedCards[3] && (
-                        <div className="space-y-2 transition-all duration-300">
-                          <div className="h-4 bg-border/10 rounded w-full animate-pulse"></div>
-                          <div className="h-4 bg-border/10 rounded w-2/3 animate-pulse"></div>
-                        </div>
-                      )}
+                    {/* Tag de em breve */}
+                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
+                      <span className="text-sm font-semibold">Em breve</span>
                     </div>
                   </div>
                 </CardContent>
