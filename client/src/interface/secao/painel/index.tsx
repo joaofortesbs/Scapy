@@ -25,6 +25,7 @@ import FraseDoDia from "@/components/frase-do-dia";
 import { DailyGoals } from "@/components/daily-goals";
 import AIAssistant from "@/components/ai-assistant";
 import ParticlesBackground from "@/components/particles-background";
+import PanicPage from "@/pages/panic-page";
 import type { User, WeeklyProgress } from "@shared/schema";
 
 // Header Component
@@ -929,15 +930,20 @@ function Timer({ user, onUserUpdate }: TimerProps) {
 }
 
 // Panic Button Component
-function PanicButton() {
+interface PanicButtonProps {
+  onPanicClick: () => void;
+}
+
+function PanicButton({ onPanicClick }: PanicButtonProps) {
   const handlePanicClick = () => {
     // Animação suave para transição
     document.body.style.transition = 'opacity 0.3s ease-out';
-    document.body.style.opacity = '0';
+    document.body.style.opacity = '0.8';
     
     setTimeout(() => {
-      window.location.href = '/panic';
-    }, 300);
+      onPanicClick();
+      document.body.style.opacity = '1';
+    }, 150);
   };
 
   return (
@@ -1039,6 +1045,7 @@ export default function PainelInterface({
   const [localUser, setLocalUser] = useState(user);
   const [isLoading, setIsLoading] = useState(true);
   const [timerStartDate, setTimerStartDate] = useState<string | null>(null);
+  const [showPanicPage, setShowPanicPage] = useState(false);
 
   // Check timer status from database when user loads
   useEffect(() => {
@@ -1084,6 +1091,19 @@ export default function PainelInterface({
     setHasStartedJourney(true);
     setTimerStartDate(updatedUser.startDate);
   };
+
+  const handlePanicClick = () => {
+    setShowPanicPage(true);
+  };
+
+  const handleBackFromPanic = () => {
+    setShowPanicPage(false);
+  };
+
+  // Se deve mostrar a página de pânico, renderizar apenas ela
+  if (showPanicPage) {
+    return <PanicPage user={localUser} onBackFromPanic={handleBackFromPanic} />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
@@ -1150,7 +1170,7 @@ export default function PainelInterface({
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 backdrop-blur-md bg-black/30 border-t border-white/10">
-        <PanicButton />
+        <PanicButton onPanicClick={handlePanicClick} />
         <BottomNavigation
           activeSection={activeSection}
           onSectionChange={onSectionChange}
