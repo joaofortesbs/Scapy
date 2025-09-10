@@ -12,6 +12,7 @@ import type { User } from "@shared/schema";
 
 interface PanicPageProps {
   user?: User;
+  onBackFromPanic?: () => void;
 }
 
 interface CalculatedTime {
@@ -21,7 +22,7 @@ interface CalculatedTime {
   seconds: number;
 }
 
-export default function PanicPage({ user: propUser }: PanicPageProps) {
+export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPageProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [user, setUser] = useState<User | null>(propUser || null);
   const [isLoading, setIsLoading] = useState(true);
@@ -138,16 +139,28 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         <div className="flex flex-col items-center justify-start min-h-screen px-6 pt-8 pb-8">
         {/* Header com botão de voltar e título */}
         <div className="w-full flex items-center justify-between mb-4">
-          <Link href="/">
+          {onBackFromPanic ? (
             <Button
               variant="ghost"
               size="sm"
+              onClick={onBackFromPanic}
               className="text-white hover:bg-white/10 transition-all duration-300"
               data-testid="back-button"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
-          </Link>
+          ) : (
+            <Link href="/">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white hover:bg-white/10 transition-all duration-300"
+                data-testid="back-button"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            </Link>
+          )}
           
           <h1 
             className="text-xl md:text-2xl font-bold text-white text-center leading-tight flex-1 mr-10"
