@@ -66,12 +66,13 @@ export default function ObjetivosCarousel() {
   }
 
   return (
-    <div className="w-full max-w-md mt-6" data-testid="objetivos-carousel">
+    <div className="w-full max-w-md mt-6 flex flex-col items-center" data-testid="objetivos-carousel">
       <div className="mb-3 flex justify-center px-2">
         <h3 className="text-lg font-semibold text-white text-center">Você prometeu...</h3>
       </div>
 
-      <Carousel
+      <div className="w-full flex justify-center">
+        <Carousel
         plugins={[autoplayPlugin.current]}
         opts={{
           align: "start",
@@ -98,7 +99,8 @@ export default function ObjetivosCarousel() {
             </CarouselItem>
           ))}
         </CarouselContent>
-      </Carousel>
+        </Carousel>
+      </div>
     </div>
   );
 }
