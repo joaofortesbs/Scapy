@@ -85,7 +85,7 @@ export default function SonhosCarousel() {
                 <CardContent className="p-2">
                   <div className="flex items-center justify-center">
                     {/* Imagem do sonho */}
-                    <div className="w-full h-72 sm:h-80 rounded-xl overflow-hidden">
+                    <div className="w-full h-80 sm:h-96 rounded-xl overflow-hidden">
                       <img
                         src={image}
                         alt={`Sonho ${index + 1}`}
