@@ -19,7 +19,7 @@ export default function QuadroDosSonhos() {
         timestamp,
         userId,
         version: '2.0',
-        totalImages: imagesData.filter(img => img !== null).length,
+        totalImages: imagesData.filter((img: string | null) => img !== null).length,
         lastModified: new Date().toISOString(),
         deviceInfo: {
           userAgent: navigator.userAgent,
@@ -71,7 +71,7 @@ export default function QuadroDosSonhos() {
       if (legacyData) {
         const parsed = JSON.parse(legacyData);
         if (Array.isArray(parsed)) {
-          const totalImages = parsed.filter(img => img !== null).length;
+          const totalImages = parsed.filter((img: string | null) => img !== null).length;
           console.log(`📖 [QuadroDosSonhos] ${totalImages} imagens carregadas (modo compatibilidade)`);
           return parsed;
         }
@@ -182,7 +182,7 @@ export default function QuadroDosSonhos() {
     const removeImageEvent = new CustomEvent('imagemRemovida', {
       detail: {
         index,
-        imagemRemovida,
+        imageRemovida,
         timestamp: Date.now()
       }
     });
