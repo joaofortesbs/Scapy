@@ -105,7 +105,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                       <img
                         src="/caveman-avatar.png"
                         alt="Homem das Cavernas"
-                        className="w-24 h-24 rounded-xl object-contain"
+                        className="w-32 h-32 rounded-xl object-contain"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=caveman&backgroundColor=000515";
