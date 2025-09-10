@@ -116,28 +116,37 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Card 2 - Próximo nível (Bloqueado) */}
+              {/* Card 2 - Guerreiro da Tribo */}
               <Card 
-                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-60 hover:opacity-70 transition-opacity duration-300"
+                className="border-border/30 bg-background/5 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02]"
                 style={{ 
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 5, 21, 0.6) 100%)',
-                  borderColor: 'rgba(255, 255, 255, 0.1)'
+                  background: 'linear-gradient(135deg, rgba(0, 246, 255, 0.1) 0%, rgba(0, 5, 21, 0.8) 100%)',
+                  borderColor: 'rgba(0, 246, 255, 0.3)'
                 }}
                 data-testid="avatar-card-2"
               >
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    {/* Título placeholder */}
-                    <div className="h-6 bg-border/20 rounded w-48 animate-pulse"></div>
+                    {/* Título no topo */}
+                    <h3 className="text-xl font-bold text-foreground">Guerreiro da Tribo</h3>
                     
-                    {/* Placeholder para imagem */}
-                    <div className="w-32 h-32 rounded-xl border-2 border-border/30 bg-background/10 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-border/30 animate-pulse"></div>
+                    {/* Imagem do avatar */}
+                    <div className="relative">
+                      <img
+                        src="/avatar-guerreiro-tribo.webp"
+                        alt="Guerreiro da Tribo"
+                        className="w-48 h-48 rounded-xl object-contain"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=warrior&backgroundColor=000515";
+                        }}
+                        data-testid="warrior-avatar"
+                      />
                     </div>
 
-                    {/* Tag de bloqueado */}
-                    <div className="bg-border/10 text-foreground/30 px-4 py-2 rounded-full border border-border/20">
-                      <span className="text-sm font-semibold">Bloqueado</span>
+                    {/* Tag de dias */}
+                    <div className="bg-primary/20 text-primary px-4 py-2 rounded-full border border-primary/30">
+                      <span className="text-sm font-semibold">7 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
