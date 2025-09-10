@@ -153,7 +153,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Card 3 - Futuro distante (Bloqueado) */}
+              {/* Card 3 - Soldado Romano */}
               <Card 
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
                 style={{ 
@@ -164,17 +164,230 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               >
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    {/* Título placeholder */}
-                    <div className="h-6 bg-border/15 rounded w-40 animate-pulse"></div>
+                    <h3 className="text-xl font-bold text-foreground/60">Soldado Romano</h3>
                     
-                    {/* Placeholder para imagem */}
-                    <div className="w-32 h-32 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
-                      <div className="w-6 h-6 rounded-full bg-border/20 animate-pulse"></div>
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
 
-                    {/* Tag de em breve */}
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">Em breve</span>
+                      <span className="text-sm font-semibold">7 DIAS</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 4 - Cavaleiro Medieval */}
+              <Card 
+                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.08)'
+                }}
+                data-testid="avatar-card-4"
+              >
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <h3 className="text-xl font-bold text-foreground/60">Cavaleiro Medieval</h3>
+                    
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    </div>
+
+                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
+                      <span className="text-sm font-semibold">14 DIAS</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 5 - Samurai */}
+              <Card 
+                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.08)'
+                }}
+                data-testid="avatar-card-5"
+              >
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <h3 className="text-xl font-bold text-foreground/60">Samurai</h3>
+                    
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    </div>
+
+                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
+                      <span className="text-sm font-semibold">30 DIAS</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 6 - Viking */}
+              <Card 
+                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.08)'
+                }}
+                data-testid="avatar-card-6"
+              >
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <h3 className="text-xl font-bold text-foreground/60">Viking</h3>
+                    
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    </div>
+
+                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
+                      <span className="text-sm font-semibold">60 DIAS</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 7 - Gladiador */}
+              <Card 
+                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.08)'
+                }}
+                data-testid="avatar-card-7"
+              >
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <h3 className="text-xl font-bold text-foreground/60">Gladiador</h3>
+                    
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    </div>
+
+                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
+                      <span className="text-sm font-semibold">90 DIAS</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 8 - Espartano */}
+              <Card 
+                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.08)'
+                }}
+                data-testid="avatar-card-8"
+              >
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <h3 className="text-xl font-bold text-foreground/60">Espartano</h3>
+                    
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    </div>
+
+                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
+                      <span className="text-sm font-semibold">120 DIAS</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 9 - Ninja */}
+              <Card 
+                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.08)'
+                }}
+                data-testid="avatar-card-9"
+              >
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <h3 className="text-xl font-bold text-foreground/60">Ninja</h3>
+                    
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    </div>
+
+                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
+                      <span className="text-sm font-semibold">180 DIAS</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 10 - Paladino */}
+              <Card 
+                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.08)'
+                }}
+                data-testid="avatar-card-10"
+              >
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <h3 className="text-xl font-bold text-foreground/60">Paladino</h3>
+                    
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    </div>
+
+                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
+                      <span className="text-sm font-semibold">270 DIAS</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 11 - Arqueiro Élfico */}
+              <Card 
+                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.08)'
+                }}
+                data-testid="avatar-card-11"
+              >
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <h3 className="text-xl font-bold text-foreground/60">Arqueiro Élfico</h3>
+                    
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    </div>
+
+                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
+                      <span className="text-sm font-semibold">365 DIAS</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Card 12 - Lendário Imortal */}
+              <Card 
+                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.08)'
+                }}
+                data-testid="avatar-card-12"
+              >
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <h3 className="text-xl font-bold text-foreground/60">Lendário Imortal</h3>
+                    
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    </div>
+
+                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
+                      <span className="text-sm font-semibold">730 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
