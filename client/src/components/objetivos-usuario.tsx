@@ -15,41 +15,183 @@ export default function ObjetivosUsuario() {
   const [objetivos, setObjetivos] = useState<Objetivo[]>([]);
   const [periodo, setPeriodo] = useState(6);
 
-  // Carregar objetivos do localStorage ao inicializar
+  // ============================================
+  // SISTEMA DE PERSISTÊNCIA SUPER ROBUSTA PARA OBJETIVOS
+  // ============================================
+
+  const saveObjetivosToLocalStorage = (objetivosData: Objetivo[]) => {
+    try {
+      const timestamp = Date.now();
+      const robustData = {
+        objetivos: objetivosData,
+        timestamp,
+        version: '2.0',
+        totalObjetivos: objetivosData.length,
+        concluidos: objetivosData.filter(obj => obj.concluido).length,
+        lastModified: new Date().toISOString()
+      };
+      
+      // Salvar em múltiplas chaves para redundância
+      localStorage.setItem('scapy_user_objetivos', JSON.stringify(robustData));
+      localStorage.setItem('userObjetivos', JSON.stringify(objetivosData)); // Compatibilidade
+      
+      // Backup em chave específica por data
+      const dateKey = new Date().toISOString().split('T')[0];
+      localStorage.setItem(`scapy_objetivos_backup_${dateKey}`, JSON.stringify(robustData));
+      
+      console.log(`💾 [ObjetivosUsuario] ${objetivosData.length} objetivos salvos com timestamp ${timestamp}`);
+    } catch (error) {
+      console.error('❌ [ObjetivosUsuario] Erro ao salvar objetivos:', error);
+    }
+  };
+
+  const loadObjetivosFromLocalStorage = () => {
+    try {
+      // Tentar carregar da chave robusta primeiro
+      const robustData = localStorage.getItem('scapy_user_objetivos');
+      if (robustData) {
+        const parsed = JSON.parse(robustData);
+        if (parsed.objetivos && Array.isArray(parsed.objetivos)) {
+          console.log(`📖 [ObjetivosUsuario] ${parsed.objetivos.length} objetivos carregados (versão robusta)`);
+          return parsed.objetivos;
+        }
+      }
+      
+      // Fallback para compatibilidade
+      const legacyData = localStorage.getItem('userObjetivos');
+      if (legacyData) {
+        const parsed = JSON.parse(legacyData);
+        if (Array.isArray(parsed)) {
+          console.log(`📖 [ObjetivosUsuario] ${parsed.length} objetivos carregados (modo compatibilidade)`);
+          return parsed;
+        }
+      }
+    } catch (error) {
+      console.error('❌ [ObjetivosUsuario] Erro ao carregar objetivos:', error);
+    }
+    return [];
+  };
+
+  const savePeriodoToLocalStorage = (periodoValue: number) => {
+    try {
+      const periodoData = {
+        periodo: periodoValue,
+        timestamp: Date.now(),
+        lastModified: new Date().toISOString()
+      };
+      
+      localStorage.setItem('scapy_user_periodo', JSON.stringify(periodoData));
+      localStorage.setItem('userPeriodo', periodoValue.toString()); // Compatibilidade
+      
+      console.log(`💾 [ObjetivosUsuario] Período ${periodoValue} meses salvo`);
+    } catch (error) {
+      console.error('❌ [ObjetivosUsuario] Erro ao salvar período:', error);
+    }
+  };
+
+  const loadPeriodoFromLocalStorage = () => {
+    try {
+      // Tentar carregar da chave robusta primeiro
+      const robustData = localStorage.getItem('scapy_user_periodo');
+      if (robustData) {
+        const parsed = JSON.parse(robustData);
+        if (parsed.periodo && typeof parsed.periodo === 'number') {
+          console.log(`📖 [ObjetivosUsuario] Período ${parsed.periodo} meses carregado (versão robusta)`);
+          return parsed.periodo;
+        }
+      }
+      
+      // Fallback para compatibilidade
+      const legacyData = localStorage.getItem('userPeriodo');
+      if (legacyData) {
+        const parsed = parseInt(legacyData);
+        if (!isNaN(parsed)) {
+          console.log(`📖 [ObjetivosUsuario] Período ${parsed} meses carregado (modo compatibilidade)`);
+          return parsed;
+        }
+      }
+    } catch (error) {
+      console.error('❌ [ObjetivosUsuario] Erro ao carregar período:', error);
+    }
+    return 6; // Valor padrão
+  };
+
+  // Carregar dados ao inicializar
   useEffect(() => {
-    const savedObjetivos = localStorage.getItem('userObjetivos');
-    const savedPeriodo = localStorage.getItem('userPeriodo');
+    const loadedObjetivos = loadObjetivosFromLocalStorage();
+    const loadedPeriodo = loadPeriodoFromLocalStorage();
     
-    if (savedObjetivos) {
-      try {
-        const parsedObjetivos = JSON.parse(savedObjetivos);
-        setObjetivos(parsedObjetivos);
-      } catch (error) {
-        console.error('Erro ao carregar objetivos:', error);
-      }
-    }
+    setObjetivos(loadedObjetivos);
+    setPeriodo(loadedPeriodo);
     
-    if (savedPeriodo) {
-      try {
-        const parsedPeriodo = parseInt(savedPeriodo);
-        setPeriodo(parsedPeriodo);
-      } catch (error) {
-        console.error('Erro ao carregar período:', error);
-      }
-    }
+    console.log(`🚀 [ObjetivosUsuario] Componente inicializado: ${loadedObjetivos.length} objetivos, período ${loadedPeriodo} meses`);
   }, []);
 
-  // Salvar objetivos no localStorage sempre que mudarem
+  // Salvar objetivos sempre que mudarem
   useEffect(() => {
-    localStorage.setItem('userObjetivos', JSON.stringify(objetivos));
-    // Disparar evento customizado para sincronização com outras páginas
-    window.dispatchEvent(new CustomEvent('objetivosUpdated'));
+    if (objetivos.length >= 0) { // Permitir array vazio
+      saveObjetivosToLocalStorage(objetivos);
+      
+      // Disparar evento customizado super-detalhado para sincronização
+      const objetivosEvent = new CustomEvent('objetivosUpdated', {
+        detail: {
+          objetivos,
+          total: objetivos.length,
+          concluidos: objetivos.filter(obj => obj.concluido).length,
+          timestamp: Date.now(),
+          action: 'update'
+        }
+      });
+      window.dispatchEvent(objetivosEvent);
+    }
   }, [objetivos]);
 
-  // Salvar período no localStorage sempre que mudar
+  // Salvar período sempre que mudar
   useEffect(() => {
-    localStorage.setItem('userPeriodo', periodo.toString());
+    if (periodo > 0) {
+      savePeriodoToLocalStorage(periodo);
+      
+      // Disparar evento para período
+      const periodoEvent = new CustomEvent('periodoUpdated', {
+        detail: {
+          periodo,
+          timestamp: Date.now()
+        }
+      });
+      window.dispatchEvent(periodoEvent);
+    }
   }, [periodo]);
+
+  // Escutar mudanças do localStorage de outras abas
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'scapy_user_objetivos' || e.key === 'userObjetivos') {
+        console.log('🔄 [ObjetivosUsuario] Detectada mudança em outra aba, sincronizando objetivos...');
+        const newObjetivos = loadObjetivosFromLocalStorage();
+        setObjetivos(newObjetivos);
+      }
+      
+      if (e.key === 'scapy_user_periodo' || e.key === 'userPeriodo') {
+        console.log('🔄 [ObjetivosUsuario] Detectada mudança em outra aba, sincronizando período...');
+        const newPeriodo = loadPeriodoFromLocalStorage();
+        setPeriodo(newPeriodo);
+      }
+    };
+
+    // Listener para eventos customizados (mesma aba)
+    const handleCustomObjectivesChange = () => {
+      const currentObjetivos = loadObjetivosFromLocalStorage();
+      setObjetivos(currentObjetivos);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('objetivosUpdated', handleCustomObjectivesChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('objetivosUpdated', handleCustomObjectivesChange);
+    };
+  }, []);
   const [novoObjetivo, setNovoObjetivo] = useState('');
   const [editandoObjetivo, setEditandoObjetivo] = useState<string | null>(null);
   const [textoEdicao, setTextoEdicao] = useState('');
@@ -60,24 +202,73 @@ export default function ObjetivosUsuario() {
   const adicionarObjetivo = () => {
     if (novoObjetivo.trim()) {
       const objetivo: Objetivo = {
-        id: Date.now().toString(),
+        id: `objetivo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // ID mais único
         texto: novoObjetivo.trim(),
         concluido: false
       };
-      setObjetivos([...objetivos, objetivo]);
+      
+      const novosObjetivos = [...objetivos, objetivo];
+      setObjetivos(novosObjetivos);
       setNovoObjetivo('');
       setAdicionandoObjetivo(false);
+      
+      console.log(`➕ [ObjetivosUsuario] Objetivo adicionado: "${objetivo.texto}" (ID: ${objetivo.id})`);
+      
+      // Disparar evento específico de adição
+      const addEvent = new CustomEvent('objetivoAdicionado', {
+        detail: {
+          objetivo,
+          totalObjetivos: novosObjetivos.length,
+          timestamp: Date.now()
+        }
+      });
+      window.dispatchEvent(addEvent);
     }
   };
 
   const removerObjetivo = (id: string) => {
-    setObjetivos(objetivos.filter(obj => obj.id !== id));
+    const objetivoRemovido = objetivos.find(obj => obj.id === id);
+    const novosObjetivos = objetivos.filter(obj => obj.id !== id);
+    
+    setObjetivos(novosObjetivos);
+    
+    if (objetivoRemovido) {
+      console.log(`🗑️ [ObjetivosUsuario] Objetivo removido: "${objetivoRemovido.texto}" (ID: ${id})`);
+      
+      // Disparar evento específico de remoção
+      const removeEvent = new CustomEvent('objetivoRemovido', {
+        detail: {
+          objetivoRemovido,
+          totalObjetivos: novosObjetivos.length,
+          timestamp: Date.now()
+        }
+      });
+      window.dispatchEvent(removeEvent);
+    }
   };
 
   const alternarConclusao = (id: string) => {
-    setObjetivos(objetivos.map(obj => 
-      obj.id === id ? { ...obj, concluido: !obj.concluido } : obj
-    ));
+    const novosObjetivos = objetivos.map(obj => {
+      if (obj.id === id) {
+        const objetivoAtualizado = { ...obj, concluido: !obj.concluido };
+        console.log(`${objetivoAtualizado.concluido ? '✅' : '⭕'} [ObjetivosUsuario] Objetivo ${objetivoAtualizado.concluido ? 'concluído' : 'desmarcado'}: "${obj.texto}"`);
+        
+        // Disparar evento específico de toggle
+        const toggleEvent = new CustomEvent('objetivoToggled', {
+          detail: {
+            objetivo: objetivoAtualizado,
+            action: objetivoAtualizado.concluido ? 'completed' : 'uncompleted',
+            timestamp: Date.now()
+          }
+        });
+        window.dispatchEvent(toggleEvent);
+        
+        return objetivoAtualizado;
+      }
+      return obj;
+    });
+    
+    setObjetivos(novosObjetivos);
   };
 
   const iniciarEdicao = (objetivo: Objetivo) => {
@@ -86,10 +277,29 @@ export default function ObjetivosUsuario() {
   };
 
   const salvarEdicao = () => {
-    if (textoEdicao.trim()) {
-      setObjetivos(objetivos.map(obj => 
-        obj.id === editandoObjetivo ? { ...obj, texto: textoEdicao.trim() } : obj
-      ));
+    if (textoEdicao.trim() && editandoObjetivo) {
+      const objetivoAnterior = objetivos.find(obj => obj.id === editandoObjetivo);
+      const novosObjetivos = objetivos.map(obj => {
+        if (obj.id === editandoObjetivo) {
+          const objetivoEditado = { ...obj, texto: textoEdicao.trim() };
+          console.log(`✏️ [ObjetivosUsuario] Objetivo editado: "${obj.texto}" → "${textoEdicao.trim()}"`);
+          
+          // Disparar evento específico de edição
+          const editEvent = new CustomEvent('objetivoEditado', {
+            detail: {
+              objetivoAnterior: obj,
+              objetivoNovo: objetivoEditado,
+              timestamp: Date.now()
+            }
+          });
+          window.dispatchEvent(editEvent);
+          
+          return objetivoEditado;
+        }
+        return obj;
+      });
+      
+      setObjetivos(novosObjetivos);
     }
     setEditandoObjetivo(null);
     setTextoEdicao('');
