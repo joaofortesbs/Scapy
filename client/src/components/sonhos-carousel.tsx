@@ -83,10 +83,10 @@ export default function SonhosCarousel() {
                 className="border-2 rounded-3xl transition-all duration-300 ai-assistant-card-natural-3d border-border backdrop-blur-md"
                 style={{ backgroundColor: '#000515' }}
               >
-                <CardContent className="p-3">
+                <CardContent className="p-2">
                   <div className="flex items-center justify-center">
                     {/* Imagem do sonho */}
-                    <div className="w-full h-56 sm:h-64 rounded-xl overflow-hidden">
+                    <div className="w-full h-56 sm:h-93 rounded-xl overflow-hidden">
                       <img
                         src={image}
                         alt={`Sonho ${index + 1}`}
