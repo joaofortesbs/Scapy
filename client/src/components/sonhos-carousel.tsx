@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
@@ -79,14 +78,14 @@ export default function SonhosCarousel() {
         <CarouselContent className="-ml-2 md:-ml-4">
           {images.map((image, index) => (
             <CarouselItem key={index} className="pl-2 md:pl-4 basis-4/5">
-              <Card 
+              <Card
                 className="border-2 rounded-3xl transition-all duration-300 ai-assistant-card-natural-3d border-border backdrop-blur-md"
                 style={{ backgroundColor: '#000515' }}
               >
                 <CardContent className="p-2">
                   <div className="flex items-center justify-center">
                     {/* Imagem do sonho */}
-                    <div className="w-full h-56 sm:h-93 rounded-xl overflow-hidden">
+                    <div className="w-full h-72 sm:h-80 rounded-xl overflow-hidden">
                       <img
                         src={image}
                         alt={`Sonho ${index + 1}`}
