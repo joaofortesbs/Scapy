@@ -110,7 +110,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
                     {/* Tag de dias */}
                     <div className="bg-primary/20 text-primary px-4 py-2 rounded-full border border-primary/30">
-                      <span className="text-sm font-semibold">3 DIAS</span>
+                      <span className="text-sm font-semibold">0 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
@@ -147,7 +147,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
                     {/* Tag de dias */}
                     <div className="bg-primary/20 text-primary px-4 py-2 rounded-full border border-primary/30">
-                      <span className="text-sm font-semibold">7 DIAS</span>
+                      <span className="text-sm font-semibold">3 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
