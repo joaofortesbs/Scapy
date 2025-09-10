@@ -11,7 +11,7 @@ interface User {
   fullName: string;
 }
 
-export default function AIAssistant() {
+export default function AIAssistant(): JSX.Element {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [todayMood, setTodayMood] = useState<string | null>(null);
@@ -57,17 +57,73 @@ export default function AIAssistant() {
 
   const checkTodayMood = async (userId: number) => {
     try {
-      const response = await apiRequest('GET', `/api/today-mood/${userId}`);
-      const data = await response.json();
-      if (data) {
-        setTodayMood(data.mood);
-        console.log(`📋 Humor de hoje carregado: ${data.mood}`);
-      } else {
-        setTodayMood(null);
-        console.log(`📋 Nenhum humor registrado para hoje`);
+      // 1. PRIMEIRO: Verificar localStorage para carregamento rápido
+      const todayKey = new Date().toISOString().split('T')[0];
+      
+      // Verificar humor individual salvo
+      const individualMoodKey = `scapy_mood_${userId}_${todayKey}`;
+      const savedIndividualMood = localStorage.getItem(individualMoodKey);
+      
+      if (savedIndividualMood) {
+        try {
+          const moodData = JSON.parse(savedIndividualMood);
+          setTodayMood(moodData.mood);
+          console.log(`💿 [AIAssistant] Humor carregado do localStorage: ${moodData.mood}`);
+        } catch (error) {
+          console.error('❌ Erro ao parsear humor do localStorage:', error);
+        }
+      }
+      
+      // Verificar registro geral como fallback
+      if (!savedIndividualMood) {
+        const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
+        const userMoods = allMoods[userId.toString()] || {};
+        const todayMoodFromGeneral = userMoods[todayKey];
+        
+        if (todayMoodFromGeneral) {
+          setTodayMood(todayMoodFromGeneral);
+          console.log(`💿 [AIAssistant] Humor carregado do registro geral: ${todayMoodFromGeneral}`);
+        }
+      }
+      
+      // 2. SEGUNDO: Verificar API e sincronizar
+      try {
+        const response = await apiRequest('GET', `/api/today-mood/${userId}`);
+        const apiData = await response.json();
+        
+        if (apiData && apiData.mood) {
+          // Se a API tem um humor diferente do localStorage, usar o da API (mais recente)
+          setTodayMood(apiData.mood);
+          
+          // Sincronizar localStorage com dados da API
+          const moodData = {
+            userId: userId.toString(),
+            mood: apiData.mood,
+            date: todayKey,
+            timestamp: Date.now()
+          };
+          
+          localStorage.setItem(individualMoodKey, JSON.stringify(moodData));
+          
+          const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
+          if (!allMoods[userId.toString()]) {
+            allMoods[userId.toString()] = {};
+          }
+          allMoods[userId.toString()][todayKey] = apiData.mood;
+          localStorage.setItem('scapy_all_moods', JSON.stringify(allMoods));
+          
+          console.log(`🌐 [AIAssistant] Humor sincronizado da API: ${apiData.mood}`);
+        } else if (!savedIndividualMood) {
+          // Se nem localStorage nem API têm humor, definir como null
+          setTodayMood(null);
+          console.log(`📋 [AIAssistant] Nenhum humor registrado para hoje`);
+        }
+      } catch (apiError) {
+        console.error('⚠️ Erro na API, usando dados do localStorage:', apiError);
+        // Se API falhar, manter o que foi carregado do localStorage
       }
     } catch (error) {
-      console.error('Erro ao verificar humor de hoje:', error);
+      console.error('❌ Erro ao verificar humor de hoje:', error);
       setTodayMood(null);
     }
   };
@@ -126,19 +182,24 @@ export default function AIAssistant() {
         description: `${suggestionData.tasks.length} atividades personalizadas foram adicionadas às suas metas do dia!`,
       });
 
-      // 4. Salvar humor imediatamente no localStorage ultra-persistente
+      // 4. Salvar humor imediatamente no localStorage ULTRA-PERSISTENTE
       const todayKey = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
       const moodData = {
         userId: user.id.toString(),
         mood: normalizedMood,
         date: todayKey,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        source: 'ai-assistant',
+        version: '2.0'
       };
       
-      // Salvar humor individual
-      localStorage.setItem(`scapy_mood_${user.id}_${todayKey}`, JSON.stringify(moodData));
+      // === SISTEMA DE SALVAMENTO TRIPLO PARA MÁXIMA ROBUSTEZ ===
       
-      // Salvar no registro geral de humores
+      // 1. Salvar humor individual (chave principal)
+      const individualKey = `scapy_mood_${user.id}_${todayKey}`;
+      localStorage.setItem(individualKey, JSON.stringify(moodData));
+      
+      // 2. Salvar no registro geral de humores (backup)
       const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
       if (!allMoods[user.id.toString()]) {
         allMoods[user.id.toString()] = {};
@@ -146,11 +207,28 @@ export default function AIAssistant() {
       allMoods[user.id.toString()][todayKey] = normalizedMood;
       localStorage.setItem('scapy_all_moods', JSON.stringify(allMoods));
       
-      console.log(`💾 Humor "${mood}" salvo persistentemente para ${todayKey}`);
-
-      // 5. Disparar múltiplos eventos para sincronização ultra-robusta
-      const today = new Date();
-      const dayOfWeek = today.getDay(); // 0-6 (domingo a sábado)
+      // 3. Salvar backup com timestamp extendido
+      const backupKey = `scapy_mood_backup_${user.id}_${todayKey}_${Date.now()}`;
+      localStorage.setItem(backupKey, JSON.stringify(moodData));
+      
+      // 4. Salvar estado geral da sessão
+      const sessionData = {
+        lastMoodUpdate: Date.now(),
+        currentMood: normalizedMood,
+        userId: user.id.toString(),
+        date: todayKey
+      };
+      localStorage.setItem('scapy_session_mood', JSON.stringify(sessionData));
+      
+      console.log(`💾 [AIAssistant] Humor "${mood}" salvo com ULTRA-PERSISTÊNCIA para ${todayKey}`);
+      
+      // 5. Salvar também no formato para compatibilidade com WeeklyMoodStorage
+      const dailyMoodKey = `scapy_daily_mood_${user.id}_${todayKey}`;
+      localStorage.setItem(dailyMoodKey, JSON.stringify(moodData));
+      
+      // 6. Disparar múltiplos eventos para sincronização ultra-robusta
+      const eventDate = new Date();
+      const dayOfWeek = eventDate.getDay(); // 0-6 (domingo a sábado)
       
       // Evento principal de atualização de humor
       const moodEvent = new CustomEvent('moodUpdated', {
@@ -172,8 +250,8 @@ export default function AIAssistant() {
           mood: normalizedMood,
           dayOfWeek: dayOfWeek,
           weekStart: (() => {
-            const startOfWeek = new Date(today);
-            startOfWeek.setDate(today.getDate() - today.getDay());
+            const startOfWeek = new Date(eventDate);
+            startOfWeek.setDate(eventDate.getDate() - eventDate.getDay());
             startOfWeek.setHours(0, 0, 0, 0);
             return startOfWeek.toISOString();
           })(),
@@ -242,28 +320,12 @@ export default function AIAssistant() {
               onClick={() => handleMoodSelect(label)}
               data-testid={`mood-${id}`}
             >
-              <div className="flex items-center space-x-2">
-                {isCurrentlySelecting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : isSelected ? (
-                  <CheckCircle2 className="w-4 h-4" />
-                ) : (
-                  <Icon className="w-4 h-4" />
-                )}
-                <span className="text-xs font-medium">{label}</span>
-              </div>
+              <Icon className="w-5 h-5 mr-1" />
+              {label}
             </Button>
           );
         })}
       </div>
-
-      {todayMood && (
-        <div className="mt-3 text-center">
-          <p className="text-xs text-muted-foreground">
-            Verifique suas "Metas do Dia" para ver as atividades geradas para você!
-          </p>
-        </div>
-      )}
     </section>
   );
 }

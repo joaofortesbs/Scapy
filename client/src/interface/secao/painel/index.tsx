@@ -495,15 +495,15 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
   const weekDays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
   const dayNames = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 
-  // Carregar humor semanal
+  // Carregar humor semanal com merge inteligente
   const loadWeeklyMood = useCallback(async () => {
     if (!user?.id) return;
     
     try {
       console.log(`🔍 [WeeklyTracker] Carregando humor semanal para usuário ${user.id}`);
       
-      // Tentar carregar do localStorage primeiro
-      const localMood = WeeklyMoodStorage.loadWeeklyMood(user.id.toString());
+      // Carregar dados locais primeiro
+      let localMood = WeeklyMoodStorage.loadWeeklyMood(user.id.toString());
       if (localMood) {
         console.log(`💿 [WeeklyTracker] Humor carregado do localStorage:`, localMood);
         setWeeklyMood(localMood);
@@ -513,11 +513,47 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
       const response = await apiRequest('GET', `/api/weekly-mood/${user.id}`);
       const apiMood = await response.json() as WeeklyMood;
       console.log(`🌐 [WeeklyTracker] Humor semanal recebido da API:`, apiMood);
-      setWeeklyMood(apiMood);
-      WeeklyMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
+      
+      // === MERGE INTELIGENTE: NÃO SOBRESCREVER DADOS VÁLIDOS ===
+      const apiMoodCount = apiMood.moodByDay.filter(mood => mood !== null).length;
+      const localMoodCount = localMood ? localMood.moodByDay.filter(mood => mood !== null).length : 0;
+      
+      console.log(`📊 [WeeklyTracker] Contagem - API: ${apiMoodCount}, Local: ${localMoodCount}`);
+      
+      if (apiMoodCount === 0 && localMoodCount > 0) {
+        // Se API está vazia mas temos dados locais, manter os locais
+        console.log(`🚫 [WeeklyTracker] API vazia, mantendo dados locais existentes`);
+        return; // Não sobrescrever
+      } else if (apiMoodCount > 0 && localMood) {
+        // Fazer merge: combinar dados da API com dados locais
+        const mergedMoodByDay = [...apiMood.moodByDay];
         
+        // Preencher gaps da API com dados locais
+        for (let i = 0; i < 7; i++) {
+          if (mergedMoodByDay[i] === null && localMood.moodByDay[i] !== null) {
+            mergedMoodByDay[i] = localMood.moodByDay[i];
+            console.log(`🔄 [WeeklyTracker] Preenchendo dia ${i} com humor local: ${localMood.moodByDay[i]}`);
+          }
+        }
+        
+        const mergedMood: WeeklyMood = {
+          ...apiMood,
+          moodByDay: mergedMoodByDay
+        };
+        
+        console.log(`🤝 [WeeklyTracker] Dados merged:`, mergedMood);
+        setWeeklyMood(mergedMood);
+        WeeklyMoodStorage.saveWeeklyMood(user.id.toString(), mergedMood);
+      } else if (apiMoodCount > 0) {
+        // Se só a API tem dados, usar os da API
+        console.log(`🌐 [WeeklyTracker] Usando dados da API`);
+        setWeeklyMood(apiMood);
+        WeeklyMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
+      }
+      
     } catch (error) {
       console.error('❌ [WeeklyTracker] Erro ao carregar humor:', error);
+      // Em caso de erro na API, manter dados locais se existirem
     }
   }, [user?.id]);
 
@@ -566,9 +602,22 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
           moodByDay: newMoodByDay
         };
         
-        // Salvar SEM disparar novos eventos
+        // Salvar SEM disparar novos eventos E sincronizar com formato da API
         WeeklyMoodStorage.saveWeeklyMoodSilently(user.id.toString(), updatedMood);
-        console.log('⚡ [WeeklyTracker] Estado atualizado:', updatedMood);
+        
+        // BONUS: Salvar também no formato individual para compatibilidade total
+        const todayKey = new Date().toISOString().split('T')[0];
+        const moodData = {
+          userId: user.id.toString(),
+          mood: mood,
+          date: todayKey,
+          timestamp: Date.now(),
+          source: 'weekly-tracker'
+        };
+        localStorage.setItem(`scapy_mood_${user.id}_${todayKey}`, JSON.stringify(moodData));
+        localStorage.setItem(`scapy_daily_mood_${user.id}_${todayKey}`, JSON.stringify(moodData));
+        
+        console.log('⚡ [WeeklyTracker] Estado atualizado e sincronizado:', updatedMood);
         
         return updatedMood;
       });
