@@ -105,17 +105,13 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                       <img
                         src="/caveman-avatar.png"
                         alt="Homem das Cavernas"
-                        className="w-24 h-24 rounded-xl object-cover"
+                        className="w-24 h-24 rounded-xl object-contain"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=caveman&backgroundColor=000515";
                         }}
                         data-testid="caveman-avatar"
                       />
-                      {/* Badge de ativo */}
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                        <div className="w-3 h-3 bg-background rounded-full animate-pulse"></div>
-                      </div>
                     </div>
 
                     {/* Conteúdo do card */}
@@ -123,9 +119,6 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="text-xl font-bold text-foreground">Homem das Cavernas</h3>
                         <div className="flex items-center space-x-2">
-                          <span className="px-3 py-1 bg-primary/20 text-primary text-sm rounded-full border border-primary/30">
-                            Atual
-                          </span>
                           {expandedCards[1] ? (
                             <ChevronUp className="w-5 h-5 text-primary" />
                           ) : (
