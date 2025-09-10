@@ -597,6 +597,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
     // Escutar múltiplos eventos para máxima sincronização
     const events = [
       'moodUpdated', 
+      'weeklyMoodUpdated', // Evento específico do AI Assistant
       'tasksUpdated',
       'weeklyMoodSaved',
       'weeklyMoodCrossTabSync',
@@ -674,9 +675,15 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
     loadPersistentMoods();
   }, [user?.id]);
 
-  // Limpeza periódica de semanas antigas (a cada acesso)
+  // Inicialização de sistemas robustos
   useEffect(() => {
+    // Limpeza periódica de semanas antigas (mantendo 3 meses)
     WeeklyMoodStorage.cleanOldWeeks();
+    
+    // Ativar sincronização cross-tab
+    WeeklyMoodStorage.setupCrossTabSync();
+    
+    console.log('🚀 [WeeklyTracker] Sistemas de persistência ultra-robusta inicializados');
   }, []);
 
   const updateProgressMutation = useMutation({

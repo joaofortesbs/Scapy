@@ -148,22 +148,44 @@ export default function AIAssistant() {
       
       console.log(`💾 Humor "${mood}" salvo persistentemente para ${todayKey}`);
 
-      // 5. Disparar evento com dados específicos para sincronização imediata
+      // 5. Disparar múltiplos eventos para sincronização ultra-robusta
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0-6 (domingo a sábado)
+      
+      // Evento principal de atualização de humor
       const moodEvent = new CustomEvent('moodUpdated', {
         detail: {
           userId: user.id.toString(),
           mood: normalizedMood,
           date: todayKey,
-          dayOfWeek: new Date().getDay(),
-          timestamp: Date.now()
+          dayOfWeek: dayOfWeek,
+          timestamp: Date.now(),
+          source: 'ai-assistant'
         }
       });
       window.dispatchEvent(moodEvent);
       
-      // Também disparar evento de tarefas
+      // Evento específico para WeeklyTracker
+      const weeklyEvent = new CustomEvent('weeklyMoodUpdated', {
+        detail: {
+          userId: user.id.toString(),
+          mood: normalizedMood,
+          dayOfWeek: dayOfWeek,
+          weekStart: (() => {
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+            startOfWeek.setHours(0, 0, 0, 0);
+            return startOfWeek.toISOString();
+          })(),
+          timestamp: Date.now()
+        }
+      });
+      window.dispatchEvent(weeklyEvent);
+      
+      // Evento de tarefas para compatibilidade
       window.dispatchEvent(new CustomEvent('tasksUpdated'));
       
-      console.log(`🔔 Eventos disparados com dados específicos:`, moodEvent.detail);
+      console.log(`🔔 [AIAssistant] Eventos de sincronização disparados - humor: ${normalizedMood}, dia: ${dayOfWeek}`);
 
     } catch (error) {
       console.error('Erro ao processar seleção de humor:', error);
