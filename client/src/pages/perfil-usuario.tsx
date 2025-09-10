@@ -13,6 +13,7 @@ interface PerfilUsuarioProps {
     id: string;
     username: string;
     full_name?: string; // Adjusted to match potential Supabase naming
+    fullName?: string; // Alternative naming
     profileImage?: string;
     bestStreak?: number;
     relapseCount?: number;
@@ -95,8 +96,14 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
 
       // ============ SISTEMA 100% OFFLINE - SÓ LOCALSTORAGE! ============
 
-      // Salvar imagem Base64 no localStorage específico
-      saveImageToLocalStorage(result.base64);
+      // Salvar imagem Base64 no localStorage específico com informações do arquivo
+      const fileInfo = {
+        size: new Blob([result.base64]).size,
+        type: 'image/*',
+        originalName: 'profile-image'
+      };
+      
+      saveImageToLocalStorage(result.base64, fileInfo);
 
       // Atualizar dados do usuário com a imagem Base64
       const updatedUser = { ...currentUser, profileImage: result.base64 };
