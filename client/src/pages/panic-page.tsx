@@ -180,7 +180,7 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
         {/* Espaçamento para compensar o card sobreposto */}
         <div 
           className="w-full max-w-md" 
-          style={{ marginTop: '45px' }}
+          style={{ marginTop: '20px' }}
         >
           {/* Carrossel de Objetivos */}
           <ObjetivosCarousel />
