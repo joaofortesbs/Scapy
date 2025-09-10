@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Bot,
   BookOpen,
@@ -476,133 +476,125 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
   const queryClient = useQueryClient();
   const [weeklyMood, setWeeklyMood] = useState<WeeklyMood | null>(null);
   const [isLoadingMood, setIsLoadingMood] = useState(true);
+  const [lastFetchTime, setLastFetchTime] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const weekDays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
   const dayNames = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 
-  // Carregar humor semanal
-  useEffect(() => {
-    const loadWeeklyMood = async () => {
-      if (!user?.id) return;
-
-      setIsLoadingMood(true);
+  // Carregar humor semanal apenas uma vez
+  const loadWeeklyMood = useCallback(async () => {
+    if (!user?.id || isLoadingMood) return;
+    
+    // Evitar chamadas múltiplas usando timestamp
+    const now = Date.now();
+    if (now - lastFetchTime < 5000) return; // Mínimo 5 segundos entre chamadas
+    
+    setIsLoadingMood(true);
+    setLastFetchTime(now);
+    
+    try {
+      console.log(`🔍 [WeeklyTracker] Carregando humor semanal para usuário ${user.id}`);
       
-      try {
-        console.log(`🔍 Carregando humor semanal para usuário ${user.id}`);
-        
-        // Buscar dados da API
-        const response = await apiRequest('GET', `/api/weekly-mood/${user.id}`);
-        const apiMood = await response.json() as WeeklyMood;
-        
-        console.log(`🌐 Humor semanal recebido da API:`, apiMood);
-        
-        setWeeklyMood(apiMood);
-        
-        // Salvar no localStorage para persistência
-        WeeklyMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
-        
-      } catch (error) {
-        console.error('❌ Erro ao carregar humor semanal:', error);
-        setWeeklyMood({ userId: user.id.toString(), weekStart: '', weekEnd: '', moodByDay: new Array(7).fill(null) });
-      } finally {
-        setIsLoadingMood(false);
-      }
-    };
-
-    loadWeeklyMood();
-  }, [user?.id]);
-
-  // ============================================
-  // SISTEMA ULTRA-ROBUSTO DE SINCRONIZAÇÃO EM TEMPO REAL
-  // ============================================
-  useEffect(() => {
-    const handleMoodUpdated = async (event: any) => {
-      if (!user?.id) return;
-      
-      console.log('🔔 [WeeklyTracker] Evento moodUpdated recebido:', event.detail);
-      
-      // Sincronização imediata se temos dados específicos
-      if (event.detail && event.detail.userId === user.id.toString()) {
-        // Detectar automaticamente o dia da semana baseado na data
-        const today = new Date();
-        const dayOfWeek = today.getDay(); // 0-6 (domingo a sábado)
-        const mood = event.detail.mood;
-        
-        console.log(`⚡ [WeeklyTracker] Aplicando sincronização imediata: humor "${mood}" para dia ${dayOfWeek}`);
-        
-        // Atualizar estado local imediatamente
-        setWeeklyMood(prevMood => {
-          const now = new Date();
-          const startOfWeek = new Date(now);
-          startOfWeek.setDate(now.getDate() - now.getDay());
-          startOfWeek.setHours(0, 0, 0, 0);
-          
-          const endOfWeek = new Date(startOfWeek);
-          endOfWeek.setDate(startOfWeek.getDate() + 6);
-          endOfWeek.setHours(23, 59, 59, 999);
-          
-          const newMoodByDay = [...(prevMood?.moodByDay || new Array(7).fill(null))];
-          newMoodByDay[dayOfWeek] = mood;
-          
-          const updatedMood: WeeklyMood = {
-            userId: user.id.toString(),
-            weekStart: startOfWeek.toISOString(),
-            weekEnd: endOfWeek.toISOString(),
-            moodByDay: newMoodByDay
-          };
-          
-          // Salvar imediatamente com sistema ultra-robusto
-          const saved = WeeklyMoodStorage.saveWeeklyMood(user.id.toString(), updatedMood);
-          if (saved) {
-            console.log('⚡ [WeeklyTracker] Sincronização imediata bem-sucedida:', updatedMood);
-          } else {
-            console.error('❌ [WeeklyTracker] Falha na sincronização imediata');
-          }
-          
-          return updatedMood;
-        });
+      // Primeiro, tentar carregar do localStorage
+      const localMood = WeeklyMoodStorage.loadWeeklyMood(user.id.toString());
+      if (localMood) {
+        console.log(`💿 [WeeklyTracker] Humor carregado do localStorage:`, localMood);
+        setWeeklyMood(localMood);
       }
       
-      // Confirmar com API após um breve delay
-      setTimeout(async () => {
-        try {
-          console.log('🔄 [WeeklyTracker] Confirmando dados com API...');
-          const response = await apiRequest('GET', `/api/weekly-mood/${user.id}`);
-          const apiMood = await response.json() as WeeklyMood;
-          
+      // Buscar dados da API (sem await para não travar UI)
+      apiRequest('GET', `/api/weekly-mood/${user.id}`)
+        .then(response => response.json())
+        .then((apiMood: WeeklyMood) => {
+          console.log(`🌐 [WeeklyTracker] Humor semanal recebido da API:`, apiMood);
           setWeeklyMood(apiMood);
           WeeklyMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
-          
-          console.log('✅ [WeeklyTracker] Dados confirmados e sincronizados com API:', apiMood);
-        } catch (error) {
-          console.error('❌ [WeeklyTracker] Erro ao confirmar dados da API:', error);
-        }
-      }, 150);
-    };
+        })
+        .catch(error => {
+          console.error('❌ [WeeklyTracker] Erro ao carregar humor da API:', error);
+        });
+        
+    } catch (error) {
+      console.error('❌ [WeeklyTracker] Erro geral:', error);
+    } finally {
+      setIsLoadingMood(false);
+    }
+  }, [user?.id, isLoadingMood, lastFetchTime]);
 
-    // Handler para sincronização cross-tab
-    const handleCrossTabSync = (event: any) => {
-      if (!user?.id) return;
-      
-      console.log('🔄 [WeeklyTracker] Sincronização cross-tab detectada:', event.detail);
-      
-      // Recarregar dados do localStorage
-      const updatedMood = WeeklyMoodStorage.loadWeeklyMood(user.id.toString());
-      if (updatedMood) {
-        setWeeklyMood(updatedMood);
-        console.log('🔄 [WeeklyTracker] Dados sincronizados entre abas:', updatedMood);
-      }
-    };
+  // Inicialização única
+  useEffect(() => {
+    if (!isInitialized && user?.id) {
+      setIsInitialized(true);
+      loadWeeklyMood();
+    }
+  }, [user?.id, isInitialized, loadWeeklyMood]);
 
-    // Escutar múltiplos eventos para máxima sincronização
+  // ============================================
+  // SISTEMA OTIMIZADO DE SINCRONIZAÇÃO (SEM RE-RENDERS INFINITOS)
+  // ============================================
+  const handleMoodUpdated = useCallback(async (event: any) => {
+    if (!user?.id || !event.detail || event.detail.userId !== user.id.toString()) return;
+    
+    console.log('🔔 [WeeklyTracker] Evento moodUpdated recebido:', event.detail);
+    
+    // Sincronização imediata
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const mood = event.detail.mood;
+    
+    console.log(`⚡ [WeeklyTracker] Aplicando sincronização: humor "${mood}" para dia ${dayOfWeek}`);
+    
+    setWeeklyMood(prevMood => {
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+      
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+      
+      const newMoodByDay = [...(prevMood?.moodByDay || new Array(7).fill(null))];
+      newMoodByDay[dayOfWeek] = mood;
+      
+      const updatedMood: WeeklyMood = {
+        userId: user.id.toString(),
+        weekStart: startOfWeek.toISOString(),
+        weekEnd: endOfWeek.toISOString(),
+        moodByDay: newMoodByDay
+      };
+      
+      WeeklyMoodStorage.saveWeeklyMood(user.id.toString(), updatedMood);
+      console.log('⚡ [WeeklyTracker] Estado atualizado:', updatedMood);
+      
+      return updatedMood;
+    });
+    
+    // Atualizar dados da API em background (sem forçar re-render)
+    setTimeout(() => {
+      loadWeeklyMood();
+    }, 1000);
+  }, [user?.id, loadWeeklyMood]);
+
+  const handleCrossTabSync = useCallback((event: any) => {
+    if (!user?.id) return;
+    
+    console.log('🔄 [WeeklyTracker] Sincronização cross-tab detectada');
+    const updatedMood = WeeklyMoodStorage.loadWeeklyMood(user.id.toString());
+    if (updatedMood) {
+      setWeeklyMood(updatedMood);
+    }
+  }, [user?.id]);
+
+  // Event listeners com controle de dependências
+  useEffect(() => {
+    if (!isInitialized) return;
+    
     const events = [
       'moodUpdated', 
-      'weeklyMoodUpdated', // Evento específico do AI Assistant
-      'tasksUpdated',
-      'weeklyMoodSaved',
-      'weeklyMoodCrossTabSync',
-      'objetivosUpdated', // Para sincronizar com outras seções
-      'profileImageUpdated' // Para sincronizar com mudanças de perfil
+      'weeklyMoodUpdated',
+      'weeklyMoodSaved'
     ];
     
     events.forEach(eventName => {
@@ -622,69 +614,70 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
         }
       });
     };
-  }, [user?.id]);
+  }, [isInitialized, handleMoodUpdated, handleCrossTabSync]);
 
-  // Sistema de recuperação ultra-persistente do localStorage
-  useEffect(() => {
+  // Sistema de recuperação do localStorage (executado apenas na inicialização)
+  const loadPersistentMoods = useCallback(() => {
     if (!user?.id) return;
     
-    const loadPersistentMoods = () => {
-      try {
-        // Carregar todos os humores salvos
-        const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
-        const userMoods = allMoods[user.id.toString()] || {};
-        
-        // Calcular semana atual
-        const now = new Date();
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - now.getDay());
-        startOfWeek.setHours(0, 0, 0, 0);
-        
-        // Mapear humores da semana
-        const moodByDay = new Array(7).fill(null);
-        
-        for (let i = 0; i < 7; i++) {
-          const dayDate = new Date(startOfWeek);
-          dayDate.setDate(startOfWeek.getDate() + i);
-          const dayKey = dayDate.toISOString().split('T')[0];
-          
-          if (userMoods[dayKey]) {
-            moodByDay[i] = userMoods[dayKey];
-          }
-        }
-        
-        // Se encontramos humores, criar objeto de humor semanal
-        const hasAnyMood = moodByDay.some(mood => mood !== null);
-        if (hasAnyMood) {
-          const persistentMood: WeeklyMood = {
-            userId: user.id.toString(),
-            weekStart: startOfWeek.toISOString(),
-            weekEnd: new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString(),
-            moodByDay
-          };
-          
-          setWeeklyMood(persistentMood);
-          console.log('💿 Humores recuperados do localStorage:', persistentMood);
-        }
-      } catch (error) {
-        console.error('❌ Erro ao recuperar humores persistentes:', error);
+    try {
+      // Primeiro tentar o sistema robusto
+      const robustMood = WeeklyMoodStorage.loadWeeklyMood(user.id.toString());
+      if (robustMood) {
+        setWeeklyMood(robustMood);
+        console.log('💿 [WeeklyTracker] Humor carregado do sistema robusto:', robustMood);
+        return;
       }
-    };
-
-    // Carregar imediatamente
-    loadPersistentMoods();
+      
+      // Fallback para sistema antigo
+      const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
+      const userMoods = allMoods[user.id.toString()] || {};
+      
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+      
+      const moodByDay = new Array(7).fill(null);
+      
+      for (let i = 0; i < 7; i++) {
+        const dayDate = new Date(startOfWeek);
+        dayDate.setDate(startOfWeek.getDate() + i);
+        const dayKey = dayDate.toISOString().split('T')[0];
+        
+        if (userMoods[dayKey]) {
+          moodByDay[i] = userMoods[dayKey];
+        }
+      }
+      
+      const hasAnyMood = moodByDay.some(mood => mood !== null);
+      if (hasAnyMood) {
+        const persistentMood: WeeklyMood = {
+          userId: user.id.toString(),
+          weekStart: startOfWeek.toISOString(),
+          weekEnd: new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString(),
+          moodByDay
+        };
+        
+        setWeeklyMood(persistentMood);
+        console.log('💿 [WeeklyTracker] Humor recuperado do sistema antigo:', persistentMood);
+      }
+    } catch (error) {
+      console.error('❌ [WeeklyTracker] Erro ao recuperar humores:', error);
+    }
   }, [user?.id]);
 
-  // Inicialização de sistemas robustos
+  // Inicialização única dos sistemas robustos
   useEffect(() => {
-    // Limpeza periódica de semanas antigas (mantendo 3 meses)
+    if (isInitialized) return;
+    
+    // Configurar sistemas uma única vez
     WeeklyMoodStorage.cleanOldWeeks();
-    
-    // Ativar sincronização cross-tab
     WeeklyMoodStorage.setupCrossTabSync();
+    loadPersistentMoods();
     
-    console.log('🚀 [WeeklyTracker] Sistemas de persistência ultra-robusta inicializados');
-  }, []);
+    console.log('🚀 [WeeklyTracker] Sistemas inicializados');
+  }, [isInitialized, loadPersistentMoods]);
 
   const updateProgressMutation = useMutation({
     mutationFn: async (updatedDays: boolean[]) => {
