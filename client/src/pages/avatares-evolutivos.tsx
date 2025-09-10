@@ -133,7 +133,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                     {/* Imagem do avatar */}
                     <div className="relative">
                       <img
-                        src="/avatar-guerreiro-tribo.webp"
+                        src="/avatar-guerreiro-tribo-novo.webp"
                         alt="Guerreiro da Tribo"
                         className="w-48 h-48 rounded-xl object-cover"
                         style={{ aspectRatio: '1 / 1' }}
