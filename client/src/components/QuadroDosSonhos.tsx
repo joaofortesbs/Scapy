@@ -4,41 +4,189 @@ import { Upload, X } from 'lucide-react';
 export default function QuadroDosSonhos() {
   const [images, setImages] = useState<(string | null)[]>([null, null, null, null]);
 
+  // ============================================
+  // SISTEMA DE PERSISTÊNCIA SUPER ROBUSTA PARA QUADRO DOS SONHOS
+  // ============================================
+
+  const saveImagesToLocalStorage = (imagesData: (string | null)[]) => {
+    try {
+      const timestamp = Date.now();
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = user.id || 'unknown';
+      
+      const robustData = {
+        images: imagesData,
+        timestamp,
+        userId,
+        version: '2.0',
+        totalImages: imagesData.filter(img => img !== null).length,
+        lastModified: new Date().toISOString(),
+        deviceInfo: {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform
+        }
+      };
+      
+      // Salvar em múltiplas chaves para máxima redundância
+      localStorage.setItem('scapy_quadro_sonhos', JSON.stringify(robustData));
+      localStorage.setItem('quadroDosSonhosImages', JSON.stringify(imagesData)); // Compatibilidade
+      
+      // Backup específico por usuário e data
+      const dateKey = new Date().toISOString().split('T')[0];
+      localStorage.setItem(`scapy_sonhos_backup_${userId}_${dateKey}`, JSON.stringify(robustData));
+      
+      console.log(`💾 [QuadroDosSonhos] ${robustData.totalImages} imagens salvas para usuário ${userId} com timestamp ${timestamp}`);
+      
+      // Disparar evento de sincronização
+      const dreamEvent = new CustomEvent('quadroSonhosUpdated', {
+        detail: {
+          images: imagesData,
+          totalImages: robustData.totalImages,
+          userId,
+          timestamp,
+          action: 'update'
+        }
+      });
+      window.dispatchEvent(dreamEvent);
+      
+    } catch (error) {
+      console.error('❌ [QuadroDosSonhos] Erro ao salvar imagens:', error);
+    }
+  };
+
+  const loadImagesFromLocalStorage = () => {
+    try {
+      // Tentar carregar da chave robusta primeiro
+      const robustData = localStorage.getItem('scapy_quadro_sonhos');
+      if (robustData) {
+        const parsed = JSON.parse(robustData);
+        if (parsed.images && Array.isArray(parsed.images)) {
+          console.log(`📖 [QuadroDosSonhos] ${parsed.totalImages || 0} imagens carregadas (versão robusta)`);
+          return parsed.images;
+        }
+      }
+      
+      // Fallback para compatibilidade
+      const legacyData = localStorage.getItem('quadroDosSonhosImages');
+      if (legacyData) {
+        const parsed = JSON.parse(legacyData);
+        if (Array.isArray(parsed)) {
+          const totalImages = parsed.filter(img => img !== null).length;
+          console.log(`📖 [QuadroDosSonhos] ${totalImages} imagens carregadas (modo compatibilidade)`);
+          return parsed;
+        }
+      }
+    } catch (error) {
+      console.error('❌ [QuadroDosSonhos] Erro ao carregar imagens:', error);
+    }
+    return [null, null, null, null]; // Array padrão
+  };
+
   // Carregar imagens do localStorage ao inicializar
   useEffect(() => {
-    const savedImages = localStorage.getItem('quadroDosSonhosImages');
-    if (savedImages) {
-      try {
-        const parsedImages = JSON.parse(savedImages);
-        setImages(parsedImages);
-      } catch (error) {
-        console.error('Erro ao carregar imagens do quadro dos sonhos:', error);
-      }
-    }
+    const loadedImages = loadImagesFromLocalStorage();
+    setImages(loadedImages);
+    
+    const totalImages = loadedImages.filter(img => img !== null).length;
+    console.log(`🚀 [QuadroDosSonhos] Componente inicializado com ${totalImages} imagens`);
   }, []);
 
   // Salvar imagens no localStorage sempre que mudarem
   useEffect(() => {
-    localStorage.setItem('quadroDosSonhosImages', JSON.stringify(images));
+    if (images.length > 0) {
+      saveImagesToLocalStorage(images);
+    }
   }, [images]);
+
+  // Escutar mudanças do localStorage de outras abas
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'scapy_quadro_sonhos' || e.key === 'quadroDosSonhosImages') {
+        console.log('🔄 [QuadroDosSonhos] Detectada mudança em outra aba, sincronizando imagens...');
+        const newImages = loadImagesFromLocalStorage();
+        setImages(newImages);
+      }
+    };
+
+    // Listener para eventos customizados (mesma aba)
+    const handleCustomImageChange = () => {
+      const currentImages = loadImagesFromLocalStorage();
+      setImages(currentImages);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('quadroSonhosUpdated', handleCustomImageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('quadroSonhosUpdated', handleCustomImageChange);
+    };
+  }, []);
 
   const handleImageUpload = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Validação de arquivo
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      
+      if (file.size > maxSize) {
+        console.warn(`⚠️ [QuadroDosSonhos] Arquivo muito grande: ${(file.size / 1024 / 1024).toFixed(2)}MB. Máximo permitido: 5MB`);
+        return;
+      }
+      
+      if (!allowedTypes.includes(file.type)) {
+        console.warn(`⚠️ [QuadroDosSonhos] Tipo de arquivo não suportado: ${file.type}`);
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         const newImages = [...images];
-        newImages[index] = e.target?.result as string;
+        const imageData = e.target?.result as string;
+        newImages[index] = imageData;
         setImages(newImages);
+        
+        console.log(`🖼️ [QuadroDosSonhos] Imagem adicionada na posição ${index + 1}: ${file.name} (${(file.size / 1024).toFixed(2)}KB)`);
+        
+        // Disparar evento específico de adição de imagem
+        const addImageEvent = new CustomEvent('imagemAdicionada', {
+          detail: {
+            index,
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            timestamp: Date.now()
+          }
+        });
+        window.dispatchEvent(addImageEvent);
       };
+      
+      reader.onerror = (error) => {
+        console.error('❌ [QuadroDosSonhos] Erro ao carregar imagem:', error);
+      };
+      
       reader.readAsDataURL(file);
     }
   };
 
   const removeImage = (index: number) => {
+    const imageRemovida = images[index];
     const newImages = [...images];
     newImages[index] = null;
     setImages(newImages);
+    
+    console.log(`🗑️ [QuadroDosSonhos] Imagem removida da posição ${index + 1}`);
+    
+    // Disparar evento específico de remoção de imagem
+    const removeImageEvent = new CustomEvent('imagemRemovida', {
+      detail: {
+        index,
+        imagemRemovida,
+        timestamp: Date.now()
+      }
+    });
+    window.dispatchEvent(removeImageEvent);
   };
 
   const cardRotations = [
