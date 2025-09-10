@@ -55,11 +55,15 @@ function Header({ user }: HeaderInternalProps) {
       </div>
 
       <div className="flex items-center space-x-3">
-        <div className="gradient-border w-12 h-12" data-testid="empty-circle-container">
+        <button
+          onClick={() => setLocation('/avatares-evolutivos')}
+          className="gradient-border w-12 h-12 hover:scale-105 transition-transform cursor-pointer"
+          data-testid="avatares-evolutivos-button"
+        >
           <div className="gradient-border-inner flex items-center justify-center">
             <Target className="w-6 h-6 text-primary" />
           </div>
-        </div>
+        </button>
 
         <button
           onClick={handleProfileClick}
