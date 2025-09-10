@@ -87,81 +87,347 @@ interface WeeklyMood {
   moodByDay: (string | null)[]; // [domingo, segunda, terça, quarta, quinta, sexta, sábado]
 }
 
-// Sistema de persistência semanal com localStorage
-class WeeklyMoodStorage {
-  private static readonly STORAGE_KEY = 'scapy_weekly_moods';
-  private static readonly VERSION_KEY = 'scapy_mood_version';
-  private static readonly CURRENT_VERSION = '1.0.0';
+// ============================================
+// SISTEMA ULTRA-ROBUSTO DE PERSISTÊNCIA DE HUMOR SEMANAL
+// Sistema de múltiplos backups, validação avançada e recuperação automática
+// ============================================
 
-  // Salvar humor semanal no localStorage
-  static saveWeeklyMood(userId: string, weeklyMood: WeeklyMood): void {
+interface WeeklyMoodRobustData {
+  weeklyMood: WeeklyMood;
+  timestamp: number;
+  version: string;
+  lastModified: string;
+  deviceInfo: {
+    userAgent: string;
+    platform: string;
+  };
+  checksums: {
+    userId: string;
+    weekKey: string;
+    moodCount: number;
+  };
+}
+
+class WeeklyMoodStorage {
+  private static readonly STORAGE_KEY = 'scapy_weekly_moods_v2';
+  private static readonly BACKUP_KEY = 'scapy_weekly_moods_backup';
+  private static readonly INDIVIDUAL_KEY = 'scapy_individual_moods';
+  private static readonly VERSION_KEY = 'scapy_mood_version';
+  private static readonly CURRENT_VERSION = '2.0.0';
+  private static readonly MAX_WEEKS_TO_KEEP = 12; // 3 meses
+
+  // Salvar humor semanal com sistema ultra-robusto
+  static saveWeeklyMood(userId: string, weeklyMood: WeeklyMood): boolean {
     try {
+      const timestamp = Date.now();
       const weekKey = this.getWeekKey(new Date());
-      const storageData = this.getStorageData();
       
+      const robustData: WeeklyMoodRobustData = {
+        weeklyMood,
+        timestamp,
+        version: this.CURRENT_VERSION,
+        lastModified: new Date().toISOString(),
+        deviceInfo: {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform
+        },
+        checksums: {
+          userId,
+          weekKey,
+          moodCount: weeklyMood.moodByDay.filter(mood => mood !== null).length
+        }
+      };
+
+      // 1. Salvar dados principais
+      const storageData = this.getStorageData();
       if (!storageData[userId]) {
         storageData[userId] = {};
       }
-      
-      storageData[userId][weekKey] = weeklyMood;
-      
+      storageData[userId][weekKey] = robustData;
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(storageData));
+
+      // 2. Backup em chave separada
+      const backupData = this.getBackupData();
+      if (!backupData[userId]) {
+        backupData[userId] = {};
+      }
+      backupData[userId][weekKey] = robustData;
+      localStorage.setItem(this.BACKUP_KEY, JSON.stringify(backupData));
+
+      // 3. Backup individual por usuário
+      const individualKey = `${this.INDIVIDUAL_KEY}_${userId}_${weekKey}`;
+      localStorage.setItem(individualKey, JSON.stringify(robustData));
+
+      // 4. Salvar versão para compatibilidade
       localStorage.setItem(this.VERSION_KEY, this.CURRENT_VERSION);
+
+      // 5. Salvar cada humor individual também
+      this.saveIndividualMoods(userId, weeklyMood);
+
+      console.log(`💾 [WeeklyMoodStorage] Humor semanal salvo com ultra-robustez para usuário ${userId}, semana: ${weekKey} (${robustData.checksums.moodCount} humores)`);
       
-      console.log(`💾 Humor semanal salvo para usuário ${userId}, semana: ${weekKey}`);
+      // 6. Disparar evento de sincronização
+      const syncEvent = new CustomEvent('weeklyMoodSaved', {
+        detail: {
+          userId,
+          weekKey,
+          weeklyMood,
+          timestamp
+        }
+      });
+      window.dispatchEvent(syncEvent);
+      
+      return true;
     } catch (error) {
-      console.error('Erro ao salvar humor semanal:', error);
+      console.error('❌ [WeeklyMoodStorage] Erro ao salvar humor semanal:', error);
+      return false;
     }
   }
 
-  // Carregar humor semanal do localStorage
+  // Salvar humores individuais para máxima redundância
+  private static saveIndividualMoods(userId: string, weeklyMood: WeeklyMood): void {
+    try {
+      const startOfWeek = new Date(weeklyMood.weekStart);
+      
+      weeklyMood.moodByDay.forEach((mood, dayIndex) => {
+        if (mood) {
+          const dayDate = new Date(startOfWeek);
+          dayDate.setDate(startOfWeek.getDate() + dayIndex);
+          const dayKey = dayDate.toISOString().split('T')[0];
+          
+          const moodData = {
+            userId,
+            mood,
+            date: dayKey,
+            dayOfWeek: dayIndex,
+            timestamp: Date.now(),
+            version: this.CURRENT_VERSION
+          };
+          
+          localStorage.setItem(`scapy_daily_mood_${userId}_${dayKey}`, JSON.stringify(moodData));
+        }
+      });
+    } catch (error) {
+      console.error('❌ [WeeklyMoodStorage] Erro ao salvar humores individuais:', error);
+    }
+  }
+
+  // Carregar humor semanal com sistema de fallback
   static loadWeeklyMood(userId: string): WeeklyMood | null {
     try {
       const weekKey = this.getWeekKey(new Date());
-      const storageData = this.getStorageData();
       
-      return storageData[userId]?.[weekKey] || null;
+      // 1. Tentar carregar dados principais
+      let robustData = this.loadFromPrimary(userId, weekKey);
+      
+      // 2. Fallback para backup
+      if (!robustData) {
+        console.log('🔄 [WeeklyMoodStorage] Tentando carregar backup...');
+        robustData = this.loadFromBackup(userId, weekKey);
+      }
+      
+      // 3. Fallback para chave individual
+      if (!robustData) {
+        console.log('🔄 [WeeklyMoodStorage] Tentando carregar dados individuais...');
+        robustData = this.loadFromIndividual(userId, weekKey);
+      }
+      
+      // 4. Fallback para reconstituição a partir de humores diários
+      if (!robustData) {
+        console.log('🔄 [WeeklyMoodStorage] Tentando reconstituir a partir de humores diários...');
+        return this.reconstructFromDailyMoods(userId);
+      }
+      
+      if (robustData) {
+        // Validar integridade dos dados
+        if (this.validateMoodData(robustData)) {
+          console.log(`📖 [WeeklyMoodStorage] Humor semanal carregado com sucesso para usuário ${userId}`);
+          return robustData.weeklyMood;
+        } else {
+          console.warn('⚠️ [WeeklyMoodStorage] Dados corrompidos detectados, tentando recuperação...');
+          return this.reconstructFromDailyMoods(userId);
+        }
+      }
+      
+      return null;
     } catch (error) {
-      console.error('Erro ao carregar humor semanal:', error);
+      console.error('❌ [WeeklyMoodStorage] Erro ao carregar humor semanal:', error);
       return null;
     }
   }
 
-  // Limpar dados de semanas antigas (manter apenas últimas 4 semanas)
+  // Validar integridade dos dados
+  private static validateMoodData(robustData: WeeklyMoodRobustData): boolean {
+    try {
+      // Verificar estrutura básica
+      if (!robustData.weeklyMood || !robustData.checksums) {
+        return false;
+      }
+      
+      // Verificar array de humores
+      if (!Array.isArray(robustData.weeklyMood.moodByDay) || robustData.weeklyMood.moodByDay.length !== 7) {
+        return false;
+      }
+      
+      // Verificar contagem de humores
+      const actualMoodCount = robustData.weeklyMood.moodByDay.filter(mood => mood !== null).length;
+      if (actualMoodCount !== robustData.checksums.moodCount) {
+        console.warn(`⚠️ [WeeklyMoodStorage] Divergência na contagem: esperado ${robustData.checksums.moodCount}, encontrado ${actualMoodCount}`);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('❌ [WeeklyMoodStorage] Erro na validação:', error);
+      return false;
+    }
+  }
+
+  // Reconstituir dados a partir de humores diários
+  private static reconstructFromDailyMoods(userId: string): WeeklyMood | null {
+    try {
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+      
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+      
+      const moodByDay = new Array(7).fill(null);
+      
+      for (let i = 0; i < 7; i++) {
+        const dayDate = new Date(startOfWeek);
+        dayDate.setDate(startOfWeek.getDate() + i);
+        const dayKey = dayDate.toISOString().split('T')[0];
+        
+        const dailyMoodData = localStorage.getItem(`scapy_daily_mood_${userId}_${dayKey}`);
+        if (dailyMoodData) {
+          try {
+            const parsed = JSON.parse(dailyMoodData);
+            moodByDay[i] = parsed.mood;
+          } catch (error) {
+            console.warn(`⚠️ [WeeklyMoodStorage] Erro ao parsear humor do dia ${dayKey}:`, error);
+          }
+        }
+      }
+      
+      const hasAnyMood = moodByDay.some(mood => mood !== null);
+      if (hasAnyMood) {
+        const reconstructedMood: WeeklyMood = {
+          userId,
+          weekStart: startOfWeek.toISOString(),
+          weekEnd: endOfWeek.toISOString(),
+          moodByDay
+        };
+        
+        console.log('🔧 [WeeklyMoodStorage] Dados reconstituídos com sucesso:', reconstructedMood);
+        
+        // Salvar dados reconstituídos
+        this.saveWeeklyMood(userId, reconstructedMood);
+        
+        return reconstructedMood;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('❌ [WeeklyMoodStorage] Erro na reconstituição:', error);
+      return null;
+    }
+  }
+
+  // Carregar dados principais
+  private static loadFromPrimary(userId: string, weekKey: string): WeeklyMoodRobustData | null {
+    try {
+      const storageData = this.getStorageData();
+      return storageData[userId]?.[weekKey] || null;
+    } catch (error) {
+      console.error('❌ [WeeklyMoodStorage] Erro ao carregar dados principais:', error);
+      return null;
+    }
+  }
+
+  // Carregar dados de backup
+  private static loadFromBackup(userId: string, weekKey: string): WeeklyMoodRobustData | null {
+    try {
+      const backupData = this.getBackupData();
+      return backupData[userId]?.[weekKey] || null;
+    } catch (error) {
+      console.error('❌ [WeeklyMoodStorage] Erro ao carregar backup:', error);
+      return null;
+    }
+  }
+
+  // Carregar dados individuais
+  private static loadFromIndividual(userId: string, weekKey: string): WeeklyMoodRobustData | null {
+    try {
+      const individualKey = `${this.INDIVIDUAL_KEY}_${userId}_${weekKey}`;
+      const data = localStorage.getItem(individualKey);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error('❌ [WeeklyMoodStorage] Erro ao carregar dados individuais:', error);
+      return null;
+    }
+  }
+
+  // Limpar dados antigos mas preservar histórico extenso
   static cleanOldWeeks(): void {
     try {
       const storageData = this.getStorageData();
+      const backupData = this.getBackupData();
       const currentDate = new Date();
-      const weeksToKeep = 4;
       
       Object.keys(storageData).forEach(userId => {
         const userWeeks = storageData[userId];
         const weekKeys = Object.keys(userWeeks);
         
-        // Ordenar semanas por data e manter apenas as mais recentes
+        // Ordenar semanas por data e manter as mais recentes
         const sortedWeeks = weekKeys
           .map(key => ({ key, date: this.getDateFromWeekKey(key) }))
           .sort((a, b) => b.date.getTime() - a.date.getTime())
-          .slice(0, weeksToKeep);
+          .slice(0, this.MAX_WEEKS_TO_KEEP);
         
-        // Remover semanas antigas
+        // Manter dados principais
         const newUserWeeks: any = {};
         sortedWeeks.forEach(({ key }) => {
           newUserWeeks[key] = userWeeks[key];
         });
-        
         storageData[userId] = newUserWeeks;
+        
+        // Fazer o mesmo para backup
+        if (backupData[userId]) {
+          const backupUserWeeks: any = {};
+          sortedWeeks.forEach(({ key }) => {
+            if (backupData[userId][key]) {
+              backupUserWeeks[key] = backupData[userId][key];
+            }
+          });
+          backupData[userId] = backupUserWeeks;
+        }
       });
       
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(storageData));
+      localStorage.setItem(this.BACKUP_KEY, JSON.stringify(backupData));
+      
+      console.log(`🧹 [WeeklyMoodStorage] Limpeza concluída, mantendo ${this.MAX_WEEKS_TO_KEEP} semanas`);
     } catch (error) {
-      console.error('Erro ao limpar semanas antigas:', error);
+      console.error('❌ [WeeklyMoodStorage] Erro ao limpar semanas antigas:', error);
     }
   }
 
   private static getStorageData(): any {
     try {
       const stored = localStorage.getItem(this.STORAGE_KEY);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  private static getBackupData(): any {
+    try {
+      const stored = localStorage.getItem(this.BACKUP_KEY);
       return stored ? JSON.parse(stored) : {};
     } catch {
       return {};
@@ -177,6 +443,26 @@ class WeeklyMoodStorage {
 
   private static getDateFromWeekKey(weekKey: string): Date {
     return new Date(weekKey);
+  }
+
+  // Método para sincronização cross-tab
+  static setupCrossTabSync(): void {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key && (e.key.startsWith(this.STORAGE_KEY) || e.key.startsWith(this.BACKUP_KEY))) {
+        console.log('🔄 [WeeklyMoodStorage] Detectada mudança cross-tab, disparando evento...');
+        const syncEvent = new CustomEvent('weeklyMoodCrossTabSync', {
+          detail: {
+            key: e.key,
+            newValue: e.newValue,
+            timestamp: Date.now()
+          }
+        });
+        window.dispatchEvent(syncEvent);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    console.log('🚀 [WeeklyMoodStorage] Sincronização cross-tab ativada');
   }
 }
 
@@ -226,58 +512,114 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
     loadWeeklyMood();
   }, [user?.id]);
 
-  // Sistema de sincronização ultra-rápida e persistente
+  // ============================================
+  // SISTEMA ULTRA-ROBUSTO DE SINCRONIZAÇÃO EM TEMPO REAL
+  // ============================================
   useEffect(() => {
     const handleMoodUpdated = async (event: any) => {
       if (!user?.id) return;
       
-      console.log('🔔 Evento moodUpdated recebido:', event.detail);
+      console.log('🔔 [WeeklyTracker] Evento moodUpdated recebido:', event.detail);
       
-      // Se temos dados específicos do evento, usar sincronização imediata
+      // Sincronização imediata se temos dados específicos
       if (event.detail && event.detail.userId === user.id.toString()) {
-        const { mood, dayOfWeek, date } = event.detail;
+        // Detectar automaticamente o dia da semana baseado na data
+        const today = new Date();
+        const dayOfWeek = today.getDay(); // 0-6 (domingo a sábado)
+        const mood = event.detail.mood;
+        
+        console.log(`⚡ [WeeklyTracker] Aplicando sincronização imediata: humor "${mood}" para dia ${dayOfWeek}`);
         
         // Atualizar estado local imediatamente
         setWeeklyMood(prevMood => {
+          const now = new Date();
+          const startOfWeek = new Date(now);
+          startOfWeek.setDate(now.getDate() - now.getDay());
+          startOfWeek.setHours(0, 0, 0, 0);
+          
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6);
+          endOfWeek.setHours(23, 59, 59, 999);
+          
           const newMoodByDay = [...(prevMood?.moodByDay || new Array(7).fill(null))];
           newMoodByDay[dayOfWeek] = mood;
           
-          const updatedMood = {
+          const updatedMood: WeeklyMood = {
             userId: user.id.toString(),
-            weekStart: prevMood?.weekStart || '',
-            weekEnd: prevMood?.weekEnd || '',
+            weekStart: startOfWeek.toISOString(),
+            weekEnd: endOfWeek.toISOString(),
             moodByDay: newMoodByDay
           };
           
-          // Salvar imediatamente no localStorage
-          WeeklyMoodStorage.saveWeeklyMood(user.id.toString(), updatedMood);
+          // Salvar imediatamente com sistema ultra-robusto
+          const saved = WeeklyMoodStorage.saveWeeklyMood(user.id.toString(), updatedMood);
+          if (saved) {
+            console.log('⚡ [WeeklyTracker] Sincronização imediata bem-sucedida:', updatedMood);
+          } else {
+            console.error('❌ [WeeklyTracker] Falha na sincronização imediata');
+          }
           
-          console.log('⚡ Sincronização imediata aplicada:', updatedMood);
           return updatedMood;
         });
       }
       
-      // Depois buscar dados atualizados da API para confirmar
+      // Confirmar com API após um breve delay
       setTimeout(async () => {
         try {
+          console.log('🔄 [WeeklyTracker] Confirmando dados com API...');
           const response = await apiRequest('GET', `/api/weekly-mood/${user.id}`);
           const apiMood = await response.json() as WeeklyMood;
+          
           setWeeklyMood(apiMood);
           WeeklyMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
-          console.log('✅ Dados confirmados da API:', apiMood);
+          
+          console.log('✅ [WeeklyTracker] Dados confirmados e sincronizados com API:', apiMood);
         } catch (error) {
-          console.error('❌ Erro ao confirmar dados da API:', error);
+          console.error('❌ [WeeklyTracker] Erro ao confirmar dados da API:', error);
         }
-      }, 100);
+      }, 150);
     };
 
-    // Escutar eventos personalizados
-    window.addEventListener('moodUpdated', handleMoodUpdated);
-    window.addEventListener('tasksUpdated', handleMoodUpdated);
+    // Handler para sincronização cross-tab
+    const handleCrossTabSync = (event: any) => {
+      if (!user?.id) return;
+      
+      console.log('🔄 [WeeklyTracker] Sincronização cross-tab detectada:', event.detail);
+      
+      // Recarregar dados do localStorage
+      const updatedMood = WeeklyMoodStorage.loadWeeklyMood(user.id.toString());
+      if (updatedMood) {
+        setWeeklyMood(updatedMood);
+        console.log('🔄 [WeeklyTracker] Dados sincronizados entre abas:', updatedMood);
+      }
+    };
+
+    // Escutar múltiplos eventos para máxima sincronização
+    const events = [
+      'moodUpdated', 
+      'tasksUpdated',
+      'weeklyMoodSaved',
+      'weeklyMoodCrossTabSync',
+      'objetivosUpdated', // Para sincronizar com outras seções
+      'profileImageUpdated' // Para sincronizar com mudanças de perfil
+    ];
+    
+    events.forEach(eventName => {
+      if (eventName === 'weeklyMoodCrossTabSync') {
+        window.addEventListener(eventName, handleCrossTabSync);
+      } else {
+        window.addEventListener(eventName, handleMoodUpdated);
+      }
+    });
     
     return () => {
-      window.removeEventListener('moodUpdated', handleMoodUpdated);
-      window.removeEventListener('tasksUpdated', handleMoodUpdated);
+      events.forEach(eventName => {
+        if (eventName === 'weeklyMoodCrossTabSync') {
+          window.removeEventListener(eventName, handleCrossTabSync);
+        } else {
+          window.removeEventListener(eventName, handleMoodUpdated);
+        }
+      });
     };
   }, [user?.id]);
 
