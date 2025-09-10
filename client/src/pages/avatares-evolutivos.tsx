@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Target } from "lucide-react";
+import { ArrowLeft, Target, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLocation } from "wouter";
+import ParticlesBackground from "@/components/particles-background";
 
 interface User {
   id: number;
@@ -13,6 +14,7 @@ interface User {
 export default function AvatareEsEvolutivos(): JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [, setLocation] = useLocation();
+  const [expandedCards, setExpandedCards] = useState<{ [key: number]: boolean }>({});
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -30,9 +32,18 @@ export default function AvatareEsEvolutivos(): JSX.Element {
     setLocation('/dashboard');
   };
 
+  const toggleCardExpansion = (cardIndex: number) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [cardIndex]: !prev[cardIndex]
+    }));
+  };
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#000515' }}>
-      {/* Header com botão de voltar */}
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#000515' }}>
+      <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
+      <div className="relative z-10">
+        {/* Header com botão de voltar */}
       <div className="flex items-center justify-between p-6 border-b border-border/20">
         <Button
           variant="ghost"
@@ -79,12 +90,13 @@ export default function AvatareEsEvolutivos(): JSX.Element {
             <div className="space-y-12 ml-20">
               {/* Card 1 - Homem das Cavernas (Atual) */}
               <Card 
-                className="border-border/30 bg-background/5 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02]"
+                className="border-border/30 bg-background/5 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02] cursor-pointer"
                 style={{ 
                   background: 'linear-gradient(135deg, rgba(0, 246, 255, 0.1) 0%, rgba(0, 5, 21, 0.8) 100%)',
                   borderColor: 'rgba(0, 246, 255, 0.3)'
                 }}
                 data-testid="avatar-card-1"
+                onClick={() => toggleCardExpansion(1)}
               >
                 <CardContent className="p-8">
                   <div className="flex items-center space-x-6">
@@ -108,15 +120,24 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
                     {/* Conteúdo do card */}
                     <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
+                      <div className="flex items-center justify-between mb-2">
                         <h3 className="text-xl font-bold text-foreground">Homem das Cavernas</h3>
-                        <span className="px-3 py-1 bg-primary/20 text-primary text-sm rounded-full border border-primary/30">
-                          Atual
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="px-3 py-1 bg-primary/20 text-primary text-sm rounded-full border border-primary/30">
+                            Atual
+                          </span>
+                          {expandedCards[1] ? (
+                            <ChevronUp className="w-5 h-5 text-primary" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-primary" />
+                          )}
+                        </div>
                       </div>
-                      <p className="text-foreground/80 leading-relaxed">
-                        Você deu os primeiros passos. Como um caçador das origens, está aprendendo a lutar contra seus instintos mais primitivos e provar que consegue sobreviver ao vício.
-                      </p>
+                      {expandedCards[1] && (
+                        <p className="text-foreground/80 leading-relaxed transition-all duration-300">
+                          Você deu os primeiros passos. Como um caçador das origens, está aprendendo a lutar contra seus instintos mais primitivos e provar que consegue sobreviver ao vício.
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -124,12 +145,13 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
               {/* Card 2 - Próximo nível (Bloqueado) */}
               <Card 
-                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-60"
+                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-60 cursor-pointer hover:opacity-70 transition-opacity duration-300"
                 style={{ 
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 5, 21, 0.6) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.1)'
                 }}
                 data-testid="avatar-card-2"
+                onClick={() => toggleCardExpansion(2)}
               >
                 <CardContent className="p-8">
                   <div className="flex items-center space-x-6">
@@ -146,16 +168,25 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
                     {/* Conteúdo placeholder */}
                     <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
+                      <div className="flex items-center justify-between mb-2">
                         <div className="h-6 bg-border/20 rounded w-48 animate-pulse"></div>
-                        <span className="px-3 py-1 bg-border/10 text-foreground/30 text-sm rounded-full border border-border/20">
-                          Bloqueado
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="px-3 py-1 bg-border/10 text-foreground/30 text-sm rounded-full border border-border/20">
+                            Bloqueado
+                          </span>
+                          {expandedCards[2] ? (
+                            <ChevronUp className="w-5 h-5 text-foreground/30" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-foreground/30" />
+                          )}
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <div className="h-4 bg-border/15 rounded w-full animate-pulse"></div>
-                        <div className="h-4 bg-border/15 rounded w-3/4 animate-pulse"></div>
-                      </div>
+                      {expandedCards[2] && (
+                        <div className="space-y-2 transition-all duration-300">
+                          <div className="h-4 bg-border/15 rounded w-full animate-pulse"></div>
+                          <div className="h-4 bg-border/15 rounded w-3/4 animate-pulse"></div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -163,12 +194,13 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
               {/* Card 3 - Futuro distante (Bloqueado) */}
               <Card 
-                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40"
+                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 cursor-pointer hover:opacity-50 transition-opacity duration-300"
                 style={{ 
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.08)'
                 }}
                 data-testid="avatar-card-3"
+                onClick={() => toggleCardExpansion(3)}
               >
                 <CardContent className="p-8">
                   <div className="flex items-center space-x-6">
@@ -185,16 +217,25 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
                     {/* Conteúdo placeholder */}
                     <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
+                      <div className="flex items-center justify-between mb-2">
                         <div className="h-6 bg-border/15 rounded w-40 animate-pulse"></div>
-                        <span className="px-3 py-1 bg-border/5 text-foreground/20 text-sm rounded-full border border-border/10">
-                          Em breve
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="px-3 py-1 bg-border/5 text-foreground/20 text-sm rounded-full border border-border/10">
+                            Em breve
+                          </span>
+                          {expandedCards[3] ? (
+                            <ChevronUp className="w-5 h-5 text-foreground/20" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-foreground/20" />
+                          )}
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <div className="h-4 bg-border/10 rounded w-full animate-pulse"></div>
-                        <div className="h-4 bg-border/10 rounded w-2/3 animate-pulse"></div>
-                      </div>
+                      {expandedCards[3] && (
+                        <div className="space-y-2 transition-all duration-300">
+                          <div className="h-4 bg-border/10 rounded w-full animate-pulse"></div>
+                          <div className="h-4 bg-border/10 rounded w-2/3 animate-pulse"></div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -209,6 +250,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
             Cada dia de disciplina é um passo em direção à sua evolução. Continue sua jornada e desbloqueie novos avatares que representam seu crescimento pessoal!
           </p>
         </div>
+      </div>
       </div>
     </div>
   );
