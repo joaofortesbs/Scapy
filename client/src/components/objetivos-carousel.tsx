@@ -80,22 +80,24 @@ export default function ObjetivosCarousel() {
         }}
         className="w-full"
       >
-        <CarouselContent className="-ml-2 md:-ml-4">
+        <CarouselContent className="flex justify-center">
           {objetivos.map((objetivo) => (
-            <CarouselItem key={objetivo.id} className="pl-2 md:pl-4 basis-4/5">
-              <Card 
-                className="border-2 rounded-3xl transition-all duration-300 ai-assistant-card-natural-3d border-border backdrop-blur-md"
-                style={{ backgroundColor: '#000515' }}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-center">
-                    {/* Texto do objetivo centralizado */}
-                    <p className="text-sm font-medium leading-relaxed text-white text-center">
-                      {objetivo.texto}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+            <CarouselItem key={objetivo.id} className="basis-4/5 flex justify-center">
+              <div className="w-full flex justify-center">
+                <Card 
+                  className="border-2 rounded-3xl transition-all duration-300 ai-assistant-card-natural-3d border-border backdrop-blur-md w-full max-w-xs"
+                  style={{ backgroundColor: '#000515' }}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-center">
+                      {/* Texto do objetivo centralizado */}
+                      <p className="text-sm font-medium leading-relaxed text-white text-center">
+                        {objetivo.texto}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </CarouselItem>
           ))}
         </CarouselContent>
