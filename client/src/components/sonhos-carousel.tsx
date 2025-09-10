@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { Progress } from '@/components/ui/progress';
 import Autoplay from 'embla-carousel-autoplay';
 
 export default function SonhosCarousel() {
@@ -64,7 +65,12 @@ export default function SonhosCarousel() {
   return (
     <div className="w-full max-w-md mt-6" data-testid="sonhos-carousel">
       <div className="mb-3 flex justify-center px-2">
-        <h3 className="text-lg font-semibold text-white text-center">Seus sonhos...</h3>
+        <div className="w-4/5">
+          <Progress
+            value={30}
+            className="h-3 bg-secondary/30 border border-border"
+          />
+        </div>
       </div>
 
       <Carousel
