@@ -63,7 +63,7 @@ export default function SonhosCarousel() {
   }
 
   return (
-    <div className="w-full max-w-md mt-6" data-testid="sonhos-carousel">
+    <div className="w-full max-w-md mt-6 flex flex-col items-center" data-testid="sonhos-carousel">
       <div className="mb-3 flex justify-center px-2">
         <div className="w-4/5">
           <Progress
@@ -73,7 +73,8 @@ export default function SonhosCarousel() {
         </div>
       </div>
 
-      <Carousel
+      <div className="w-full flex justify-center">
+        <Carousel
         plugins={[autoplayPlugin.current]}
         opts={{
           align: "start",
@@ -104,7 +105,8 @@ export default function SonhosCarousel() {
             </CarouselItem>
           ))}
         </CarouselContent>
-      </Carousel>
+        </Carousel>
+      </div>
     </div>
   );
 }

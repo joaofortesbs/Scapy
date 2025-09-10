@@ -180,17 +180,21 @@ export default function PanicPage({ user: propUser }: PanicPageProps) {
 
         {/* Espaçamento para compensar o card sobreposto */}
         <div 
-          className="w-full flex flex-col items-center justify-center" 
+          className="w-full flex flex-col items-center justify-center px-4" 
           style={{ marginTop: '20px' }}
         >
           {/* Carrossel de Objetivos */}
-          <div className="flex justify-center w-full">
-            <ObjetivosCarousel />
+          <div className="w-full flex justify-center items-center">
+            <div className="w-full max-w-md flex justify-center">
+              <ObjetivosCarousel />
+            </div>
           </div>
           
           {/* Carrossel de Sonhos */}
-          <div className="flex justify-center w-full">
-            <SonhosCarousel />
+          <div className="w-full flex justify-center items-center">
+            <div className="w-full max-w-md flex justify-center">
+              <SonhosCarousel />
+            </div>
           </div>
         </div>
       </div>
