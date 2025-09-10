@@ -37,17 +37,13 @@ export default function AvatareEsEvolutivos(): JSX.Element {
         <Button
           variant="ghost"
           onClick={handleBackToDashboard}
-          className="text-foreground hover:text-primary transition-colors"
+          className="text-foreground hover:text-primary transition-colors p-2"
           data-testid="back-button"
         >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Voltar ao Painel
+          <ArrowLeft className="w-5 h-5" />
         </Button>
         
-        <div className="flex items-center space-x-2">
-          <Target className="w-6 h-6 text-primary" />
-          <span className="text-foreground font-medium">Avatares Evolutivos</span>
-        </div>
+        <div className="flex-1"></div>
       </div>
 
       {/* Conteúdo principal */}
@@ -94,18 +90,16 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex items-center space-x-6">
                     {/* Imagem do avatar */}
                     <div className="relative">
-                      <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-primary/30 shadow-lg">
-                        <img
-                          src="/caveman-avatar.png"
-                          alt="Homem das Cavernas"
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=caveman&backgroundColor=000515";
-                          }}
-                          data-testid="caveman-avatar"
-                        />
-                      </div>
+                      <img
+                        src="/caveman-avatar.png"
+                        alt="Homem das Cavernas"
+                        className="w-24 h-24 rounded-xl object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=caveman&backgroundColor=000515";
+                        }}
+                        data-testid="caveman-avatar"
+                      />
                       {/* Badge de ativo */}
                       <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
                         <div className="w-3 h-3 bg-background rounded-full animate-pulse"></div>
@@ -115,14 +109,13 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                     {/* Conteúdo do card */}
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-xl font-bold text-foreground">Iniciante da Jornada</h3>
+                        <h3 className="text-xl font-bold text-foreground">Homem das Cavernas</h3>
                         <span className="px-3 py-1 bg-primary/20 text-primary text-sm rounded-full border border-primary/30">
                           Atual
                         </span>
                       </div>
                       <p className="text-foreground/80 leading-relaxed">
-                        Você começou sua jornada de transformação! Como um homem das cavernas descobrindo o fogo, 
-                        você está dando os primeiros passos rumo ao controle e disciplina.
+                        Você deu os primeiros passos. Como um caçador das origens, está aprendendo a lutar contra seus instintos mais primitivos e provar que consegue sobreviver ao vício.
                       </p>
                     </div>
                   </div>
