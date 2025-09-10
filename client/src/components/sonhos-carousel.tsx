@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { Progress } from '@/components/ui/progress';
 import Autoplay from 'embla-carousel-autoplay';
 
 export default function SonhosCarousel() {
@@ -65,7 +65,12 @@ export default function SonhosCarousel() {
   return (
     <div className="w-full max-w-md mt-6" data-testid="sonhos-carousel">
       <div className="mb-3 flex justify-center px-2">
-        <h3 className="text-lg font-semibold text-white text-center">Seus sonhos...</h3>
+        <div className="w-4/5">
+          <Progress
+            value={30}
+            className="h-3 bg-secondary/30 border border-border"
+          />
+        </div>
       </div>
 
       <Carousel
@@ -79,14 +84,14 @@ export default function SonhosCarousel() {
         <CarouselContent className="-ml-2 md:-ml-4">
           {images.map((image, index) => (
             <CarouselItem key={index} className="pl-2 md:pl-4 basis-4/5">
-              <Card 
+              <Card
                 className="border-2 rounded-3xl transition-all duration-300 ai-assistant-card-natural-3d border-border backdrop-blur-md"
                 style={{ backgroundColor: '#000515' }}
               >
                 <CardContent className="p-2">
                   <div className="flex items-center justify-center">
                     {/* Imagem do sonho */}
-                    <div className="w-full h-56 sm:h-93 rounded-xl overflow-hidden">
+                    <div className="w-full h-96 sm:h-[26rem] rounded-xl overflow-hidden">
                       <img
                         src={image}
                         alt={`Sonho ${index + 1}`}
