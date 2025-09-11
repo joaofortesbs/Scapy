@@ -238,7 +238,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                       <img
                         src="/avatar-viking-coragem.webp"
                         alt="Viking da Coragem"
-                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        className="w-40 h-40 rounded-xl object-cover opacity-60"
                         style={{ aspectRatio: '1 / 1' }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
@@ -272,7 +272,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                       <img
                         src="/avatar-cavaleiro-resistencia.webp"
                         alt="Cavaleiro da Resistência"
-                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        className="w-40 h-40 rounded-xl object-cover opacity-60"
                         style={{ aspectRatio: '1 / 1' }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
@@ -306,7 +306,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                       <img
                         src="/avatar-soldado-vitoria.webp"
                         alt="Soldado da Vitória"
-                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        className="w-40 h-40 rounded-xl object-cover opacity-60"
                         style={{ aspectRatio: '1 / 1' }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
