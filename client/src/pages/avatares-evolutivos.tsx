@@ -164,7 +164,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               >
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Soldado Romano</h3>
+                    <h3 className="text-xl font-bold text-foreground/60">Guardião da Espada</h3>
                     
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
@@ -188,14 +188,14 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               >
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Cavaleiro Medieval</h3>
+                    <h3 className="text-xl font-bold text-foreground/60">Samurai da Disciplina</h3>
                     
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">14 DIAS</span>
+                      <span className="text-sm font-semibold">15 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
@@ -212,7 +212,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               >
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Samurai</h3>
+                    <h3 className="text-xl font-bold text-foreground/60">Viking da Coragem</h3>
                     
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
@@ -236,14 +236,14 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               >
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Viking</h3>
+                    <h3 className="text-xl font-bold text-foreground/60">Cavaleiro da Resistência</h3>
                     
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">60 DIAS</span>
+                      <span className="text-sm font-semibold">50 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
@@ -260,14 +260,14 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               >
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Gladiador</h3>
+                    <h3 className="text-xl font-bold text-foreground/60">Soldado da Vitória</h3>
                     
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">90 DIAS</span>
+                      <span className="text-sm font-semibold">75 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
@@ -284,14 +284,14 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               >
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Espartano</h3>
+                    <h3 className="text-xl font-bold text-foreground/60">Rei dos Relâmpagos</h3>
                     
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">120 DIAS</span>
+                      <span className="text-sm font-semibold">100 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
@@ -308,14 +308,14 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               >
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Ninja</h3>
+                    <h3 className="text-xl font-bold text-foreground/60">Super Arcanjo</h3>
                     
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">180 DIAS</span>
+                      <span className="text-sm font-semibold">130 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
@@ -332,14 +332,14 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               >
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Paladino</h3>
+                    <h3 className="text-xl font-bold text-foreground/60">Super Arcanjo</h3>
                     
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">270 DIAS</span>
+                      <span className="text-sm font-semibold">165 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
@@ -356,14 +356,14 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               >
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Arqueiro Élfico</h3>
+                    <h3 className="text-xl font-bold text-foreground/60">Prateado da Coragem</h3>
                     
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">365 DIAS</span>
+                      <span className="text-sm font-semibold">200 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
@@ -380,14 +380,14 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               >
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Lendário Imortal</h3>
+                    <h3 className="text-xl font-bold text-foreground/60">Titã Cósmico</h3>
                     
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">730 DIAS</span>
+                      <span className="text-sm font-semibold">300 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
