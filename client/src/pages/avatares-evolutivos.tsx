@@ -336,12 +336,11 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Guerreiro do Futuro</h3>
 
-                    <div className="relative">
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center overflow-hidden">
                       <img
-                        src="/avatar-guerreiro-futuro.webp"
+                        src="/attached_assets/avatar-guerreiro-futuro.webp"
                         alt="Guerreiro do Futuro"
-                        className="w-48 h-48 rounded-xl object-contain opacity-60"
-                        style={{ aspectRatio: '1 / 1' }}
+                        className="w-full h-full object-contain opacity-60"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=future&backgroundColor=000515";
@@ -370,12 +369,11 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Rei dos Relâmpagos</h3>
 
-                    <div className="relative">
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center overflow-hidden">
                       <img
-                        src="/avatar-soldado-relampago.webp"
+                        src="/attached_assets/avatar-soldado-relampago.webp"
                         alt="Rei dos Relâmpagos"
-                        className="w-48 h-48 rounded-xl object-contain opacity-60"
-                        style={{ aspectRatio: '1 / 1' }}
+                        className="w-full h-full object-contain opacity-60"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=lightning&backgroundColor=000515";
@@ -404,12 +402,11 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Super Arcanjo</h3>
 
-                    <div className="relative">
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center overflow-hidden">
                       <img
-                        src="/avatar-super-arcanjo.webp"
+                        src="/attached_assets/avatar-super-arcanjo.webp"
                         alt="Super Arcanjo"
-                        className="w-48 h-48 rounded-xl object-contain opacity-60"
-                        style={{ aspectRatio: '1 / 1' }}
+                        className="w-full h-full object-contain opacity-60"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=archangel&backgroundColor=000515";
@@ -438,12 +435,11 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Prateado da Coragem</h3>
 
-                    <div className="relative">
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center overflow-hidden">
                       <img
-                        src="/avatar-prateado-coragem.webp"
+                        src="/attached_assets/avatar-prateado-coragem.webp"
                         alt="Prateado da Coragem"
-                        className="w-48 h-48 rounded-xl object-contain opacity-60"
-                        style={{ aspectRatio: '1 / 1' }}
+                        className="w-full h-full object-contain opacity-60"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=silver&backgroundColor=000515";
@@ -471,12 +467,11 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Titã Cósmico</h3>
 
-                    <div className="relative">
+                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center overflow-hidden">
                       <img
-                        src="/avatar-titan-cosmico.webp"
+                        src="/attached_assets/avatar-titan-cosmico.webp"
                         alt="Titã Cósmico"
-                        className="w-48 h-48 rounded-xl object-contain opacity-60"
-                        style={{ aspectRatio: '1 / 1' }}
+                        className="w-full h-full object-contain opacity-60"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=titan&backgroundColor=000515";
