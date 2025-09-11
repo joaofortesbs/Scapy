@@ -23,54 +23,83 @@ interface CalculatedTime {
 }
 
 export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPageProps) {
-  // ====== TODOS OS HOOKS DEVEM ESTAR NO TOPO - SEM CONDIÇÕES ======
+  // ====== TODOS OS HOOKS DECLARADOS NO TOPO - ORDEM FIXA ======
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [user, setUser] = useState<User | null>(propUser || null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load user data from localStorage and API
+  // ====== EFEITO DE INICIALIZAÇÃO - EXECUTADO UMA VEZ ======
   useEffect(() => {
-    const loadUserData = async () => {
+    let isMounted = true;
+
+    const initializeComponent = async () => {
       try {
-        // First try to get from localStorage
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
-          console.log('👤 Usuário carregado do localStorage:', parsedUser);
-        }
-
-        // If we have a user ID, fetch fresh data from API
-        const userToCheck = propUser || (storedUser ? JSON.parse(storedUser) : null);
-        if (userToCheck?.id) {
-          try {
-            const response = await fetch(`/api/timer/status/${userToCheck.id}`);
-            const data = await response.json();
-
-            if (response.ok && data.hasActiveTimer && data.startDate) {
-              const updatedUser = {
-                ...userToCheck,
-                startDate: data.startDate
-              };
-              setUser(updatedUser);
-              localStorage.setItem('user', JSON.stringify(updatedUser));
-              console.log('🔄 Dados do usuário atualizados da API:', updatedUser);
+        console.log('🚀 [PanicPage] Inicializando componente...');
+        
+        // Primeiro: definir usuário a partir das props ou localStorage
+        let userData: User | null = propUser || null;
+        
+        if (!userData) {
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            try {
+              userData = JSON.parse(storedUser);
+              console.log('👤 [PanicPage] Usuário carregado do localStorage:', userData);
+            } catch (parseError) {
+              console.error('❌ [PanicPage] Erro ao parsear dados do usuário:', parseError);
+              setError('Erro ao carregar dados do usuário');
             }
-          } catch (error) {
-            console.error('❌ Erro ao buscar dados do timer:', error);
           }
         }
-      } catch (error) {
-        console.error('❌ Erro ao carregar dados do usuário:', error);
-      } finally {
-        setIsLoading(false);
+
+        // Segundo: buscar dados atualizados da API se temos um usuário
+        if (userData?.id) {
+          try {
+            const response = await fetch(`/api/timer/status/${userData.id}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.hasActiveTimer && data.startDate) {
+                userData = {
+                  ...userData,
+                  startDate: data.startDate
+                };
+                console.log('🔄 [PanicPage] Dados atualizados da API:', userData);
+                
+                // Salvar dados atualizados
+                localStorage.setItem('user', JSON.stringify(userData));
+              }
+            }
+          } catch (apiError) {
+            console.warn('⚠️ [PanicPage] Erro na API (não crítico):', apiError);
+            // Continua com dados locais
+          }
+        }
+
+        // Terceiro: atualizar estado apenas se componente ainda está montado
+        if (isMounted) {
+          setUser(userData);
+          setIsLoading(false);
+          console.log('✅ [PanicPage] Inicialização concluída');
+        }
+
+      } catch (initError) {
+        console.error('❌ [PanicPage] Erro na inicialização:', initError);
+        if (isMounted) {
+          setError('Erro ao inicializar página de pânico');
+          setIsLoading(false);
+        }
       }
     };
 
-    loadUserData();
-  }, [propUser]);
+    initializeComponent();
 
-  // Update timer every second
+    return () => {
+      isMounted = false;
+    };
+  }, [propUser?.id]); // Dependência específica para evitar loops
+
+  // ====== EFEITO DO TIMER - SEPARADO DA INICIALIZAÇÃO ======
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -79,17 +108,14 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
     return () => clearInterval(interval);
   }, []);
 
-  // ====== FUNÇÕES AUXILIARES ======
-  
-  // Calculate time difference only if user has startDate
+  // ====== FUNÇÕES AUXILIARES - SEMPRE APÓS OS HOOKS ======
   const getTimeDifference = (): CalculatedTime | null => {
     if (!user?.startDate) return null;
     return calculateTimeDifference(user.startDate, currentTime);
   };
 
-  // Timer component que replica exatamente a lógica do timer principal
   const TimerDuplicate = () => {
-    if (!user || !user.startDate) {
+    if (!user?.startDate) {
       return (
         <div className="text-xs text-white font-mono">
           00:00:00
@@ -97,24 +123,23 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
       );
     }
 
-    const startDate = user.startDate;
-    const timeDiffCalculated = calculateTimeDifference(startDate, currentTime);
-    const hasCompletedOneDay = timeDiffCalculated.days > 0;
+    const timeDiff = getTimeDifference();
+    if (!timeDiff) return null;
+
+    const hasCompletedOneDay = timeDiff.days > 0;
 
     return (
       <div className="text-center">
         {!hasCompletedOneDay ? (
-          // Timer compacto para menos de 24 horas
           <div className="text-xs text-white font-mono font-bold" data-testid="timer-display">
-            <span data-testid="timer-hours">{String(timeDiffCalculated.hours).padStart(2, '0')}</span>:
-            <span data-testid="timer-minutes">{String(timeDiffCalculated.minutes).padStart(2, '0')}</span>:
-            <span data-testid="timer-seconds">{String(timeDiffCalculated.seconds).padStart(2, '0')}</span>
+            <span data-testid="timer-hours">{String(timeDiff.hours).padStart(2, '0')}</span>:
+            <span data-testid="timer-minutes">{String(timeDiff.minutes).padStart(2, '0')}</span>:
+            <span data-testid="timer-seconds">{String(timeDiff.seconds).padStart(2, '0')}</span>
           </div>
         ) : (
-          // Design compacto para 1+ dias com texto de liberdade
           <div className="flex items-center justify-center gap-2" data-testid="days-display">
             <div className="text-sm font-bold text-white">
-              {timeDiffCalculated.days} {timeDiffCalculated.days === 1 ? 'DIA' : 'DIAS'}
+              {timeDiff.days} {timeDiff.days === 1 ? 'DIA' : 'DIAS'}
             </div>
             <div className="text-sm font-bold text-white">
               DE LIBERDADE!
@@ -125,9 +150,20 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
     );
   };
 
-  // ====== RENDERIZAÇÃO CONDICIONAL APENAS APÓS TODOS OS HOOKS ======
-  
-  // Early return se está carregando
+  // ====== RENDERIZAÇÃO CONDICIONAL APENAS APÓS HOOKS ======
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-lg mb-4">{error}</div>
+          <Button onClick={() => window.location.reload()}>
+            Tentar Novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -136,7 +172,7 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
     );
   }
 
-  // Renderização principal
+  // ====== RENDERIZAÇÃO PRINCIPAL ======
   return (
     <div 
       className="min-h-screen bg-background text-foreground relative animate-fade-in overflow-hidden"
@@ -145,12 +181,11 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
         animation: 'fadeIn 0.6s ease-out'
       }}
     >
-      {/* Fundo com partículas igual ao painel */}
       <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
 
       <div className="relative z-10">
         <div className="flex flex-col items-center justify-start min-h-screen px-6 pt-8 pb-8">
-          {/* Header com botão de voltar e título */}
+          {/* Header */}
           <div className="w-full flex items-center justify-between mb-4">
             {onBackFromPanic ? (
               <Button
@@ -183,12 +218,10 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
             </h1>
           </div>
 
-          {/* Container para Câmera da Vergonha e Card Sobreposto */}
+          {/* Container para Câmera e Card */}
           <div className="w-full max-w-md relative" style={{ marginTop: '15px' }}>
-            {/* Componente Câmera da Vergonha */}
             <CameraShame autoActivate={true} />
 
-            {/* Novo card retangular sobreposto - 50% dentro, 50% fora */}
             <div 
               className="absolute left-1/2 transform -translate-x-1/2 w-3/5"
               style={{ 
@@ -204,19 +237,17 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
             </div>
           </div>
 
-          {/* Espaçamento para compensar o card sobreposto */}
+          {/* Carrosseis */}
           <div 
             className="w-full flex flex-col items-center justify-center px-4" 
             style={{ marginTop: '20px' }}
           >
-            {/* Carrossel de Objetivos */}
             <div className="w-full flex justify-center items-center">
               <div className="w-full max-w-md flex justify-center">
                 <ObjetivosCarousel />
               </div>
             </div>
 
-            {/* Carrossel de Sonhos */}
             <div className="w-full flex justify-center items-center">
               <div className="w-full max-w-md flex justify-center">
                 <SonhosCarousel />
@@ -226,14 +257,11 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
         </div>
       </div>
 
-      {/* Botão flutuante de ajuda fixo */}
+      {/* Botão de Ajuda */}
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
         <Button
           className="panic-button text-white font-bold py-6 px-12 rounded-full shadow-2xl border-2 border-red-800 transition-all duration-300 transform hover:scale-105"
-          onClick={() => {
-            // Aqui você pode adicionar a lógica de ajuda
-            alert("Função de ajuda será implementada!");
-          }}
+          onClick={() => alert("Função de ajuda será implementada!")}
         >
           <div className="flex items-center gap-4">
             <Hand className="w-10 h-10 font-bold stroke-2" />
@@ -242,7 +270,6 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
         </Button>
       </div>
 
-      {/* Estilos para animação */}
       <style dangerouslySetInnerHTML={{
         __html: `
           @keyframes fadeIn {
