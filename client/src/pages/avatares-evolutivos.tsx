@@ -428,7 +428,8 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 }}
                 data-testid="avatar-card-12"
               >
-                <div className="flex flex-col items-center text-center space-y-4">
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Lendário Imortal</h3>
 
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
