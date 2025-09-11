@@ -40,80 +40,177 @@ export default function AIAssistant(): JSX.Element {
     }
   }, []);
 
-  // Escutar atualizações de humor para manter sincronizado
+  // Escutar atualizações de humor e eventos de reinicialização
   useEffect(() => {
     const handleMoodUpdate = () => {
       if (user) {
-        console.log('🔄 Recarregando humor após atualização...');
+        console.log('🔄 [AIAssistant] Recarregando humor após atualização...');
         checkTodayMood(user.id);
       }
     };
 
-    window.addEventListener('moodUpdated', handleMoodUpdate);
-    return () => {
-      window.removeEventListener('moodUpdated', handleMoodUpdate);
-    };
-  }, [user]);
-
-  // Verificar mudança de dia a cada minuto para reiniciar seleção de humor às 00:00
-  useEffect(() => {
-    if (!user) return;
-
-    const checkNewDay = () => {
-      const now = new Date();
-      const todayKey = now.toISOString().split('T')[0];
-      const currentMoodKey = `scapy_mood_${user.id}_${todayKey}`;
-      
-      // Se não há humor salvo para hoje, significa que é um novo dia
-      const savedMood = localStorage.getItem(currentMoodKey);
-      if (!savedMood && todayMood) {
-        console.log('🌅 [AIAssistant] Novo dia detectado! Reiniciando seleção de humor...');
+    const handleNewDayDetected = (event: CustomEvent) => {
+      if (user && event.detail?.userId === user.id) {
+        console.log('🌅 [AIAssistant] Evento de novo dia recebido, reiniciando...');
         setTodayMood(null);
+        setSelectedMood(null);
+        setIsGenerating(false);
         
-        // Disparar evento de novo dia
-        window.dispatchEvent(new CustomEvent('newDayDetected', {
-          detail: {
-            userId: user.id,
-            newDate: todayKey
-          }
-        }));
+        // Verificar estado limpo após um pequeno delay
+        setTimeout(() => {
+          checkTodayMood(user.id);
+        }, 1000);
       }
     };
 
-    // Verificar imediatamente
+    const handleMoodReset = (event: CustomEvent) => {
+      if (user && event.detail?.userId === user.id) {
+        console.log('🔄 [AIAssistant] Reset de humor detectado');
+        setTodayMood(null);
+        setSelectedMood(null);
+        setIsGenerating(false);
+      }
+    };
+
+    // Registrar todos os listeners
+    window.addEventListener('moodUpdated', handleMoodUpdate);
+    window.addEventListener('newDayDetected', handleNewDayDetected);
+    window.addEventListener('moodResetComplete', handleMoodReset);
+    
+    return () => {
+      window.removeEventListener('moodUpdated', handleMoodUpdate);
+      window.removeEventListener('newDayDetected', handleNewDayDetected);
+      window.removeEventListener('moodResetComplete', handleMoodReset);
+    };
+  }, [user]);
+
+  // Sistema robusto de detecção de mudança de dia e reinicialização às 00:00
+  useEffect(() => {
+    if (!user) return;
+
+    let lastKnownDate = new Date().toISOString().split('T')[0];
+    
+    const performMidnightReset = () => {
+      console.log('🌅 [AIAssistant] REINICIALIZAÇÃO TOTAL INICIADA - Novo dia detectado!');
+      
+      const newDate = new Date().toISOString().split('T')[0];
+      const oldDate = lastKnownDate;
+      
+      // 1. Limpar estado React completamente
+      setTodayMood(null);
+      setSelectedMood(null);
+      setIsGenerating(false);
+      
+      // 2. Limpar dados antigos do localStorage para evitar conflitos
+      const keysToRemove = [
+        `scapy_mood_${user.id}_${oldDate}`,
+        `scapy_daily_mood_${user.id}_${oldDate}`,
+        `scapy_session_mood`,
+        'scapy_ai_assistant_state'
+      ];
+      
+      keysToRemove.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+          console.log(`🗑️ [AIAssistant] Removido: ${key}`);
+        } catch (error) {
+          console.warn(`⚠️ [AIAssistant] Erro ao remover ${key}:`, error);
+        }
+      });
+      
+      // 3. Resetar dados gerais de humor se necessário
+      try {
+        const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
+        if (allMoods[user.id.toString()] && allMoods[user.id.toString()][oldDate]) {
+          // Manter histórico, mas não interferir no novo dia
+          console.log(`📚 [AIAssistant] Mantendo histórico do dia ${oldDate}`);
+        }
+      } catch (error) {
+        console.error('❌ [AIAssistant] Erro ao processar histórico:', error);
+      }
+      
+      // 4. Atualizar referência de data
+      lastKnownDate = newDate;
+      
+      // 5. Disparar eventos de sincronização
+      window.dispatchEvent(new CustomEvent('newDayDetected', {
+        detail: {
+          userId: user.id,
+          oldDate: oldDate,
+          newDate: newDate,
+          timestamp: Date.now(),
+          source: 'ai-assistant-midnight-reset'
+        }
+      }));
+      
+      window.dispatchEvent(new CustomEvent('moodResetComplete', {
+        detail: {
+          userId: user.id,
+          date: newDate,
+          resetType: 'midnight'
+        }
+      }));
+      
+      console.log(`🔄 [AIAssistant] REINICIALIZAÇÃO COMPLETA! ${oldDate} → ${newDate}`);
+    };
+
+    const checkNewDay = () => {
+      const now = new Date();
+      const currentDate = now.toISOString().split('T')[0];
+      
+      // Detectar mudança de data
+      if (currentDate !== lastKnownDate) {
+        console.log(`📅 [AIAssistant] Mudança de data detectada: ${lastKnownDate} → ${currentDate}`);
+        performMidnightReset();
+        return;
+      }
+      
+      // Verificar se há humor salvo para hoje quando não deveria haver
+      const currentMoodKey = `scapy_mood_${user.id}_${currentDate}`;
+      const savedMood = localStorage.getItem(currentMoodKey);
+      
+      // Se é um novo dia e ainda há estado de humor anterior, limpar
+      if (todayMood && !savedMood) {
+        console.log('🧹 [AIAssistant] Estado inconsistente detectado, limpando...');
+        setTodayMood(null);
+      }
+    };
+
+    // Verificação inicial
     checkNewDay();
 
-    // Verificar a cada 60 segundos
-    const interval = setInterval(checkNewDay, 60000);
+    // Verificação a cada 30 segundos para detecção rápida
+    const frequentCheck = setInterval(checkNewDay, 30000);
 
-    // Verificar especificamente à meia-noite
+    // Verificação específica à meia-noite
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(now.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
+    tomorrow.setHours(0, 0, 5, 0); // 5 segundos após meia-noite para garantir
     
     const msUntilMidnight = tomorrow.getTime() - now.getTime();
     
     const midnightTimeout = setTimeout(() => {
-      console.log('🌅 [AIAssistant] Meia-noite detectada! Reiniciando sistema...');
-      setTodayMood(null);
-      checkTodayMood(user.id);
+      console.log('🕛 [AIAssistant] MEIA-NOITE EXATA DETECTADA!');
+      performMidnightReset();
       
-      // Configurar verificação diária
-      const dailyInterval = setInterval(() => {
-        console.log('🌅 [AIAssistant] Verificação diária - reiniciando humor...');
-        setTodayMood(null);
-        checkTodayMood(user.id);
-      }, 24 * 60 * 60 * 1000); // 24 horas
+      // Configurar timer diário para próximas meia-noites
+      const dailyTimer = setInterval(() => {
+        console.log('🕛 [AIAssistant] Timer diário ativado - Nova meia-noite!');
+        performMidnightReset();
+      }, 24 * 60 * 60 * 1000);
 
-      return () => clearInterval(dailyInterval);
+      // Cleanup será feito quando o componente desmontar
+      return () => clearInterval(dailyTimer);
     }, msUntilMidnight);
 
+    console.log(`⏰ [AIAssistant] Timer configurado - Próxima verificação em ${Math.round(msUntilMidnight / 1000)} segundos`);
+
     return () => {
-      clearInterval(interval);
+      clearInterval(frequentCheck);
       clearTimeout(midnightTimeout);
     };
-  }, [user, todayMood]);
+  }, [user]); // Remover dependência de todayMood para evitar loops
 
   const checkTodayMood = async (userId: number) => {
     try {
@@ -123,7 +220,7 @@ export default function AIAssistant(): JSX.Element {
       
       console.log(`🕒 [AIAssistant] Verificando humor para: ${todayKey} às ${now.toLocaleTimeString()}`);
       
-      // 1. PRIMEIRO: Verificar localStorage para carregamento rápido
+      // Verificação robusta com limpeza automática de dados antigos
       const individualMoodKey = `scapy_mood_${userId}_${todayKey}`;
       const savedIndividualMood = localStorage.getItem(individualMoodKey);
       
@@ -131,34 +228,66 @@ export default function AIAssistant(): JSX.Element {
         try {
           const moodData = JSON.parse(savedIndividualMood);
           
-          // Verificar se o humor é realmente de hoje
-          const moodDate = moodData.date;
-          if (moodDate === todayKey) {
-            setTodayMood(moodData.mood);
-            console.log(`💿 [AIAssistant] Humor carregado do localStorage: ${moodData.mood} para ${todayKey}`);
+          // Verificação rigorosa de data
+          if (moodData.date === todayKey) {
+            // Verificação adicional de timestamp para garantir que é realmente de hoje
+            const moodTimestamp = new Date(moodData.timestamp || 0);
+            const todayStart = new Date(todayKey + 'T00:00:00.000Z');
+            const todayEnd = new Date(todayKey + 'T23:59:59.999Z');
+            
+            if (moodTimestamp >= todayStart && moodTimestamp <= todayEnd) {
+              setTodayMood(moodData.mood);
+              console.log(`💿 [AIAssistant] Humor válido carregado: ${moodData.mood} para ${todayKey}`);
+            } else {
+              console.log(`🗑️ [AIAssistant] Humor com timestamp inválido, removendo...`);
+              localStorage.removeItem(individualMoodKey);
+              setTodayMood(null);
+            }
           } else {
-            // Humor é de outro dia, limpar e definir como null
-            console.log(`🗑️ [AIAssistant] Humor antigo encontrado (${moodDate}), limpando...`);
+            // Humor é de outro dia, limpar imediatamente
+            console.log(`🗑️ [AIAssistant] Humor de data diferente (${moodData.date}), removendo...`);
             localStorage.removeItem(individualMoodKey);
             setTodayMood(null);
           }
         } catch (error) {
-          console.error('❌ Erro ao parsear humor do localStorage:', error);
+          console.error('❌ Erro ao parsear humor, removendo:', error);
           localStorage.removeItem(individualMoodKey);
           setTodayMood(null);
         }
       } else {
-        // Verificar registro geral como fallback
-        const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
-        const userMoods = allMoods[userId.toString()] || {};
-        const todayMoodFromGeneral = userMoods[todayKey];
-        
-        if (todayMoodFromGeneral) {
-          setTodayMood(todayMoodFromGeneral);
-          console.log(`💿 [AIAssistant] Humor carregado do registro geral: ${todayMoodFromGeneral} para ${todayKey}`);
-        } else {
+        // Verificar e limpar registros antigos do sistema geral
+        try {
+          const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
+          const userMoods = allMoods[userId.toString()] || {};
+          
+          // Limpar automaticamente humores antigos (mais de 7 dias)
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          
+          Object.keys(userMoods).forEach(dateKey => {
+            const dateObj = new Date(dateKey);
+            if (dateObj < sevenDaysAgo) {
+              delete userMoods[dateKey];
+              console.log(`🧹 [AIAssistant] Removido humor antigo: ${dateKey}`);
+            }
+          });
+          
+          // Salvar dados limpos
+          allMoods[userId.toString()] = userMoods;
+          localStorage.setItem('scapy_all_moods', JSON.stringify(allMoods));
+          
+          // Verificar humor de hoje
+          const todayMoodFromGeneral = userMoods[todayKey];
+          if (todayMoodFromGeneral) {
+            setTodayMood(todayMoodFromGeneral);
+            console.log(`💿 [AIAssistant] Humor recuperado do sistema geral: ${todayMoodFromGeneral}`);
+          } else {
+            setTodayMood(null);
+            console.log(`📋 [AIAssistant] Nenhum humor encontrado para hoje (${todayKey})`);
+          }
+        } catch (error) {
+          console.error('❌ Erro ao processar sistema geral:', error);
           setTodayMood(null);
-          console.log(`📋 [AIAssistant] Nenhum humor encontrado para hoje (${todayKey})`);
         }
       }
       
