@@ -365,13 +365,13 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">130 DIAS</span>
+                      <span className="text-sm font-semibold">150 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Card 10 - Super Arcanjo */}
+              {/* Card 10 - Prateado da Coragem */}
               <Card
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
                 style={{
@@ -379,30 +379,6 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   borderColor: 'rgba(255, 255, 255, 0.08)'
                 }}
                 data-testid="avatar-card-10"
-              >
-                <CardContent className="p-8">
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Super Arcanjo</h3>
-
-                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
-                    </div>
-
-                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">165 DIAS</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 11 - Prateado da Coragem */}
-              <Card
-                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
-                  borderColor: 'rgba(255, 255, 255, 0.08)'
-                }}
-                data-testid="avatar-card-11"
               >
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
@@ -419,25 +395,25 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Card 12 - Titã Cósmico */}
+              {/* Card 11 - Titã Cósmico */}
               <Card
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
                 style={{
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.08)'
                 }}
-                data-testid="avatar-card-12"
+                data-testid="avatar-card-11"
               >
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Lendário Imortal</h3>
+                    <h3 className="text-xl font-bold text-foreground/60">Titã Cósmico</h3>
 
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">365 DIAS</span>
+                      <span className="text-sm font-semibold">300 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
