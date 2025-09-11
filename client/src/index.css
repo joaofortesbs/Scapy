@@ -140,16 +140,16 @@
   }
 
   .floating-avatar {
-    animation: float 3s ease-in-out infinite;
+    animation: floating 4s ease-in-out infinite;
     margin-bottom: 1.5rem;
   }
 
-  @keyframes float {
+  @keyframes floating {
     0%, 100% {
       transform: translateY(0px);
     }
     50% {
-      transform: translateY(-10px);
+      transform: translateY(-6px);
     }
   }
 
@@ -443,23 +443,23 @@
       height: 35px;
       font-size: 0.875rem;
     }
-    
+
     .challenge-cards-container {
       gap: 1rem;
     }
-    
+
     .challenge-card {
       max-width: calc(50% - 0.25rem);
     }
-    
+
     .challenge-card .min-h-\[84px\] {
       min-height: 70px;
     }
-    
+
     .challenge-card .p-4 {
       padding: 0.75rem;
     }
-    
+
     .daily-goals-section {
       margin-top: 1rem !important;
     }
@@ -892,3 +892,4 @@
         translateZ(6px);
     }
   }
+}
