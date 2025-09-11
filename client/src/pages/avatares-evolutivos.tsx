@@ -338,7 +338,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
                     <div className="relative">
                       <img
-                        src="/caveman-avatar.png"
+                        src="/avatar-guerreiro-futuro.webp"
                         alt="Guerreiro do Futuro"
                         className="w-48 h-48 rounded-xl object-contain opacity-60"
                         style={{ aspectRatio: '1 / 1' }}
@@ -372,9 +372,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
                     <div className="relative">
                       <img
-                        src="/avatar-cavaleiro-resistencia.webp"
+                        src="/avatar-soldado-relampago.webp"
                         alt="Rei dos Relâmpagos"
-                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        className="w-48 h-48 rounded-xl object-contain opacity-60"
                         style={{ aspectRatio: '1 / 1' }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
@@ -406,9 +406,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
                     <div className="relative">
                       <img
-                        src="/avatar-guardião-espada.webp"
+                        src="/avatar-super-arcanjo.webp"
                         alt="Super Arcanjo"
-                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        className="w-48 h-48 rounded-xl object-contain opacity-60"
                         style={{ aspectRatio: '1 / 1' }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
@@ -440,9 +440,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
                     <div className="relative">
                       <img
-                        src="/avatar-samurai-disciplina.webp"
+                        src="/avatar-prateado-coragem.webp"
                         alt="Prateado da Coragem"
-                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        className="w-48 h-48 rounded-xl object-contain opacity-60"
                         style={{ aspectRatio: '1 / 1' }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
@@ -473,9 +473,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
                     <div className="relative">
                       <img
-                        src="/avatar-soldado-vitoria.webp"
+                        src="/avatar-titan-cosmico.webp"
                         alt="Titã Cósmico"
-                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        className="w-48 h-48 rounded-xl object-contain opacity-60"
                         style={{ aspectRatio: '1 / 1' }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
