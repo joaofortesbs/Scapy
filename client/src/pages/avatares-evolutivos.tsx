@@ -102,7 +102,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
             <div className="absolute left-8 top-0 bottom-0 w-1 bg-border/30 rounded-full border border-border/40">
               {/* Preenchimento da barra até a posição atual */}
               <div 
-                className="absolute top-0 left-0 w-full bg-gradient-to-b from-primary via-primary/80 to-primary/60 rounded-full transition-all duration-500"
+                className="absolute top-0 left-0 w-full bg-primary rounded-full transition-all duration-500"
                 style={{
                   height: `${(() => {
                     // Marcos dos cards em dias
