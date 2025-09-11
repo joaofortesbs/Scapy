@@ -323,7 +323,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Card 8 - Espartano */}
+              {/* Card 8 - Rei dos Relâmpagos */}
               <Card 
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
                 style={{ 
@@ -347,7 +347,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Card 9 - Ninja */}
+              {/* Card 9 - Super Arcanjo */}
               <Card 
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
                 style={{ 
@@ -371,7 +371,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Card 10 - Paladino */}
+              {/* Card 10 - Super Arcanjo */}
               <Card 
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
                 style={{ 
@@ -395,7 +395,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Card 11 - Arqueiro Élfico */}
+              {/* Card 11 - Prateado da Coragem */}
               <Card 
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
                 style={{ 
@@ -419,7 +419,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Card 12 - Lendário Imortal */}
+              {/* Card 12 - Titã Cósmico */}
               <Card 
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
                 style={{ 
