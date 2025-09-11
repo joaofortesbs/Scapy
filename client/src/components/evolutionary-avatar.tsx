@@ -97,7 +97,7 @@ export default function EvolutionaryAvatar({
         )}
 
         {/* Indicador de progresso para próximo avatar */}
-        {nextAvatar && (
+        {nextAvatar && showTitle && (
           <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
             <div className="bg-background/90 backdrop-blur-sm rounded-full px-3 py-1 border border-border/30">
               <span className="text-xs text-foreground/70">

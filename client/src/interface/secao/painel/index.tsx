@@ -1221,7 +1221,7 @@ export default function PainelInterface({
                     <EvolutionaryAvatar
                       startDate={localUser?.startDate}
                       size="large"
-                      showTitle={true}
+                      showTitle={false}
                       showProgress={false}
                       className="transition-all duration-500"
                     />
