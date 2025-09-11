@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLocation } from "wouter";
 import ParticlesBackground from "@/components/particles-background";
+import { avatarEvolutions, getCurrentAvatar, calculateProgressInDays } from "@/utils/avatar-system";
 
 interface User {
   id: number;
@@ -289,82 +290,78 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               </Card>
 
               {/* Cards 5-12 with dynamic system */}
-              {[
-                { id: 5, title: "Viking da Coragem", days: 30, nextDays: 50, image: "/avatar-viking-coragem.webp", seed: "viking", size: "w-48 h-48" },
-                { id: 6, title: "Cavaleiro da Resistência", days: 50, nextDays: 75, image: "/avatar-cavaleiro-resistencia.webp", seed: "knight", size: "w-48 h-48" },
-                { id: 7, title: "Soldado da Vitória", days: 75, nextDays: 100, image: "/avatar-soldado-vitoria.webp", seed: "soldier", size: "w-48 h-48" },
-                { id: 8, title: "Guerreiro do Futuro", days: 100, nextDays: 130, image: "/avatar-guerreiro-futuro.webp", seed: "future", size: "w-48 h-48" },
-                { id: 9, title: "Rei dos Relâmpagos", days: 130, nextDays: 165, image: "/avatar-soldado-relampago.webp", seed: "lightning", size: "w-48 h-48" },
-                { id: 10, title: "Super Arcanjo", days: 165, nextDays: 200, image: "/avatar-super-arcanjo.webp", seed: "archangel", size: "w-48 h-48" },
-                { id: 11, title: "Prateado da Coragem", days: 200, nextDays: 300, image: "/avatar-prateado-coragem.webp", seed: "silver", size: "w-48 h-48" },
-                { id: 12, title: "Titã Cósmico", days: 300, nextDays: undefined, image: "/avatar-titan-cosmico.webp", seed: "titan", size: "w-48 h-48" }
-              ].map((avatar) => (
+              {avatarEvolutions.slice(4).map((avatar) => {
+                const nextAvatar = avatarEvolutions.find(a => a.days > avatar.days);
+                const nextDays = nextAvatar ? nextAvatar.days : undefined;
+                
+                return (
                 <Card
-                  key={avatar.id}
-                  className={`backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02] ${
-                    isCurrentCard(avatar.days, avatar.nextDays)
-                      ? 'bg-background/5 border-primary/30'
-                      : isCardActive(avatar.days)
-                        ? 'bg-background/3 border-green-500/30'
-                        : 'bg-background/1 border-border/10 opacity-40 hover:opacity-50'
-                  }`}
-                  style={{
-                    background: isCurrentCard(avatar.days, avatar.nextDays)
-                      ? 'linear-gradient(135deg, rgba(0, 246, 255, 0.1) 0%, rgba(0, 5, 21, 0.8) 100%)'
-                      : isCardActive(avatar.days)
-                        ? 'linear-gradient(135deg, rgba(0, 255, 0, 0.1) 0%, rgba(0, 5, 21, 0.8) 100%)'
-                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
-                    borderColor: isCurrentCard(avatar.days, avatar.nextDays)
-                      ? 'rgba(0, 246, 255, 0.3)'
-                      : isCardActive(avatar.days)
-                        ? 'rgba(0, 255, 0, 0.3)'
-                        : 'rgba(255, 255, 255, 0.08)'
-                  }}
-                  data-testid={`avatar-card-${avatar.id}`}
-                >
-                  <CardContent className="p-8">
-                    <div className="flex flex-col items-center text-center space-y-4">
-                      <h3 className={`text-xl font-bold ${
-                        isCurrentCard(avatar.days, avatar.nextDays) ? 'text-foreground' :
-                        isCardActive(avatar.days) ? 'text-green-400' : 'text-foreground/60'
-                      }`}>
-                        {avatar.title}
-                      </h3>
+                    key={avatar.id}
+                    className={`backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02] ${
+                      isCurrentCard(avatar.days, nextDays)
+                        ? 'bg-background/5 border-primary/30'
+                        : isCardActive(avatar.days)
+                          ? 'bg-background/3 border-green-500/30'
+                          : 'bg-background/1 border-border/10 opacity-40 hover:opacity-50'
+                    }`}
+                    style={{
+                      background: isCurrentCard(avatar.days, nextDays)
+                        ? 'linear-gradient(135deg, rgba(0, 246, 255, 0.1) 0%, rgba(0, 5, 21, 0.8) 100%)'
+                        : isCardActive(avatar.days)
+                          ? 'linear-gradient(135deg, rgba(0, 255, 0, 0.1) 0%, rgba(0, 5, 21, 0.8) 100%)'
+                          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
+                      borderColor: isCurrentCard(avatar.days, nextDays)
+                        ? 'rgba(0, 246, 255, 0.3)'
+                        : isCardActive(avatar.days)
+                          ? 'rgba(0, 255, 0, 0.3)'
+                          : 'rgba(255, 255, 255, 0.08)'
+                    }}
+                    data-testid={`avatar-card-${avatar.id}`}
+                  >
+                    <CardContent className="p-8">
+                      <div className="flex flex-col items-center text-center space-y-4">
+                        <h3 className={`text-xl font-bold ${
+                          isCurrentCard(avatar.days, nextDays) ? 'text-foreground' :
+                          isCardActive(avatar.days) ? 'text-green-400' : 'text-foreground/60'
+                        }`}>
+                          {avatar.title}
+                        </h3>
 
-                      <div className="relative">
-                        <img
-                          src={avatar.image}
-                          alt={avatar.title}
-                          className={`${avatar.size} rounded-xl object-contain ${
-                            isCurrentCard(avatar.days, avatar.nextDays) ? '' :
-                            isCardActive(avatar.days) ? 'opacity-100' : 'opacity-60'
-                          }`}
-                          style={{ aspectRatio: '1 / 1' }}
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${avatar.seed}&backgroundColor=000515`;
-                          }}
-                          data-testid={`${avatar.seed}-avatar`}
-                        />
+                        <div className="relative">
+                          <img
+                            src={avatar.image}
+                            alt={avatar.title}
+                            className={`w-48 h-48 rounded-xl object-contain ${
+                              isCurrentCard(avatar.days, nextDays) ? '' :
+                              isCardActive(avatar.days) ? 'opacity-100' : 'opacity-60'
+                            }`}
+                            style={{ aspectRatio: '1 / 1' }}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${avatar.seed}&backgroundColor=000515`;
+                            }}
+                            data-testid={`${avatar.seed}-avatar`}
+                          />
 
-                        {isCardActive(avatar.days) && !isCurrentCard(avatar.days, avatar.nextDays) && (
-                          <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-sm font-bold">✓</span>
-                          </div>
-                        )}
+                          {isCardActive(avatar.days) && !isCurrentCard(avatar.days, nextDays) && (
+                            <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                              <span className="text-white text-sm font-bold">✓</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className={`px-4 py-2 rounded-full border ${
+                          isCurrentCard(avatar.days, nextDays) ? 'bg-primary/20 text-primary border-primary/30' :
+                          isCardActive(avatar.days) ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                          'bg-border/5 text-foreground/20 border-border/10'
+                        }`}>
+                          <span className="text-sm font-semibold">{avatar.days} DIAS</span>
+                        </div>
                       </div>
-
-                      <div className={`px-4 py-2 rounded-full border ${
-                        isCurrentCard(avatar.days, avatar.nextDays) ? 'bg-primary/20 text-primary border-primary/30' :
-                        isCardActive(avatar.days) ? 'bg-green-500/20 text-green-400 border-green-500/30' :
-                        'bg-border/5 text-foreground/20 border-border/10'
-                      }`}>
-                        <span className="text-sm font-semibold">{avatar.days} DIAS</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         </div>
