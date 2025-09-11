@@ -99,8 +99,54 @@ export default function AvatareEsEvolutivos(): JSX.Element {
         <div className="max-w-4xl mx-auto">
           <div className="relative">
             {/* Barra de progresso vertical */}
-            <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-primary/60 to-border/30 rounded-full">
-              {/* Indicador de progresso atual */}
+            <div className="absolute left-8 top-0 bottom-0 w-1 bg-border/30 rounded-full border border-border/40">
+              {/* Preenchimento da barra até a posição atual */}
+              <div 
+                className="absolute top-0 left-0 w-full bg-gradient-to-b from-primary via-primary/80 to-primary/60 rounded-full transition-all duration-500"
+                style={{
+                  height: `${(() => {
+                    // Marcos dos cards em dias
+                    const milestones = [0, 3, 7, 15, 30, 50, 75, 100, 130, 165, 200, 300];
+                    
+                    // Encontrar o marco atual ou próximo
+                    let currentMilestoneIndex = 0;
+                    for (let i = 0; i < milestones.length; i++) {
+                      if (progressInDays >= milestones[i]) {
+                        currentMilestoneIndex = i;
+                      } else {
+                        break;
+                      }
+                    }
+                    
+                    // Se passou do último marco, fica no final
+                    if (progressInDays >= 300) {
+                      return 100;
+                    }
+                    
+                    // Calcular posição baseada no índice do card (12 cards = 100% / 11 intervalos)
+                    const cardSpacing = 100 / 11;
+                    const cardCenterOffset = cardSpacing / 3.5;
+                    let position = (currentMilestoneIndex * cardSpacing) + cardCenterOffset;
+                    
+                    // Se está entre marcos, fazer interpolação
+                    if (currentMilestoneIndex < milestones.length - 1) {
+                      const currentMilestone = milestones[currentMilestoneIndex];
+                      const nextMilestone = milestones[currentMilestoneIndex + 1];
+                      const progressBetween = (progressInDays - currentMilestone) / (nextMilestone - currentMilestone);
+                      position += progressBetween * cardSpacing;
+                    }
+                    
+                    // Para o primeiro card, ajustar para ficar no início
+                    if (currentMilestoneIndex === 0 && progressInDays < 3) {
+                      position = cardCenterOffset;
+                    }
+                    
+                    return Math.min(position, 100);
+                  })()}%`
+                }}
+              />
+              
+              {/* Indicador de progresso atual (bolinha) */}
               <div 
                 className="absolute w-4 h-4 bg-primary rounded-full transform -translate-x-1.5 shadow-lg shadow-primary/50 transition-all duration-500"
                 style={{ 
