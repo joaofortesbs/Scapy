@@ -45,7 +45,14 @@ export default function AvatareEsEvolutivos(): JSX.Element {
   }, []);
 
   const handleBackToDashboard = () => {
-    setLocation('/dashboard');
+    // Animação suave para transição
+    document.body.style.transition = 'opacity 0.3s ease-out';
+    document.body.style.opacity = '0.8';
+
+    setTimeout(() => {
+      setLocation('/dashboard');
+      document.body.style.opacity = '1';
+    }, 150);
   };
 
   const isCardActive = (daysRequired: number): boolean => {
@@ -63,6 +70,18 @@ export default function AvatareEsEvolutivos(): JSX.Element {
     <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#000515' }}>
       <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
       <div className="relative z-10">
+        {/* Botão de sair no canto superior esquerdo */}
+        <div className="absolute top-6 left-6 z-20">
+          <Button
+            variant="ghost"
+            onClick={handleBackToDashboard}
+            className="text-foreground hover:text-primary transition-all duration-300 p-3 rounded-full hover:bg-primary/10"
+            data-testid="exit-button"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </Button>
+        </div>
+
         {/* Conteúdo principal */}
         <div className="container mx-auto px-6 py-12">
         {/* Título principal */}
