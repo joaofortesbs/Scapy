@@ -153,7 +153,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Card 3 - Soldado Romano */}
+              {/* Card 3 - Guardião da Espada */}
               <Card 
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
                 style={{ 
@@ -166,8 +166,18 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Guardião da Espada</h3>
                     
-                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    <div className="relative">
+                      <img
+                        src="/avatar-guardião-espada.webp"
+                        alt="Guardião da Espada"
+                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        style={{ aspectRatio: '1 / 1' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=guardian&backgroundColor=000515";
+                        }}
+                        data-testid="guardian-avatar"
+                      />
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
@@ -177,7 +187,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Card 4 - Cavaleiro Medieval */}
+              {/* Card 4 - Samurai da Disciplina */}
               <Card 
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
                 style={{ 
@@ -190,8 +200,18 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Samurai da Disciplina</h3>
                     
-                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    <div className="relative">
+                      <img
+                        src="/avatar-samurai-disciplina.webp"
+                        alt="Samurai da Disciplina"
+                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        style={{ aspectRatio: '1 / 1' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=samurai&backgroundColor=000515";
+                        }}
+                        data-testid="samurai-avatar"
+                      />
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
@@ -201,7 +221,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Card 5 - Samurai */}
+              {/* Card 5 - Viking da Coragem */}
               <Card 
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
                 style={{ 
@@ -214,8 +234,18 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Viking da Coragem</h3>
                     
-                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    <div className="relative">
+                      <img
+                        src="/avatar-viking-coragem.webp"
+                        alt="Viking da Coragem"
+                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        style={{ aspectRatio: '1 / 1' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=viking&backgroundColor=000515";
+                        }}
+                        data-testid="viking-avatar"
+                      />
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
@@ -225,7 +255,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Card 6 - Viking */}
+              {/* Card 6 - Cavaleiro da Resistência */}
               <Card 
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
                 style={{ 
@@ -238,8 +268,18 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Cavaleiro da Resistência</h3>
                     
-                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    <div className="relative">
+                      <img
+                        src="/avatar-cavaleiro-resistencia.webp"
+                        alt="Cavaleiro da Resistência"
+                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        style={{ aspectRatio: '1 / 1' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=knight&backgroundColor=000515";
+                        }}
+                        data-testid="knight-avatar"
+                      />
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
@@ -249,7 +289,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Card 7 - Gladiador */}
+              {/* Card 7 - Soldado da Vitória */}
               <Card 
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
                 style={{ 
@@ -262,8 +302,18 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Soldado da Vitória</h3>
                     
-                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    <div className="relative">
+                      <img
+                        src="/avatar-soldado-vitoria.webp"
+                        alt="Soldado da Vitória"
+                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        style={{ aspectRatio: '1 / 1' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=soldier&backgroundColor=000515";
+                        }}
+                        data-testid="soldier-avatar"
+                      />
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
