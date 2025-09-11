@@ -63,22 +63,8 @@ export default function AvatareEsEvolutivos(): JSX.Element {
     <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#000515' }}>
       <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
       <div className="relative z-10">
-        {/* Header com botão de voltar */}
-      <div className="flex items-center justify-between p-6 border-b border-border/20">
-        <Button
-          variant="ghost"
-          onClick={handleBackToDashboard}
-          className="text-foreground hover:text-primary transition-colors p-2"
-          data-testid="back-button"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-
-        <div className="flex-1"></div>
-      </div>
-
-      {/* Conteúdo principal */}
-      <div className="container mx-auto px-6 py-12">
+        {/* Conteúdo principal */}
+        <div className="container mx-auto px-6 py-12">
         {/* Título principal */}
         <div className="text-center mb-16">
           <h1
