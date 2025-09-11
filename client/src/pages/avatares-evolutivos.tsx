@@ -45,7 +45,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
         >
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        
+
         <div className="flex-1"></div>
       </div>
 
@@ -53,9 +53,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
       <div className="container mx-auto px-6 py-12">
         {/* Título principal */}
         <div className="text-center mb-16">
-          <h1 
+          <h1
             className="text-4xl md:text-5xl font-bold text-foreground mb-4"
-            style={{ 
+            style={{
               background: 'linear-gradient(135deg, #00F6FF 0%, #ffffff 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -81,9 +81,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
             {/* Cards evolutivos */}
             <div className="space-y-12 ml-20">
               {/* Card 1 - Homem das Cavernas (Atual) */}
-              <Card 
+              <Card
                 className="border-border/30 bg-background/5 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02]"
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, rgba(0, 246, 255, 0.1) 0%, rgba(0, 5, 21, 0.8) 100%)',
                   borderColor: 'rgba(0, 246, 255, 0.3)'
                 }}
@@ -93,7 +93,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     {/* Título no topo */}
                     <h3 className="text-xl font-bold text-foreground">Homem das Cavernas</h3>
-                    
+
                     {/* Imagem do avatar */}
                     <div className="relative">
                       <img
@@ -117,9 +117,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               </Card>
 
               {/* Card 2 - Guerreiro da Tribo */}
-              <Card 
+              <Card
                 className="border-border/30 bg-background/5 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02]"
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, rgba(0, 246, 255, 0.1) 0%, rgba(0, 5, 21, 0.8) 100%)',
                   borderColor: 'rgba(0, 246, 255, 0.3)'
                 }}
@@ -129,7 +129,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     {/* Título no topo */}
                     <h3 className="text-xl font-bold text-foreground">Guerreiro da Tribo</h3>
-                    
+
                     {/* Imagem do avatar */}
                     <div className="relative">
                       <img
@@ -154,9 +154,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               </Card>
 
               {/* Card 3 - Guardião da Espada */}
-              <Card 
+              <Card
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.08)'
                 }}
@@ -165,7 +165,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Guardião da Espada</h3>
-                    
+
                     <div className="relative">
                       <img
                         src="/avatar-guardião-espada.webp"
@@ -188,9 +188,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               </Card>
 
               {/* Card 4 - Samurai da Disciplina */}
-              <Card 
+              <Card
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.08)'
                 }}
@@ -199,7 +199,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Samurai da Disciplina</h3>
-                    
+
                     <div className="relative">
                       <img
                         src="/avatar-samurai-disciplina.webp"
@@ -222,9 +222,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               </Card>
 
               {/* Card 5 - Viking da Coragem */}
-              <Card 
+              <Card
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.08)'
                 }}
@@ -233,7 +233,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Viking da Coragem</h3>
-                    
+
                     <div className="relative">
                       <img
                         src="/avatar-viking-coragem.webp"
@@ -256,9 +256,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               </Card>
 
               {/* Card 6 - Cavaleiro da Resistência */}
-              <Card 
+              <Card
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.08)'
                 }}
@@ -267,7 +267,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Cavaleiro da Resistência</h3>
-                    
+
                     <div className="relative">
                       <img
                         src="/avatar-cavaleiro-resistencia.webp"
@@ -290,9 +290,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               </Card>
 
               {/* Card 7 - Soldado da Vitória */}
-              <Card 
+              <Card
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.08)'
                 }}
@@ -301,7 +301,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Soldado da Vitória</h3>
-                    
+
                     <div className="relative">
                       <img
                         src="/avatar-soldado-vitoria.webp"
@@ -324,9 +324,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               </Card>
 
               {/* Card 8 - Rei dos Relâmpagos */}
-              <Card 
+              <Card
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.08)'
                 }}
@@ -335,7 +335,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Rei dos Relâmpagos</h3>
-                    
+
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
@@ -348,9 +348,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               </Card>
 
               {/* Card 9 - Super Arcanjo */}
-              <Card 
+              <Card
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.08)'
                 }}
@@ -359,7 +359,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Super Arcanjo</h3>
-                    
+
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
@@ -372,9 +372,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               </Card>
 
               {/* Card 10 - Super Arcanjo */}
-              <Card 
+              <Card
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.08)'
                 }}
@@ -383,7 +383,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Super Arcanjo</h3>
-                    
+
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
@@ -396,9 +396,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               </Card>
 
               {/* Card 11 - Prateado da Coragem */}
-              <Card 
+              <Card
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.08)'
                 }}
@@ -407,7 +407,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 <CardContent className="p-8">
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Prateado da Coragem</h3>
-                    
+
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
@@ -420,24 +420,23 @@ export default function AvatareEsEvolutivos(): JSX.Element {
               </Card>
 
               {/* Card 12 - Titã Cósmico */}
-              <Card 
+              <Card
                 className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
                   borderColor: 'rgba(255, 255, 255, 0.08)'
                 }}
                 data-testid="avatar-card-12"
               >
-                <CardContent className="p-8">
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Titã Cósmico</h3>
-                    
+                <div className="flex flex-col items-center text-center space-y-4">
+                    <h3 className="text-xl font-bold text-foreground/60">Lendário Imortal</h3>
+
                     <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
                       <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">300 DIAS</span>
+                      <span className="text-sm font-semibold">365 DIAS</span>
                     </div>
                   </div>
                 </CardContent>
