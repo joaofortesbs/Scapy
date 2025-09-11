@@ -121,7 +121,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                     // Calcular posição baseada no índice do card (12 cards = 100% / 11 intervalos)
                     // Ajustamos para centralizar a bolinha no meio de cada card
                     const cardSpacing = 100 / 11; // 11 intervalos entre 12 cards
-                    const cardCenterOffset = cardSpacing / 2; // Offset para centralizar no meio do card
+                    const cardCenterOffset = cardSpacing / 3; // Offset reduzido para melhor alinhamento
                     let position = (currentMilestoneIndex * cardSpacing) + cardCenterOffset;
                     
                     // Se está entre marcos, fazer interpolação
