@@ -1245,79 +1245,16 @@ export default function PainelInterface({
           </div>
 
           <div className="mt-6 flex flex-col space-y-6">
-            <div 
-              className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
-              onClick={() => {
-                // Animação suave para transição
-                document.body.style.transition = 'opacity 0.3s ease-out';
-                document.body.style.opacity = '0.8';
-                setTimeout(() => {
-                  setLocation('/melhor-versao');
-                  document.body.style.opacity = '1';
-                }, 150);
-              }}
-            >
-              <AnaliseEvolucaoMental />
-            </div>
+            <AnaliseEvolucaoMental />
 
-            <div 
-              className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
-              onClick={() => {
-                // Animação suave para transição
-                document.body.style.transition = 'opacity 0.3s ease-out';
-                document.body.style.opacity = '0.8';
-                setTimeout(() => {
-                  setLocation('/melhor-versao');
-                  document.body.style.opacity = '1';
-                }, 150);
-              }}
-            >
-              <FraseDoDia />
-            </div>
+            <FraseDoDia />
 
             <div className="challenge-cards-container mt-8">
-              <div 
-                className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
-                onClick={() => {
-                  // Animação suave para transição
-                  document.body.style.transition = 'opacity 0.3s ease-out';
-                  document.body.style.opacity = '0.8';
-                  setTimeout(() => {
-                    setLocation('/melhor-versao');
-                    document.body.style.opacity = '1';
-                  }, 150);
-                }}
-              >
-                <DesafioPlanoBeamEstar />
-              </div>
-              <div 
-                className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
-                onClick={() => {
-                  // Animação suave para transição
-                  document.body.style.transition = 'opacity 0.3s ease-out';
-                  document.body.style.opacity = '0.8';
-                  setTimeout(() => {
-                    setLocation('/melhor-versao');
-                    document.body.style.opacity = '1';
-                  }, 150);
-                }}
-              >
-                <DesafioDuplaDinamica />
-              </div>
+              <DesafioPlanoBeamEstar />
+              <DesafioDuplaDinamica />
             </div>
 
-            <div 
-              className="daily-goals-section cursor-pointer transition-transform hover:scale-105 active:scale-95"
-              onClick={() => {
-                // Animação suave para transição
-                document.body.style.transition = 'opacity 0.3s ease-out';
-                document.body.style.opacity = '0.8';
-                setTimeout(() => {
-                  setLocation('/melhor-versao');
-                  document.body.style.opacity = '1';
-                }, 150);
-              }}
-            >
+            <div className="daily-goals-section">
               <DailyGoals />
             </div>
           </div>
