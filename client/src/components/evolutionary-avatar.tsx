@@ -1,5 +1,6 @@
 
-import { useMemo } from 'react';
+
+import { useMemo, useState, useEffect } from 'react';
 import { getCurrentAvatar, getNextAvatar, calculateProgressInDays } from '@/utils/avatar-system';
 
 interface EvolutionaryAvatarProps {
@@ -17,6 +18,17 @@ export default function EvolutionaryAvatar({
   showProgress = false,
   className = ''
 }: EvolutionaryAvatarProps) {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update time every second for real-time progression
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const { currentAvatar, nextAvatar, progressInDays } = useMemo(() => {
     if (!startDate) {
       const fallbackAvatar = getCurrentAvatar(0);
@@ -28,12 +40,17 @@ export default function EvolutionaryAvatar({
     }
 
     const days = calculateProgressInDays(startDate);
+    const current = getCurrentAvatar(days);
+    const next = getNextAvatar(days);
+    
+    console.log(`🎯 [EvolutionaryAvatar] ${days} dias - Avatar atual: ${current.title}`);
+    
     return {
-      currentAvatar: getCurrentAvatar(days),
-      nextAvatar: getNextAvatar(days),
+      currentAvatar: current,
+      nextAvatar: next,
       progressInDays: days
     };
-  }, [startDate]);
+  }, [startDate, currentTime]); // Add currentTime as dependency for real-time updates
 
   const sizeClasses = {
     small: 'w-20 h-20',
@@ -47,8 +64,6 @@ export default function EvolutionaryAvatar({
     large: 'text-2xl'
   };
 
-  console.log(`🎯 [EvolutionaryAvatar] ${progressInDays} dias - Avatar: ${currentAvatar.title}`);
-
   return (
     <div className={`text-center ${className}`}>
       {showTitle && (
@@ -57,7 +72,7 @@ export default function EvolutionaryAvatar({
             {currentAvatar.title}
           </h2>
           <p className="text-xs text-foreground/60">
-            Seu avatar atual
+            Seu avatar atual ({progressInDays} {progressInDays === 1 ? 'dia' : 'dias'})
           </p>
         </div>
       )}
@@ -74,10 +89,21 @@ export default function EvolutionaryAvatar({
           data-testid={`evolutionary-avatar-${currentAvatar.seed}`}
         />
         
-        {/* Badge de conquista */}
+        {/* Badge de conquista para avatares desbloqueados */}
         {progressInDays >= currentAvatar.days && currentAvatar.days > 0 && (
           <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
             <span className="text-white text-sm font-bold">✓</span>
+          </div>
+        )}
+
+        {/* Indicador de progresso para próximo avatar */}
+        {nextAvatar && (
+          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+            <div className="bg-background/90 backdrop-blur-sm rounded-full px-3 py-1 border border-border/30">
+              <span className="text-xs text-foreground/70">
+                Próximo em {nextAvatar.days - progressInDays} {nextAvatar.days - progressInDays === 1 ? 'dia' : 'dias'}
+              </span>
+            </div>
           </div>
         )}
       </div>
@@ -105,3 +131,4 @@ export default function EvolutionaryAvatar({
     </div>
   );
 }
+

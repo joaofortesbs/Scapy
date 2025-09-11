@@ -53,13 +53,18 @@ export function getNextAvatar(progressInDays: number): AvatarEvolution | null {
   return nextAvatar || null;
 }
 
-export function calculateProgressInDays(startDate: string): number {
-  if (!startDate) return 0;
+export function calculateProgressInDays(startDate: string, currentDate?: Date): number {
+  if (!startDate) {
+    console.log('🎯 [AvatarSystem] Nenhuma data de início fornecida');
+    return 0;
+  }
   
   const start = new Date(startDate);
-  const now = new Date();
+  const now = currentDate || new Date();
   const diffTime = Math.abs(now.getTime() - start.getTime());
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  
+  console.log(`🎯 [AvatarSystem] Calculando progresso: início=${startDate}, agora=${now.toISOString()}, dias=${diffDays}`);
   
   return diffDays;
 }

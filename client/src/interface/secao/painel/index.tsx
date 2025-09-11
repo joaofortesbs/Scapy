@@ -1145,6 +1145,15 @@ export default function PainelInterface({
     setLocalUser(updatedUser);
     setHasStartedJourney(true);
     setTimerStartDate(updatedUser.startDate);
+    
+    // Force avatar update
+    if (updatedUser.startDate) {
+      const days = calculateProgressInDays(updatedUser.startDate);
+      setDaysProgress(days);
+      const avatar = getCurrentAvatar(days);
+      setCurrentAvatar(avatar);
+      console.log(`🎯 [PainelInterface] Avatar forçado para atualização: ${avatar.title} (${days} dias)`);
+    }
   };
 
   const handlePanicClick = () => {
@@ -1160,9 +1169,30 @@ export default function PainelInterface({
     return <PanicPage user={localUser} onBackFromPanic={handleBackFromPanic} />;
   }
 
-  // Calculate days for avatar progression
-  const daysProgress = localUser?.startDate ? calculateProgressInDays(localUser.startDate, new Date()) : 0;
-  const currentAvatar = getCurrentAvatar(daysProgress);
+  // Calculate days for avatar progression with real-time updates
+  const [daysProgress, setDaysProgress] = useState(0);
+  const [currentAvatar, setCurrentAvatar] = useState(getCurrentAvatar(0));
+
+  // Update days progress in real-time
+  useEffect(() => {
+    const updateProgress = () => {
+      if (localUser?.startDate) {
+        const days = calculateProgressInDays(localUser.startDate);
+        setDaysProgress(days);
+        const avatar = getCurrentAvatar(days);
+        setCurrentAvatar(avatar);
+        console.log(`🎯 [PainelInterface] Avatar atualizado: ${avatar.title} para ${days} dias`);
+      }
+    };
+
+    // Update immediately
+    updateProgress();
+
+    // Update every second for real-time sync
+    const interval = setInterval(updateProgress, 1000);
+
+    return () => clearInterval(interval);
+  }, [localUser?.startDate]);
 
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-background relative overflow-hidden">
@@ -1186,12 +1216,14 @@ export default function PainelInterface({
                 <JourneyStart onStartJourney={handleStartJourney} />
               ) : (
                 <>
-                  {/* Conditionally show evolutionary avatar */}
+                  {/* Avatar evolutivo com sincronização em tempo real */}
                   <div className="floating-avatar mb-6">
                     <EvolutionaryAvatar
-                      avatarUrl={currentAvatar.imageUrl}
-                      altText={currentAvatar.name}
-                      progressInDays={daysProgress}
+                      startDate={localUser?.startDate}
+                      size="large"
+                      showTitle={true}
+                      showProgress={false}
+                      className="transition-all duration-500"
                     />
                   </div>
 
