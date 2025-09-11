@@ -89,12 +89,7 @@ export default function EvolutionaryAvatar({
           data-testid={`evolutionary-avatar-${currentAvatar.seed}`}
         />
         
-        {/* Badge de conquista para avatares desbloqueados */}
-        {progressInDays >= currentAvatar.days && currentAvatar.days > 0 && (
-          <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
-            <span className="text-white text-sm font-bold">✓</span>
-          </div>
-        )}
+        
 
         {/* Indicador de progresso para próximo avatar */}
         {nextAvatar && showTitle && (
