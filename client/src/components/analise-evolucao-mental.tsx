@@ -104,7 +104,7 @@ export default function AnaliseEvolucaoMental() {
       </Link>
 
       {/* Checklist com itens condicionais clicáveis */}
-      {!hasAllContent && (
+      {(!hasQuadroDosSonhos || !hasObjetivos) && (
         <div className="mt-4 space-y-3">
           {!hasQuadroDosSonhos && (
             <Link href="/melhor-versao">

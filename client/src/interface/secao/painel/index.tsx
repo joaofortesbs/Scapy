@@ -991,14 +991,25 @@ interface PanicButtonProps {
 
 function PanicButton({ onPanicClick }: PanicButtonProps) {
   const handlePanicClick = () => {
-    // Animação suave para transição
-    document.body.style.transition = 'opacity 0.3s ease-out';
-    document.body.style.opacity = '0.8';
+    try {
+      // Animação suave para transição
+      document.body.style.transition = 'opacity 0.3s ease-out';
+      document.body.style.opacity = '0.8';
 
-    setTimeout(() => {
+      setTimeout(() => {
+        onPanicClick();
+        // Restaurar opacidade após navegação
+        setTimeout(() => {
+          if (document.body) {
+            document.body.style.opacity = '1';
+          }
+        }, 100);
+      }, 150);
+    } catch (error) {
+      console.error('❌ Erro no botão de pânico:', error);
+      // Fallback: chamar diretamente
       onPanicClick();
-      document.body.style.opacity = '1';
-    }, 150);
+    }
   };
 
   return (

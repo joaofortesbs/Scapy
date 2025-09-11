@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { ArrowLeft, Hand } from "lucide-react";
@@ -22,6 +23,7 @@ interface CalculatedTime {
 }
 
 export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPageProps) {
+  // ====== TODOS OS HOOKS DEVEM ESTAR NO TOPO - SEM CONDIÇÕES ======
   const [currentTime, setCurrentTime] = useState(new Date());
   const [user, setUser] = useState<User | null>(propUser || null);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,24 +79,15 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
     return () => clearInterval(interval);
   }, []);
 
+  // ====== FUNÇÕES AUXILIARES ======
+  
   // Calculate time difference only if user has startDate
   const getTimeDifference = (): CalculatedTime | null => {
     if (!user?.startDate) return null;
     return calculateTimeDifference(user.startDate, currentTime);
   };
 
-  const timeDiff = getTimeDifference();
-
-  // Early return if loading
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-white text-lg">Carregando...</div>
-      </div>
-    );
-  }
-
-  // Timer component that mirrors exactly the main timer logic
+  // Timer component que replica exatamente a lógica do timer principal
   const TimerDuplicate = () => {
     if (!user || !user.startDate) {
       return (
@@ -104,7 +97,7 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
       );
     }
 
-    const startDate = user.startDate; // Already checked that it exists
+    const startDate = user.startDate;
     const timeDiffCalculated = calculateTimeDifference(startDate, currentTime);
     const hasCompletedOneDay = timeDiffCalculated.days > 0;
 
@@ -132,6 +125,18 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
     );
   };
 
+  // ====== RENDERIZAÇÃO CONDICIONAL APENAS APÓS TODOS OS HOOKS ======
+  
+  // Early return se está carregando
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-white text-lg">Carregando...</div>
+      </div>
+    );
+  }
+
+  // Renderização principal
   return (
     <div 
       className="min-h-screen bg-background text-foreground relative animate-fade-in overflow-hidden"
@@ -145,80 +150,80 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
 
       <div className="relative z-10">
         <div className="flex flex-col items-center justify-start min-h-screen px-6 pt-8 pb-8">
-        {/* Header com botão de voltar e título */}
-        <div className="w-full flex items-center justify-between mb-4">
-          {onBackFromPanic ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onBackFromPanic}
-              className="text-white hover:bg-white/10 transition-all duration-300"
-              data-testid="back-button"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          ) : (
-            <Link href="/">
+          {/* Header com botão de voltar e título */}
+          <div className="w-full flex items-center justify-between mb-4">
+            {onBackFromPanic ? (
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={onBackFromPanic}
                 className="text-white hover:bg-white/10 transition-all duration-300"
                 data-testid="back-button"
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
-            </Link>
-          )}
+            ) : (
+              <Link href="/">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white hover:bg-white/10 transition-all duration-300"
+                  data-testid="back-button"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+              </Link>
+            )}
 
-          <h1 
-            className="text-xl md:text-2xl font-bold text-white text-center leading-tight flex-1 mr-10"
-            data-testid="panic-title"
-          >
-            Relembre o porque você<br />começou essa jornada!
-          </h1>
-        </div>
+            <h1 
+              className="text-xl md:text-2xl font-bold text-white text-center leading-tight flex-1 mr-10"
+              data-testid="panic-title"
+            >
+              Relembre o porque você<br />começou essa jornada!
+            </h1>
+          </div>
 
-        {/* Container para Câmera da Vergonha e Card Sobreposto */}
-        <div className="w-full max-w-md relative" style={{ marginTop: '15px' }}>
-          {/* Componente Câmera da Vergonha */}
-          <CameraShame autoActivate={true} />
+          {/* Container para Câmera da Vergonha e Card Sobreposto */}
+          <div className="w-full max-w-md relative" style={{ marginTop: '15px' }}>
+            {/* Componente Câmera da Vergonha */}
+            <CameraShame autoActivate={true} />
 
-          {/* Novo card retangular sobreposto - 50% dentro, 50% fora */}
+            {/* Novo card retangular sobreposto - 50% dentro, 50% fora */}
+            <div 
+              className="absolute left-1/2 transform -translate-x-1/2 w-3/5"
+              style={{ 
+                bottom: '-25px',
+                zIndex: 10 
+              }}
+            >
+              <div className="bg-gradient-to-r from-blue-600/80 to-purple-600/80 rounded-full p-3 shadow-lg border border-white/20 ai-assistant-card-natural-3d backdrop-blur-md" style={{ height: '50px', backgroundColor: 'rgba(0, 5, 21, 0.8)' }}>
+                <div className="text-center text-white h-full flex items-center justify-center">
+                  <TimerDuplicate />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Espaçamento para compensar o card sobreposto */}
           <div 
-            className="absolute left-1/2 transform -translate-x-1/2 w-3/5"
-            style={{ 
-              bottom: '-25px', // 50% para fora do card de câmera
-              zIndex: 10 
-            }}
+            className="w-full flex flex-col items-center justify-center px-4" 
+            style={{ marginTop: '20px' }}
           >
-            <div className="bg-gradient-to-r from-blue-600/80 to-purple-600/80 rounded-full p-3 shadow-lg border border-white/20 ai-assistant-card-natural-3d backdrop-blur-md" style={{ height: '50px', backgroundColor: 'rgba(0, 5, 21, 0.8)' }}>
-              <div className="text-center text-white h-full flex items-center justify-center">
-                <TimerDuplicate />
+            {/* Carrossel de Objetivos */}
+            <div className="w-full flex justify-center items-center">
+              <div className="w-full max-w-md flex justify-center">
+                <ObjetivosCarousel />
+              </div>
+            </div>
+
+            {/* Carrossel de Sonhos */}
+            <div className="w-full flex justify-center items-center">
+              <div className="w-full max-w-md flex justify-center">
+                <SonhosCarousel />
               </div>
             </div>
           </div>
         </div>
-
-        {/* Espaçamento para compensar o card sobreposto */}
-        <div 
-          className="w-full flex flex-col items-center justify-center px-4" 
-          style={{ marginTop: '20px' }}
-        >
-          {/* Carrossel de Objetivos */}
-          <div className="w-full flex justify-center items-center">
-            <div className="w-full max-w-md flex justify-center">
-              <ObjetivosCarousel />
-            </div>
-          </div>
-
-          {/* Carrossel de Sonhos */}
-          <div className="w-full flex justify-center items-center">
-            <div className="w-full max-w-md flex justify-center">
-              <SonhosCarousel />
-            </div>
-          </div>
-        </div>
-      </div>
       </div>
 
       {/* Botão flutuante de ajuda fixo */}
