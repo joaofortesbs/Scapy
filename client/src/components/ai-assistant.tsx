@@ -55,34 +55,110 @@ export default function AIAssistant(): JSX.Element {
     };
   }, [user]);
 
+  // Verificar mudança de dia a cada minuto para reiniciar seleção de humor às 00:00
+  useEffect(() => {
+    if (!user) return;
+
+    const checkNewDay = () => {
+      const now = new Date();
+      const todayKey = now.toISOString().split('T')[0];
+      const currentMoodKey = `scapy_mood_${user.id}_${todayKey}`;
+      
+      // Se não há humor salvo para hoje, significa que é um novo dia
+      const savedMood = localStorage.getItem(currentMoodKey);
+      if (!savedMood && todayMood) {
+        console.log('🌅 [AIAssistant] Novo dia detectado! Reiniciando seleção de humor...');
+        setTodayMood(null);
+        
+        // Disparar evento de novo dia
+        window.dispatchEvent(new CustomEvent('newDayDetected', {
+          detail: {
+            userId: user.id,
+            newDate: todayKey
+          }
+        }));
+      }
+    };
+
+    // Verificar imediatamente
+    checkNewDay();
+
+    // Verificar a cada 60 segundos
+    const interval = setInterval(checkNewDay, 60000);
+
+    // Verificar especificamente à meia-noite
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    const msUntilMidnight = tomorrow.getTime() - now.getTime();
+    
+    const midnightTimeout = setTimeout(() => {
+      console.log('🌅 [AIAssistant] Meia-noite detectada! Reiniciando sistema...');
+      setTodayMood(null);
+      checkTodayMood(user.id);
+      
+      // Configurar verificação diária
+      const dailyInterval = setInterval(() => {
+        console.log('🌅 [AIAssistant] Verificação diária - reiniciando humor...');
+        setTodayMood(null);
+        checkTodayMood(user.id);
+      }, 24 * 60 * 60 * 1000); // 24 horas
+
+      return () => clearInterval(dailyInterval);
+    }, msUntilMidnight);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(midnightTimeout);
+    };
+  }, [user, todayMood]);
+
   const checkTodayMood = async (userId: number) => {
     try {
-      // 1. PRIMEIRO: Verificar localStorage para carregamento rápido
-      const todayKey = new Date().toISOString().split('T')[0];
+      // Obter data atual sempre atualizada
+      const now = new Date();
+      const todayKey = now.toISOString().split('T')[0];
       
-      // Verificar humor individual salvo
+      console.log(`🕒 [AIAssistant] Verificando humor para: ${todayKey} às ${now.toLocaleTimeString()}`);
+      
+      // 1. PRIMEIRO: Verificar localStorage para carregamento rápido
       const individualMoodKey = `scapy_mood_${userId}_${todayKey}`;
       const savedIndividualMood = localStorage.getItem(individualMoodKey);
       
       if (savedIndividualMood) {
         try {
           const moodData = JSON.parse(savedIndividualMood);
-          setTodayMood(moodData.mood);
-          console.log(`💿 [AIAssistant] Humor carregado do localStorage: ${moodData.mood}`);
+          
+          // Verificar se o humor é realmente de hoje
+          const moodDate = moodData.date;
+          if (moodDate === todayKey) {
+            setTodayMood(moodData.mood);
+            console.log(`💿 [AIAssistant] Humor carregado do localStorage: ${moodData.mood} para ${todayKey}`);
+          } else {
+            // Humor é de outro dia, limpar e definir como null
+            console.log(`🗑️ [AIAssistant] Humor antigo encontrado (${moodDate}), limpando...`);
+            localStorage.removeItem(individualMoodKey);
+            setTodayMood(null);
+          }
         } catch (error) {
           console.error('❌ Erro ao parsear humor do localStorage:', error);
+          localStorage.removeItem(individualMoodKey);
+          setTodayMood(null);
         }
-      }
-      
-      // Verificar registro geral como fallback
-      if (!savedIndividualMood) {
+      } else {
+        // Verificar registro geral como fallback
         const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
         const userMoods = allMoods[userId.toString()] || {};
         const todayMoodFromGeneral = userMoods[todayKey];
         
         if (todayMoodFromGeneral) {
           setTodayMood(todayMoodFromGeneral);
-          console.log(`💿 [AIAssistant] Humor carregado do registro geral: ${todayMoodFromGeneral}`);
+          console.log(`💿 [AIAssistant] Humor carregado do registro geral: ${todayMoodFromGeneral} para ${todayKey}`);
+        } else {
+          setTodayMood(null);
+          console.log(`📋 [AIAssistant] Nenhum humor encontrado para hoje (${todayKey})`);
         }
       }
       
@@ -91,8 +167,8 @@ export default function AIAssistant(): JSX.Element {
         const response = await apiRequest('GET', `/api/today-mood/${userId}`);
         const apiData = await response.json();
         
-        if (apiData && apiData.mood) {
-          // Se a API tem um humor diferente do localStorage, usar o da API (mais recente)
+        if (apiData && apiData.mood && apiData.date === todayKey) {
+          // Se a API tem um humor válido para hoje, usar ele
           setTodayMood(apiData.mood);
           
           // Sincronizar localStorage com dados da API
@@ -112,11 +188,11 @@ export default function AIAssistant(): JSX.Element {
           allMoods[userId.toString()][todayKey] = apiData.mood;
           localStorage.setItem('scapy_all_moods', JSON.stringify(allMoods));
           
-          console.log(`🌐 [AIAssistant] Humor sincronizado da API: ${apiData.mood}`);
+          console.log(`🌐 [AIAssistant] Humor sincronizado da API: ${apiData.mood} para ${todayKey}`);
         } else if (!savedIndividualMood) {
-          // Se nem localStorage nem API têm humor, definir como null
+          // Se nem localStorage nem API têm humor válido para hoje
           setTodayMood(null);
-          console.log(`📋 [AIAssistant] Nenhum humor registrado para hoje`);
+          console.log(`📋 [AIAssistant] Nenhum humor registrado para hoje (${todayKey})`);
         }
       } catch (apiError) {
         console.error('⚠️ Erro na API, usando dados do localStorage:', apiError);
