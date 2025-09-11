@@ -14,6 +14,14 @@ interface User {
 export default function AvatareEsEvolutivos(): JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [, setLocation] = useLocation();
+  const [progressInDays, setProgressInDays] = useState<number>(0); // Assuming user has a progress in days
+
+  // Simulate fetching user progress
+  useEffect(() => {
+    // In a real application, you would fetch this from an API or context
+    const simulatedProgress = 50; // Example: user has progressed 50 days
+    setProgressInDays(simulatedProgress);
+  }, []);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -29,6 +37,17 @@ export default function AvatareEsEvolutivos(): JSX.Element {
 
   const handleBackToDashboard = () => {
     setLocation('/dashboard');
+  };
+
+  const isCardActive = (daysRequired: number): boolean => {
+    return progressInDays >= daysRequired;
+  };
+
+  const isCurrentCard = (daysRequired: number, nextDaysRequired?: number): boolean => {
+    if (nextDaysRequired === undefined) {
+      return progressInDays >= daysRequired;
+    }
+    return progressInDays >= daysRequired && progressInDays < nextDaysRequired;
   };
 
   return (
@@ -73,7 +92,13 @@ export default function AvatareEsEvolutivos(): JSX.Element {
             {/* Barra de progresso vertical */}
             <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-primary/60 to-border/30 rounded-full">
               {/* Indicador de progresso atual */}
-              <div className="absolute top-0 w-4 h-4 bg-primary rounded-full transform -translate-x-1.5 shadow-lg shadow-primary/50">
+              {/* This indicator needs to be dynamically positioned based on progressInDays */}
+              <div 
+                className="absolute top-0 w-4 h-4 bg-primary rounded-full transform -translate-x-1.5 shadow-lg shadow-primary/50 transition-all duration-500"
+                style={{ 
+                  top: `${(progressInDays / 300) * 100}%` // Example calculation, needs adjustment based on total days and card distribution
+                }}
+              >
                 <div className="w-4 h-4 bg-primary rounded-full animate-pulse"></div>
               </div>
             </div>
@@ -221,276 +246,83 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Card 5 - Viking da Coragem */}
-              <Card
-                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
-                  borderColor: 'rgba(255, 255, 255, 0.08)'
-                }}
-                data-testid="avatar-card-5"
-              >
-                <CardContent className="p-8">
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Viking da Coragem</h3>
+              {/* Cards 5-12 with dynamic system */}
+              {[
+                { id: 5, title: "Viking da Coragem", days: 30, nextDays: 50, image: "/avatar-viking-coragem.webp", seed: "viking", size: "w-48 h-48" },
+                { id: 6, title: "Cavaleiro da Resistência", days: 50, nextDays: 75, image: "/avatar-cavaleiro-resistencia.webp", seed: "knight", size: "w-48 h-48" },
+                { id: 7, title: "Soldado da Vitória", days: 75, nextDays: 100, image: "/avatar-soldado-vitoria.webp", seed: "soldier", size: "w-48 h-48" },
+                { id: 8, title: "Guerreiro do Futuro", days: 100, nextDays: 130, image: "/avatar-guerreiro-futuro.webp", seed: "future", size: "w-48 h-48" },
+                { id: 9, title: "Rei dos Relâmpagos", days: 130, nextDays: 165, image: "/avatar-soldado-relampago.webp", seed: "lightning", size: "w-48 h-48" },
+                { id: 10, title: "Super Arcanjo", days: 165, nextDays: 200, image: "/avatar-super-arcanjo.webp", seed: "archangel", size: "w-48 h-48" },
+                { id: 11, title: "Prateado da Coragem", days: 200, nextDays: 300, image: "/avatar-prateado-coragem.webp", seed: "silver", size: "w-48 h-48" },
+                { id: 12, title: "Titã Cósmico", days: 300, nextDays: undefined, image: "/avatar-titan-cosmico.webp", seed: "titan", size: "w-48 h-48" }
+              ].map((avatar) => (
+                <Card
+                  key={avatar.id}
+                  className={`backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02] ${
+                    isCurrentCard(avatar.days, avatar.nextDays)
+                      ? 'bg-background/5 border-primary/30'
+                      : isCardActive(avatar.days)
+                        ? 'bg-background/3 border-green-500/30'
+                        : 'bg-background/1 border-border/10 opacity-40 hover:opacity-50'
+                  }`}
+                  style={{
+                    background: isCurrentCard(avatar.days, avatar.nextDays)
+                      ? 'linear-gradient(135deg, rgba(0, 246, 255, 0.1) 0%, rgba(0, 5, 21, 0.8) 100%)'
+                      : isCardActive(avatar.days)
+                        ? 'linear-gradient(135deg, rgba(0, 255, 0, 0.1) 0%, rgba(0, 5, 21, 0.8) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
+                    borderColor: isCurrentCard(avatar.days, avatar.nextDays)
+                      ? 'rgba(0, 246, 255, 0.3)'
+                      : isCardActive(avatar.days)
+                        ? 'rgba(0, 255, 0, 0.3)'
+                        : 'rgba(255, 255, 255, 0.08)'
+                  }}
+                  data-testid={`avatar-card-${avatar.id}`}
+                >
+                  <CardContent className="p-8">
+                    <div className="flex flex-col items-center text-center space-y-4">
+                      <h3 className={`text-xl font-bold ${
+                        isCurrentCard(avatar.days, avatar.nextDays) ? 'text-foreground' :
+                        isCardActive(avatar.days) ? 'text-green-400' : 'text-foreground/60'
+                      }`}>
+                        {avatar.title}
+                      </h3>
 
-                    <div className="relative">
-                      <img
-                        src="/avatar-viking-coragem.webp"
-                        alt="Viking da Coragem"
-                        className="w-40 h-40 rounded-xl object-cover opacity-60"
-                        style={{ aspectRatio: '1 / 1' }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=viking&backgroundColor=000515";
-                        }}
-                        data-testid="viking-avatar"
-                      />
+                      <div className="relative">
+                        <img
+                          src={avatar.image}
+                          alt={avatar.title}
+                          className={`${avatar.size} rounded-xl object-contain ${
+                            isCurrentCard(avatar.days, avatar.nextDays) ? '' :
+                            isCardActive(avatar.days) ? 'opacity-100' : 'opacity-60'
+                          }`}
+                          style={{ aspectRatio: '1 / 1' }}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${avatar.seed}&backgroundColor=000515`;
+                          }}
+                          data-testid={`${avatar.seed}-avatar`}
+                        />
+
+                        {isCardActive(avatar.days) && !isCurrentCard(avatar.days, avatar.nextDays) && (
+                          <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                            <span className="text-white text-sm font-bold">✓</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className={`px-4 py-2 rounded-full border ${
+                        isCurrentCard(avatar.days, avatar.nextDays) ? 'bg-primary/20 text-primary border-primary/30' :
+                        isCardActive(avatar.days) ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                        'bg-border/5 text-foreground/20 border-border/10'
+                      }`}>
+                        <span className="text-sm font-semibold">{avatar.days} DIAS</span>
+                      </div>
                     </div>
-
-                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">30 DIAS</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 6 - Cavaleiro da Resistência */}
-              <Card
-                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
-                  borderColor: 'rgba(255, 255, 255, 0.08)'
-                }}
-                data-testid="avatar-card-6"
-              >
-                <CardContent className="p-8">
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Cavaleiro da Resistência</h3>
-
-                    <div className="relative">
-                      <img
-                        src="/avatar-cavaleiro-resistencia.webp"
-                        alt="Cavaleiro da Resistência"
-                        className="w-40 h-40 rounded-xl object-cover opacity-60"
-                        style={{ aspectRatio: '1 / 1' }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=knight&backgroundColor=000515";
-                        }}
-                        data-testid="knight-avatar"
-                      />
-                    </div>
-
-                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">50 DIAS</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 7 - Soldado da Vitória */}
-              <Card
-                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
-                  borderColor: 'rgba(255, 255, 255, 0.08)'
-                }}
-                data-testid="avatar-card-7"
-              >
-                <CardContent className="p-8">
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Soldado da Vitória</h3>
-
-                    <div className="relative">
-                      <img
-                        src="/avatar-soldado-vitoria.webp"
-                        alt="Soldado da Vitória"
-                        className="w-40 h-40 rounded-xl object-contain opacity-60"
-                        style={{ aspectRatio: '1 / 1' }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=soldier&backgroundColor=000515";
-                        }}
-                        data-testid="soldier-avatar"
-                      />
-                    </div>
-
-                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">75 DIAS</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 8 - Guerreiro do Futuro */}
-              <Card
-                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
-                  borderColor: 'rgba(255, 255, 255, 0.08)'
-                }}
-                data-testid="avatar-card-8"
-              >
-                <CardContent className="p-8">
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Guerreiro do Futuro</h3>
-
-                    <div className="relative">
-                      <img
-                        src="/avatar-guerreiro-futuro.webp"
-                        alt="Guerreiro do Futuro"
-                        className="w-48 h-48 rounded-xl object-contain opacity-60"
-                        style={{ aspectRatio: '1 / 1' }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=future&backgroundColor=000515";
-                        }}
-                        data-testid="future-avatar"
-                      />
-                    </div>
-
-                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">100 DIAS</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 9 - Rei dos Relâmpagos */}
-              <Card
-                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
-                  borderColor: 'rgba(255, 255, 255, 0.08)'
-                }}
-                data-testid="avatar-card-9"
-              >
-                <CardContent className="p-8">
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Rei dos Relâmpagos</h3>
-
-                    <div className="relative">
-                      <img
-                        src="/avatar-soldado-relampago.webp"
-                        alt="Rei dos Relâmpagos"
-                        className="w-48 h-48 rounded-xl object-contain opacity-60"
-                        style={{ aspectRatio: '1 / 1' }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=lightning&backgroundColor=000515";
-                        }}
-                        data-testid="lightning-avatar"
-                      />
-                    </div>
-
-                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">130 DIAS</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 10 - Super Arcanjo */}
-              <Card
-                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
-                  borderColor: 'rgba(255, 255, 255, 0.08)'
-                }}
-                data-testid="avatar-card-10"
-              >
-                <CardContent className="p-8">
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Super Arcanjo</h3>
-
-                    <div className="relative">
-                      <img
-                        src="/avatar-super-arcanjo.webp"
-                        alt="Super Arcanjo"
-                        className="w-48 h-48 rounded-xl object-contain opacity-60"
-                        style={{ aspectRatio: '1 / 1' }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=archangel&backgroundColor=000515";
-                        }}
-                        data-testid="archangel-avatar"
-                      />
-                    </div>
-
-                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">165 DIAS</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Card 11 - Prateado da Coragem */}
-              <Card
-                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
-                  borderColor: 'rgba(255, 255, 255, 0.08)'
-                }}
-                data-testid="avatar-card-11"
-              >
-                <CardContent className="p-8">
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Prateado da Coragem</h3>
-
-                    <div className="relative">
-                      <img
-                        src="/avatar-prateado-coragem.webp"
-                        alt="Prateado da Coragem"
-                        className="w-48 h-48 rounded-xl object-contain opacity-60"
-                        style={{ aspectRatio: '1 / 1' }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=silver&backgroundColor=000515";
-                        }}
-                        data-testid="silver-avatar"
-                      />
-                    </div>
-
-                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">200 DIAS</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            {/* Card 12 - Titã Cósmico */}
-              <Card
-                className="border-border/20 bg-background/3 backdrop-blur-sm rounded-2xl shadow-lg opacity-40 hover:opacity-50 transition-opacity duration-300"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 5, 21, 0.4) 100%)',
-                  borderColor: 'rgba(255, 255, 255, 0.08)'
-                }}
-                data-testid="avatar-card-12"
-              >
-                <CardContent className="p-8">
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <h3 className="text-xl font-bold text-foreground/60">Titã Cósmico</h3>
-
-                    <div className="relative">
-                      <img
-                        src="/avatar-titan-cosmico.webp"
-                        alt="Titã Cósmico"
-                        className="w-48 h-48 rounded-xl object-contain opacity-60"
-                        style={{ aspectRatio: '1 / 1' }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=titan&backgroundColor=000515";
-                        }}
-                        data-testid="titan-avatar"
-                      />
-                    </div>
-
-                    <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
-                      <span className="text-sm font-semibold">300 DIAS</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </div>
