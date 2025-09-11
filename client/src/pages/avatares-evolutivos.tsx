@@ -119,8 +119,10 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                     }
                     
                     // Calcular posição baseada no índice do card (12 cards = 100% / 11 intervalos)
+                    // Ajustamos para centralizar a bolinha no meio de cada card
                     const cardSpacing = 100 / 11; // 11 intervalos entre 12 cards
-                    let position = currentMilestoneIndex * cardSpacing;
+                    const cardCenterOffset = cardSpacing / 2; // Offset para centralizar no meio do card
+                    let position = (currentMilestoneIndex * cardSpacing) + cardCenterOffset;
                     
                     // Se está entre marcos, fazer interpolação
                     if (currentMilestoneIndex < milestones.length - 1) {
@@ -128,6 +130,11 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                       const nextMilestone = milestones[currentMilestoneIndex + 1];
                       const progressBetween = (progressInDays - currentMilestone) / (nextMilestone - currentMilestone);
                       position += progressBetween * cardSpacing;
+                    }
+                    
+                    // Para o primeiro card, ajustar para ficar no início
+                    if (currentMilestoneIndex === 0 && progressInDays < 3) {
+                      position = cardCenterOffset;
                     }
                     
                     return Math.min(position, 100);
