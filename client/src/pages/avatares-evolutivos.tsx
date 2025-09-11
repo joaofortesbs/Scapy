@@ -306,7 +306,7 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                       <img
                         src="/avatar-soldado-vitoria.webp"
                         alt="Soldado da Vitória"
-                        className="w-40 h-40 rounded-xl object-cover opacity-60"
+                        className="w-40 h-40 rounded-xl object-contain opacity-60"
                         style={{ aspectRatio: '1 / 1' }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
