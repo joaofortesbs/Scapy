@@ -10,6 +10,10 @@ interface User {
   id: number;
   email: string;
   fullName: string;
+  startDate: string;
+  createdAt: string;
+  lastLogin?: string;
+  full_name?: string;
 }
 
 export default function AvatareEsEvolutivos(): JSX.Element {
