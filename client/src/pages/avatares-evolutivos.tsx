@@ -14,14 +14,18 @@ interface User {
 export default function AvatareEsEvolutivos(): JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [, setLocation] = useLocation();
-  const [progressInDays, setProgressInDays] = useState<number>(0); // Assuming user has a progress in days
+  const [progressInDays, setProgressInDays] = useState<number>(0);
 
-  // Simulate fetching user progress
+  // Calculate real progress from user's timer
   useEffect(() => {
-    // In a real application, you would fetch this from an API or context
-    const simulatedProgress = 50; // Example: user has progressed 50 days
-    setProgressInDays(simulatedProgress);
-  }, []);
+    if (user?.startDate) {
+      const startDate = new Date(user.startDate);
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - startDate.getTime());
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      setProgressInDays(diffDays);
+    }
+  }, [user]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -92,11 +96,42 @@ export default function AvatareEsEvolutivos(): JSX.Element {
             {/* Barra de progresso vertical */}
             <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-primary/60 to-border/30 rounded-full">
               {/* Indicador de progresso atual */}
-              {/* This indicator needs to be dynamically positioned based on progressInDays */}
               <div 
-                className="absolute top-0 w-4 h-4 bg-primary rounded-full transform -translate-x-1.5 shadow-lg shadow-primary/50 transition-all duration-500"
+                className="absolute w-4 h-4 bg-primary rounded-full transform -translate-x-1.5 shadow-lg shadow-primary/50 transition-all duration-500"
                 style={{ 
-                  top: `${(progressInDays / 300) * 100}%` // Example calculation, needs adjustment based on total days and card distribution
+                  top: `${(() => {
+                    // Marcos dos cards em dias
+                    const milestones = [0, 3, 7, 15, 30, 50, 75, 100, 130, 165, 200, 300];
+                    
+                    // Encontrar o marco atual ou próximo
+                    let currentMilestoneIndex = 0;
+                    for (let i = 0; i < milestones.length; i++) {
+                      if (progressInDays >= milestones[i]) {
+                        currentMilestoneIndex = i;
+                      } else {
+                        break;
+                      }
+                    }
+                    
+                    // Se passou do último marco, fica no final
+                    if (progressInDays >= 300) {
+                      return 100;
+                    }
+                    
+                    // Calcular posição baseada no índice do card (12 cards = 100% / 11 intervalos)
+                    const cardSpacing = 100 / 11; // 11 intervalos entre 12 cards
+                    let position = currentMilestoneIndex * cardSpacing;
+                    
+                    // Se está entre marcos, fazer interpolação
+                    if (currentMilestoneIndex < milestones.length - 1) {
+                      const currentMilestone = milestones[currentMilestoneIndex];
+                      const nextMilestone = milestones[currentMilestoneIndex + 1];
+                      const progressBetween = (progressInDays - currentMilestone) / (nextMilestone - currentMilestone);
+                      position += progressBetween * cardSpacing;
+                    }
+                    
+                    return Math.min(position, 100);
+                  })()}%`
                 }}
               >
                 <div className="w-4 h-4 bg-primary rounded-full animate-pulse"></div>
