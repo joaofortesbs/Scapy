@@ -336,8 +336,18 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Rei dos Relâmpagos</h3>
 
-                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    <div className="relative">
+                      <img
+                        src="/avatar-soldado-vitoria.webp"
+                        alt="Rei dos Relâmpagos"
+                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        style={{ aspectRatio: '1 / 1', filter: 'hue-rotate(60deg) brightness(1.2)' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=lightning&backgroundColor=000515";
+                        }}
+                        data-testid="lightning-avatar"
+                      />
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
@@ -360,8 +370,18 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Super Arcanjo</h3>
 
-                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    <div className="relative">
+                      <img
+                        src="/avatar-cavaleiro-resistencia.webp"
+                        alt="Super Arcanjo"
+                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        style={{ aspectRatio: '1 / 1', filter: 'brightness(1.3) contrast(1.1)' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=archangel&backgroundColor=000515";
+                        }}
+                        data-testid="archangel-avatar"
+                      />
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
@@ -384,8 +404,18 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Prateado da Coragem</h3>
 
-                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    <div className="relative">
+                      <img
+                        src="/avatar-samurai-disciplina.webp"
+                        alt="Prateado da Coragem"
+                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        style={{ aspectRatio: '1 / 1', filter: 'grayscale(0.3) brightness(1.1) contrast(0.9)' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=silver&backgroundColor=000515";
+                        }}
+                        data-testid="silver-avatar"
+                      />
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
@@ -408,8 +438,18 @@ export default function AvatareEsEvolutivos(): JSX.Element {
                   <div className="flex flex-col items-center text-center space-y-4">
                     <h3 className="text-xl font-bold text-foreground/60">Titã Cósmico</h3>
 
-                    <div className="w-48 h-48 rounded-xl border-2 border-border/20 bg-background/5 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-border/20 animate-pulse"></div>
+                    <div className="relative">
+                      <img
+                        src="/avatar-viking-coragem.webp"
+                        alt="Titã Cósmico"
+                        className="w-48 h-48 rounded-xl object-cover opacity-60"
+                        style={{ aspectRatio: '1 / 1', filter: 'hue-rotate(240deg) saturate(1.5) brightness(1.2)' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://api.dicebear.com/7.x/adventurer/svg?seed=titan&backgroundColor=000515";
+                        }}
+                        data-testid="titan-avatar"
+                      />
                     </div>
 
                     <div className="bg-border/5 text-foreground/20 px-4 py-2 rounded-full border border-border/10">
