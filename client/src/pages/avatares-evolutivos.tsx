@@ -83,9 +83,9 @@ export default function AvatareEsEvolutivos(): JSX.Element {
         </div>
 
         {/* Conteúdo principal */}
-        <div className="container mx-auto px-6 py-12">
+        <div className="container mx-auto px-6 py-20">
         {/* Título principal */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-20">
           <h1
             className="text-4xl md:text-5xl font-bold text-foreground mb-4"
             style={{
