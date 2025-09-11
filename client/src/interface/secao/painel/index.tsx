@@ -201,20 +201,83 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
     }
 
     try {
-      // Carregar dados locais
+      console.log(`🔍 [WeeklyTracker] Carregando humor semanal para usuário ${user.id}`);
+      
+      // Carregar dados locais primeiro
       const localMood = OptimizedMoodStorage.loadWeeklyMood(user.id.toString());
       if (localMood) {
+        console.log(`💿 [WeeklyTracker] Humor local carregado:`, localMood);
         setWeeklyMood(localMood);
+      }
+
+      // Verificar humor de hoje no AIAssistant
+      const todayKey = new Date().toISOString().split('T')[0];
+      const todayMoodKey = `scapy_daily_mood_${user.id}_${todayKey}`;
+      const todayMoodData = localStorage.getItem(todayMoodKey);
+      
+      if (todayMoodData) {
+        try {
+          const moodData = JSON.parse(todayMoodData);
+          const today = new Date();
+          const dayOfWeek = today.getDay();
+          
+          console.log(`🎯 [WeeklyTracker] Humor de hoje encontrado: ${moodData.mood} para o dia ${dayOfWeek}`);
+          
+          // Atualizar humor semanal com o humor de hoje
+          setWeeklyMood(prevMood => {
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+            startOfWeek.setHours(0, 0, 0, 0);
+
+            const newMoodByDay = [...(prevMood?.moodByDay || new Array(7).fill(null))];
+            newMoodByDay[dayOfWeek] = moodData.mood;
+
+            const updatedMood: WeeklyMood = {
+              userId: user.id.toString(),
+              weekStart: startOfWeek.toISOString(),
+              weekEnd: new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString(),
+              moodByDay: newMoodByDay
+            };
+
+            OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), updatedMood);
+            return updatedMood;
+          });
+        } catch (parseError) {
+          console.error('❌ [WeeklyTracker] Erro ao parsear humor de hoje:', parseError);
+        }
       }
 
       // Buscar da API
       const response = await apiRequest('GET', `/api/weekly-mood/${user.id}`);
       const apiMood = await response.json() as WeeklyMood;
 
-      // Merge inteligente
+      console.log(`🌐 [WeeklyTracker] Humor da API:`, apiMood);
+
+      // Merge inteligente - priorizar dados locais se mais completos
       if (apiMood.moodByDay.some(mood => mood !== null)) {
-        setWeeklyMood(apiMood);
-        OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
+        setWeeklyMood(prev => {
+          // Se temos dados locais, fazer merge inteligente
+          if (prev && prev.moodByDay.some(mood => mood !== null)) {
+            const mergedMoodByDay = [...apiMood.moodByDay];
+            prev.moodByDay.forEach((mood, index) => {
+              if (mood && !mergedMoodByDay[index]) {
+                mergedMoodByDay[index] = mood;
+              }
+            });
+            
+            const mergedMood = {
+              ...apiMood,
+              moodByDay: mergedMoodByDay
+            };
+            
+            OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), mergedMood);
+            return mergedMood;
+          }
+          
+          // Se não temos dados locais, usar da API
+          OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
+          return apiMood;
+        });
       }
 
     } catch (error) {
@@ -234,9 +297,11 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
     if (!user?.id) return;
 
     const handleMoodUpdate = (event: CustomEvent) => {
-      const { userId, mood, dayOfWeek } = event.detail;
+      const { userId, mood, dayOfWeek, date } = event.detail;
 
       if (userId !== user.id.toString() || !mood) return;
+
+      console.log(`🔄 [WeeklyTracker] Atualizando humor: ${mood} para o dia ${dayOfWeek || 'atual'}`);
 
       setWeeklyMood(prevMood => {
         const now = new Date();
@@ -244,8 +309,18 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
         startOfWeek.setDate(now.getDate() - now.getDay());
         startOfWeek.setHours(0, 0, 0, 0);
 
+        // Determinar o dia da semana correto
+        let targetDayOfWeek = dayOfWeek;
+        if (targetDayOfWeek === undefined) {
+          if (date) {
+            targetDayOfWeek = new Date(date).getDay();
+          } else {
+            targetDayOfWeek = now.getDay();
+          }
+        }
+
         const newMoodByDay = [...(prevMood?.moodByDay || new Array(7).fill(null))];
-        newMoodByDay[dayOfWeek ?? now.getDay()] = mood;
+        newMoodByDay[targetDayOfWeek] = mood;
 
         const updatedMood: WeeklyMood = {
           userId: user.id.toString(),
@@ -254,17 +329,23 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
           moodByDay: newMoodByDay
         };
 
+        console.log(`💾 [WeeklyTracker] Humor atualizado:`, updatedMood);
         OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), updatedMood);
         return updatedMood;
       });
     };
 
-    window.addEventListener('moodUpdated', handleMoodUpdate as EventListener);
-    window.addEventListener('weeklyMoodUpdated', handleMoodUpdate as EventListener);
+    // Adicionar mais listeners para capturar todas as atualizações
+    const events = ['moodUpdated', 'weeklyMoodUpdated', 'dailyMoodUpdated', 'aiMoodSelected'];
+    
+    events.forEach(eventName => {
+      window.addEventListener(eventName, handleMoodUpdate as EventListener);
+    });
 
     return () => {
-      window.removeEventListener('moodUpdated', handleMoodUpdate as EventListener);
-      window.removeEventListener('weeklyMoodUpdated', handleMoodUpdate as EventListener);
+      events.forEach(eventName => {
+        window.removeEventListener(eventName, handleMoodUpdate as EventListener);
+      });
     };
   }, [user?.id]);
 
@@ -302,9 +383,8 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
 
     let classes = [baseClass];
 
-    if (isCompleted) {
-      classes.push('completed');
-    } else if (dayMood) {
+    // Primeiro verificar se há humor para o dia
+    if (dayMood) {
       const normalizedMood = dayMood.toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
@@ -320,6 +400,11 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
           classes.push('mood-feliz');
           break;
       }
+    }
+    
+    // Depois verificar se está concluído (para sobrescrever se necessário)
+    if (isCompleted) {
+      classes.push('completed');
     }
 
     return classes.join(' ');
