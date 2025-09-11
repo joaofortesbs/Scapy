@@ -1101,6 +1101,7 @@ export default function PainelInterface({
   const [isLoading, setIsLoading] = useState(true);
   const [timerStartDate, setTimerStartDate] = useState<string | null>(null);
   const [showPanicPage, setShowPanicPage] = useState(false);
+  const [, setLocation] = useLocation();
 
   // Check timer status from database when user loads
   useEffect(() => {
@@ -1217,7 +1218,11 @@ export default function PainelInterface({
               ) : (
                 <>
                   {/* Avatar evolutivo com sincronização em tempo real */}
-                  <div className="floating-avatar mb-6">
+                  <div 
+                    className="floating-avatar mb-6 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                    onClick={() => setLocation('/avatares-evolutivos')}
+                    data-testid="evolutionary-avatar-clickable"
+                  >
                     <EvolutionaryAvatar
                       startDate={localUser?.startDate}
                       size="large"
