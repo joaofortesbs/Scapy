@@ -193,7 +193,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
   const weekDays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
   const dayNames = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 
-  // Carregar humor semanal otimizado
+  // ============= CARREGAMENTO OTIMIZADO COM MÚLTIPLAS FONTES =============
   const loadWeeklyMood = useCallback(async () => {
     if (!user?.id) {
       setIsLoading(false);
@@ -203,81 +203,122 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
     try {
       console.log(`🔍 [WeeklyTracker] Carregando humor semanal para usuário ${user.id}`);
       
-      // Carregar dados locais primeiro
+      // 1. Carregar dados locais primeiro para resposta imediata
       const localMood = OptimizedMoodStorage.loadWeeklyMood(user.id.toString());
       if (localMood) {
         console.log(`💿 [WeeklyTracker] Humor local carregado:`, localMood);
         setWeeklyMood(localMood);
       }
 
-      // Verificar humor de hoje no AIAssistant
+      // 2. Verificar TODAS as fontes de humor de hoje para máxima persistência
       const todayKey = new Date().toISOString().split('T')[0];
-      const todayMoodKey = `scapy_daily_mood_${user.id}_${todayKey}`;
-      const todayMoodData = localStorage.getItem(todayMoodKey);
+      const today = new Date();
+      const dayOfWeek = today.getDay();
       
-      if (todayMoodData) {
+      // Verificar humor individual do dia (fonte primária)
+      const individualMoodKey = `scapy_mood_${user.id}_${todayKey}`;
+      const individualMoodData = localStorage.getItem(individualMoodKey);
+      
+      // Verificar humor diário do AIAssistant (fonte secundária)
+      const dailyMoodKey = `scapy_daily_mood_${user.id}_${todayKey}`;
+      const dailyMoodData = localStorage.getItem(dailyMoodKey);
+      
+      // Verificar registro geral de humores (fonte terciária)
+      const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
+      const generalMood = allMoods[user.id.toString()]?.[todayKey];
+      
+      let todayMood = null;
+      
+      // Priorizar fonte mais recente e confiável
+      if (individualMoodData) {
         try {
-          const moodData = JSON.parse(todayMoodData);
-          const today = new Date();
-          const dayOfWeek = today.getDay();
-          
-          console.log(`🎯 [WeeklyTracker] Humor de hoje encontrado: ${moodData.mood} para o dia ${dayOfWeek}`);
-          
-          // Atualizar humor semanal com o humor de hoje
-          setWeeklyMood(prevMood => {
-            const startOfWeek = new Date(today);
-            startOfWeek.setDate(today.getDate() - today.getDay());
-            startOfWeek.setHours(0, 0, 0, 0);
-
-            const newMoodByDay = [...(prevMood?.moodByDay || new Array(7).fill(null))];
-            newMoodByDay[dayOfWeek] = moodData.mood;
-
-            const updatedMood: WeeklyMood = {
-              userId: user.id.toString(),
-              weekStart: startOfWeek.toISOString(),
-              weekEnd: new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString(),
-              moodByDay: newMoodByDay
-            };
-
-            OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), updatedMood);
-            return updatedMood;
-          });
+          const moodData = JSON.parse(individualMoodData);
+          if (moodData.date === todayKey) {
+            todayMood = moodData.mood;
+            console.log(`🎯 [WeeklyTracker] Humor individual encontrado: ${todayMood}`);
+          }
         } catch (parseError) {
-          console.error('❌ [WeeklyTracker] Erro ao parsear humor de hoje:', parseError);
+          console.warn('⚠️ [WeeklyTracker] Erro ao parsear humor individual:', parseError);
         }
       }
-
-      // Buscar da API
-      const response = await apiRequest('GET', `/api/weekly-mood/${user.id}`);
-      const apiMood = await response.json() as WeeklyMood;
-
-      console.log(`🌐 [WeeklyTracker] Humor da API:`, apiMood);
-
-      // Merge inteligente - priorizar dados locais se mais completos
-      if (apiMood.moodByDay.some(mood => mood !== null)) {
-        setWeeklyMood(prev => {
-          // Se temos dados locais, fazer merge inteligente
-          if (prev && prev.moodByDay.some(mood => mood !== null)) {
-            const mergedMoodByDay = [...apiMood.moodByDay];
-            prev.moodByDay.forEach((mood, index) => {
-              if (mood && !mergedMoodByDay[index]) {
-                mergedMoodByDay[index] = mood;
-              }
-            });
-            
-            const mergedMood = {
-              ...apiMood,
-              moodByDay: mergedMoodByDay
-            };
-            
-            OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), mergedMood);
-            return mergedMood;
+      
+      if (!todayMood && dailyMoodData) {
+        try {
+          const moodData = JSON.parse(dailyMoodData);
+          if (moodData.date === todayKey) {
+            todayMood = moodData.mood;
+            console.log(`🎯 [WeeklyTracker] Humor diário encontrado: ${todayMood}`);
           }
-          
-          // Se não temos dados locais, usar da API
-          OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
-          return apiMood;
+        } catch (parseError) {
+          console.warn('⚠️ [WeeklyTracker] Erro ao parsear humor diário:', parseError);
+        }
+      }
+      
+      if (!todayMood && generalMood) {
+        todayMood = generalMood;
+        console.log(`🎯 [WeeklyTracker] Humor geral encontrado: ${todayMood}`);
+      }
+      
+      // Se encontrou humor de hoje, atualizar humor semanal
+      if (todayMood) {
+        setWeeklyMood(prevMood => {
+          const startOfWeek = new Date(today);
+          startOfWeek.setDate(today.getDate() - today.getDay());
+          startOfWeek.setHours(0, 0, 0, 0);
+
+          const newMoodByDay = [...(prevMood?.moodByDay || new Array(7).fill(null))];
+          newMoodByDay[dayOfWeek] = todayMood;
+
+          const updatedMood: WeeklyMood = {
+            userId: user.id.toString(),
+            weekStart: startOfWeek.toISOString(),
+            weekEnd: new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString(),
+            moodByDay: newMoodByDay
+          };
+
+          OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), updatedMood);
+          console.log(`🔄 [WeeklyTracker] Humor semanal atualizado com humor de hoje: ${todayMood}`);
+          return updatedMood;
         });
+      }
+
+      // 3. Tentar buscar da API (fonte de backup)
+      try {
+        const response = await apiRequest('GET', `/api/weekly-mood/${user.id}`);
+        const apiMood = await response.json() as WeeklyMood;
+
+        console.log(`🌐 [WeeklyTracker] Humor da API:`, apiMood);
+
+        // Merge inteligente - priorizar dados locais se mais completos
+        if (apiMood && apiMood.moodByDay && apiMood.moodByDay.some(mood => mood !== null)) {
+          setWeeklyMood(prev => {
+            // Se temos dados locais, fazer merge inteligente
+            if (prev && prev.moodByDay.some(mood => mood !== null)) {
+              const mergedMoodByDay = [...apiMood.moodByDay];
+              prev.moodByDay.forEach((mood, index) => {
+                if (mood && !mergedMoodByDay[index]) {
+                  mergedMoodByDay[index] = mood;
+                }
+              });
+              
+              const mergedMood = {
+                ...apiMood,
+                moodByDay: mergedMoodByDay
+              };
+              
+              OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), mergedMood);
+              console.log(`🔄 [WeeklyTracker] Dados da API mesclados com dados locais`);
+              return mergedMood;
+            }
+            
+            // Se não temos dados locais, usar da API
+            OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
+            console.log(`🔄 [WeeklyTracker] Usando dados da API`);
+            return apiMood;
+          });
+        }
+      } catch (apiError) {
+        console.warn('⚠️ [WeeklyTracker] Erro na API, usando dados locais:', apiError);
       }
 
     } catch (error) {
@@ -292,16 +333,17 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
     loadWeeklyMood();
   }, [loadWeeklyMood]);
 
-  // Listener para atualizações de humor
+  // ============= SISTEMA DE SINCRONIZAÇÃO ULTRA-ROBUSTA =============
+  // Listener para atualizações de humor com verificação de dados
   useEffect(() => {
     if (!user?.id) return;
 
     const handleMoodUpdate = (event: CustomEvent) => {
-      const { userId, mood, dayOfWeek, date } = event.detail;
+      const { userId, mood, dayOfWeek, date, source } = event.detail;
 
       if (userId !== user.id.toString() || !mood) return;
 
-      console.log(`🔄 [WeeklyTracker] Atualizando humor: ${mood} para o dia ${dayOfWeek || 'atual'}`);
+      console.log(`🔄 [WeeklyTracker] Atualizando humor: ${mood} para o dia ${dayOfWeek || 'atual'} (source: ${source || 'unknown'})`);
 
       setWeeklyMood(prevMood => {
         const now = new Date();
@@ -331,23 +373,61 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
 
         console.log(`💾 [WeeklyTracker] Humor atualizado:`, updatedMood);
         OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), updatedMood);
+        
+        // Disparar evento de confirmação para outros componentes
+        window.dispatchEvent(new CustomEvent('weeklyMoodSyncComplete', {
+          detail: {
+            userId: user.id.toString(),
+            mood: mood,
+            dayOfWeek: targetDayOfWeek,
+            timestamp: Date.now(),
+            source: 'weekly-tracker'
+          }
+        }));
+        
         return updatedMood;
       });
     };
 
+    // Listener específico para detecção de novo dia - RESETAR DADOS
+    const handleNewDayReset = (event: CustomEvent) => {
+      const { userId, newDate, oldDate } = event.detail;
+      
+      if (userId !== user.id.toString()) return;
+      
+      console.log(`🌅 [WeeklyTracker] Reset para novo dia detectado: ${oldDate} → ${newDate}`);
+      
+      // Recarregar dados para a nova semana
+      loadWeeklyMood();
+    };
+
     // Adicionar mais listeners para capturar todas as atualizações
-    const events = ['moodUpdated', 'weeklyMoodUpdated', 'dailyMoodUpdated', 'aiMoodSelected'];
+    const events = [
+      'moodUpdated', 
+      'weeklyMoodUpdated', 
+      'dailyMoodUpdated', 
+      'aiMoodSelected',
+      'newDayDetected'
+    ];
     
     events.forEach(eventName => {
-      window.addEventListener(eventName, handleMoodUpdate as EventListener);
+      if (eventName === 'newDayDetected') {
+        window.addEventListener(eventName, handleNewDayReset as EventListener);
+      } else {
+        window.addEventListener(eventName, handleMoodUpdate as EventListener);
+      }
     });
 
     return () => {
       events.forEach(eventName => {
-        window.removeEventListener(eventName, handleMoodUpdate as EventListener);
+        if (eventName === 'newDayDetected') {
+          window.removeEventListener(eventName, handleNewDayReset as EventListener);
+        } else {
+          window.removeEventListener(eventName, handleMoodUpdate as EventListener);
+        }
       });
     };
-  }, [user?.id]);
+  }, [user?.id, loadWeeklyMood]);
 
   const updateProgressMutation = useMutation({
     mutationFn: async (updatedDays: boolean[]) => {

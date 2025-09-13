@@ -117,12 +117,30 @@ export function DailyGoals() {
     return null;
   };
 
+  // Salvar metas da IA sempre que mudarem (NOVA FUNCIONALIDADE)
+  useEffect(() => {
+    if (user && tasks.length > 0) {
+      const todayKey = new Date().toISOString().split('T')[0];
+      const aiTasksKey = `scapy_ai_tasks_${user.id}_${todayKey}`;
+      saveToLocalStorage(aiTasksKey, { 
+        tasks: tasks,
+        lastUpdate: Date.now(),
+        version: '2.0'
+      });
+      console.log(`💾 [DailyGoals] ${tasks.length} metas da IA salvas no localStorage para ${todayKey}`);
+    }
+  }, [tasks, user]);
+
   // Salvar metas personalizadas sempre que mudarem
   useEffect(() => {
     if (user && customGoals.length > 0) {
       const todayKey = new Date().toISOString().split('T')[0];
       const localGoalsKey = `scapy_custom_goals_${user.id}_${todayKey}`;
-      saveToLocalStorage(localGoalsKey, { goals: customGoals });
+      saveToLocalStorage(localGoalsKey, { 
+        goals: customGoals,
+        lastUpdate: Date.now(),
+        version: '2.0'
+      });
       
       // Disparar evento para sincronização com outras abas
       const goalEvent = new CustomEvent('customGoalsUpdated', {
@@ -134,6 +152,7 @@ export function DailyGoals() {
         }
       });
       window.dispatchEvent(goalEvent);
+      console.log(`💾 [DailyGoals] ${customGoals.length} metas personalizadas salvas no localStorage para ${todayKey}`);
     }
   }, [customGoals, user]);
 
@@ -161,14 +180,25 @@ export function DailyGoals() {
         const userData = JSON.parse(savedUser);
         setUser(userData);
         
-        // Carregar metas personalizadas do localStorage primeiro
+        // Carregar dados do localStorage PRIMEIRO para resposta instantânea
         const todayKey = new Date().toISOString().split('T')[0];
+        
+        // 1. Carregar metas da IA do localStorage
+        const aiTasksKey = `scapy_ai_tasks_${userData.id}_${todayKey}`;
+        const savedAiTasks = loadFromLocalStorage(aiTasksKey);
+        
+        if (savedAiTasks && savedAiTasks.tasks && savedAiTasks.tasks.length > 0) {
+          setTasks(savedAiTasks.tasks);
+          console.log(`🤖 [DailyGoals] ${savedAiTasks.tasks.length} metas da IA carregadas do localStorage para ${todayKey}`);
+        }
+        
+        // 2. Carregar metas personalizadas do localStorage
         const localGoalsKey = `scapy_custom_goals_${userData.id}_${todayKey}`;
         const savedLocalGoals = loadFromLocalStorage(localGoalsKey);
         
         if (savedLocalGoals && savedLocalGoals.goals) {
           setCustomGoals(savedLocalGoals.goals);
-          console.log(`🎯 [DailyGoals] Metas personalizadas carregadas do localStorage para ${todayKey}:`, savedLocalGoals.goals.length);
+          console.log(`🎯 [DailyGoals] ${savedLocalGoals.goals.length} metas personalizadas carregadas do localStorage para ${todayKey}`);
         }
         
         loadTasks(userData.id);
@@ -179,40 +209,119 @@ export function DailyGoals() {
     setIsLoading(false);
   }, []);
 
-  // Escutar atualizações de tarefas
+  // Escutar atualizações de tarefas e reset diário
   useEffect(() => {
+    if (!user) return;
+
     const handleTasksUpdated = () => {
-      if (user) {
-        loadTasks(user.id);
-      }
+      console.log('🔄 [DailyGoals] Evento tasksUpdated recebido');
+      loadTasks(user.id);
     };
 
+    const handleDailyReset = (event: CustomEvent) => {
+      const { userId, date, oldDate } = event.detail;
+      
+      if (userId !== user.id.toString()) return;
+      
+      console.log(`🌅 [DailyGoals] Reset diário detectado: ${oldDate} → ${date}`);
+      
+      // Limpar todos os estados para o novo dia
+      setTasks([]);
+      setCustomGoals([]);
+      setProgress({ totalTasks: 0, completedTasks: 0, progressPercentage: 0 });
+      
+      // Recarregar dados para o novo dia
+      setTimeout(() => {
+        if (user?.id) {
+          setIsLoading(true);
+          // Vai recarregar através do useEffect principal
+          window.dispatchEvent(new CustomEvent('tasksUpdated'));
+        }
+      }, 1000);
+      
+      console.log('✅ [DailyGoals] Estados resetados para o novo dia');
+    };
+
+    // Escutar eventos
     window.addEventListener('tasksUpdated', handleTasksUpdated);
-    return () => window.removeEventListener('tasksUpdated', handleTasksUpdated);
+    window.addEventListener('dailyGoalsReset', handleDailyReset as EventListener);
+    
+    return () => {
+      window.removeEventListener('tasksUpdated', handleTasksUpdated);
+      window.removeEventListener('dailyGoalsReset', handleDailyReset as EventListener);
+    };
   }, [user]);
 
   const loadTasks = async (userId: number) => {
     try {
       setIsLoading(true);
+      const todayKey = new Date().toISOString().split('T')[0];
+      
+      // Verificar se já temos dados no localStorage primeiro
+      const aiTasksKey = `scapy_ai_tasks_${userId}_${todayKey}`;
+      const savedAiTasks = loadFromLocalStorage(aiTasksKey);
+      const hasLocalTasks = savedAiTasks && savedAiTasks.tasks && savedAiTasks.tasks.length > 0;
       
       // Carregar tarefas da IA
-      const tasksResponse = await apiRequest('GET', `/api/daily-tasks/${userId}`);
-      const tasksData = await tasksResponse.json();
-      setTasks(tasksData);
+      try {
+        const tasksResponse = await apiRequest('GET', `/api/daily-tasks/${userId}`);
+        const tasksData = await tasksResponse.json();
+        
+        // Se há dados da API, usar eles e atualizar localStorage
+        if (tasksData && tasksData.length > 0) {
+          setTasks(tasksData);
+          saveToLocalStorage(aiTasksKey, { 
+            tasks: tasksData,
+            lastUpdate: Date.now(),
+            version: '2.0'
+          });
+          console.log(`🌐 [DailyGoals] ${tasksData.length} metas da IA carregadas da API e salvas no localStorage`);
+        } else if (hasLocalTasks) {
+          // Se API não tem dados mas localStorage tem, manter os dados locais
+          console.log(`💿 [DailyGoals] API sem dados, mantendo ${savedAiTasks.tasks.length} metas locais da IA`);
+          setTasks(savedAiTasks.tasks);
+        } else {
+          // Nenhum dado disponível
+          setTasks([]);
+        }
+      } catch (apiError) {
+        console.warn('⚠️ [DailyGoals] Erro na API de tarefas, usando dados locais:', apiError);
+        if (hasLocalTasks) {
+          setTasks(savedAiTasks.tasks);
+          console.log(`💿 [DailyGoals] Usando ${savedAiTasks.tasks.length} metas locais da IA devido a erro na API`);
+        }
+      }
 
       // Carregar metas personalizadas
-      const customGoalsResponse = await apiRequest('GET', `/api/custom-goals/${userId}`);
-      const customGoalsData = await customGoalsResponse.json();
-      setCustomGoals(customGoalsData);
+      try {
+        const customGoalsResponse = await apiRequest('GET', `/api/custom-goals/${userId}`);
+        const customGoalsData = await customGoalsResponse.json();
+        
+        if (customGoalsData && customGoalsData.length > 0) {
+          setCustomGoals(customGoalsData);
+          const localGoalsKey = `scapy_custom_goals_${userId}_${todayKey}`;
+          saveToLocalStorage(localGoalsKey, { 
+            goals: customGoalsData,
+            lastUpdate: Date.now(),
+            version: '2.0'
+          });
+          console.log(`🌐 [DailyGoals] ${customGoalsData.length} metas personalizadas carregadas da API e salvas`);
+        }
+      } catch (apiError) {
+        console.warn('⚠️ [DailyGoals] Erro na API de metas personalizadas:', apiError);
+      }
 
       // Carregar progresso
-      const progressResponse = await apiRequest('GET', `/api/task-progress/${userId}`);
-      const progressData = await progressResponse.json();
-      setProgress(progressData);
+      try {
+        const progressResponse = await apiRequest('GET', `/api/task-progress/${userId}`);
+        const progressData = await progressResponse.json();
+        setProgress(progressData);
+      } catch (apiError) {
+        console.warn('⚠️ [DailyGoals] Erro na API de progresso:', apiError);
+      }
 
-      console.log(`📋 Carregadas ${tasksData.length} tarefas da IA e ${customGoalsData.length} metas personalizadas para hoje`);
     } catch (error) {
-      console.error('Erro ao carregar tarefas:', error);
+      console.error('❌ [DailyGoals] Erro geral ao carregar tarefas:', error);
     } finally {
       setIsLoading(false);
     }
