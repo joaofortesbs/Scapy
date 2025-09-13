@@ -1,8 +1,13 @@
 
 import fetch from 'node-fetch';
 
-const GEMINI_API_KEY = 'AIzaSyCTFP7NXclzBjV5M2JzhealO_SQ8rDrzDg';
+// Security: Use environment variable instead of hardcoded API key
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
+if (!GEMINI_API_KEY) {
+  throw new Error("GEMINI_API_KEY environment variable is required");
+}
 
 export interface DailyPhrase {
   id: string;
