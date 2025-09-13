@@ -1,19 +1,7 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, integer, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-
-// Auth users table for authentication (compatible with Supabase auth_users)
-export const authUsers = pgTable("auth_users", {
-  id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
-  fullName: text("full_name").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  isActive: boolean("is_active").default(true).notNull(),
-  lastLogin: timestamp("last_login"),
-});
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -235,13 +223,3 @@ export type TaskProgress = typeof taskProgress.$inferSelect;
 export type InsertTaskProgress = z.infer<typeof insertTaskProgressSchema>;
 export type UserCustomGoal = typeof userCustomGoals.$inferSelect;
 export type InsertUserCustomGoal = z.infer<typeof insertUserCustomGoalSchema>;
-
-// Auth users schema exports
-export const insertAuthUserSchema = createInsertSchema(authUsers).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type AuthUser = typeof authUsers.$inferSelect;
-export type InsertAuthUser = z.infer<typeof insertAuthUserSchema>;

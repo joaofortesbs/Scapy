@@ -9,21 +9,26 @@ import {
   insertMoodSelectionSchema,
   insertUserObjectiveSchema,
   insertDailyTaskSchema,
-  insertUserCustomGoalSchema,
-  authUsers,
-  insertAuthUserSchema
+  insertUserCustomGoalSchema
 } from "@shared/schema";
 import { aiProcessor } from "./aiProcessor";
+import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import { neon } from '@neondatabase/serverless';
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { getDailyPhrase } from "./gemini-service";
-import { db } from "./db";
-import { eq } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
-  // Direct PostgreSQL connection for bypassing cache issues
+  // Inicializar Supabase cliente
+  const supabaseUrl = process.env.SUPABASE_URL || 'https://ddatgvruplfcutjwores.supabase.co';
+  const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkYXRndnJ1cGxmY3V0andvcmVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxMzQ3NjcsImV4cCI6MjA3MjcxMDc2N30.gkE2EWLU7gvxonWptK_bbiRuAm1d6xIxLVeCYegA5es';
+  const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkYXRndnJ1cGxmY3V0andvcmVzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzEzNDc2NywiZXhwIjoyMDcyNzEwNzY3fQ.MWY548tNrRJsr-uIxSwWz4Vd6q9YE58bf9XQrKvhAZE';
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole);
+
+  // Direct PostgreSQL connection for bypassing Supabase cache issues
   const sql = neon(process.env.DATABASE_URL!);
 
   // ========== ROTAS DE AUTENTICAÇÃO ==========
@@ -38,34 +43,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Buscar usuário pelo email
-      const users = await db.select()
-        .from(authUsers)
-        .where(eq(authUsers.email, email.toLowerCase().trim()))
-        .limit(1);
+      const { data: user, error } = await supabase
+        .from('auth_users')
+        .select('*')
+        .eq('email', email.toLowerCase().trim())
+        .eq('is_active', true)
+        .single();
 
-      const user = users[0];
-      if (!user || !user.isActive) {
+      if (error || !user) {
         return res.status(401).json({ message: 'Email ou senha inválidos' });
       }
 
       // Verificar senha
-      const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
       if (!isPasswordValid) {
         return res.status(401).json({ message: 'Email ou senha inválidos' });
       }
 
       // Atualizar último login
-      await db.update(authUsers)
-        .set({ lastLogin: new Date() })
-        .where(eq(authUsers.id, user.id));
+      await supabase
+        .from('auth_users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', user.id);
 
       // Retornar dados do usuário (sem a senha)
       const userData = {
         id: user.id,
         email: user.email,
-        fullName: user.fullName,
-        createdAt: user.createdAt,
+        fullName: user.full_name,
+        createdAt: user.created_at,
         lastLogin: new Date().toISOString()
       };
 
@@ -101,12 +108,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verificar se o email já existe
-      const existingUsers = await db.select({ email: authUsers.email })
-        .from(authUsers)
-        .where(eq(authUsers.email, email.toLowerCase().trim()))
-        .limit(1);
+      const { data: existingUser } = await supabase
+        .from('auth_users')
+        .select('email')
+        .eq('email', email.toLowerCase().trim())
+        .single();
 
-      if (existingUsers.length > 0) {
+      if (existingUser) {
         return res.status(409).json({ message: 'Este email já está cadastrado' });
       }
 
@@ -115,18 +123,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Criar usuário
-      const newUsers = await db.insert(authUsers)
-        .values({
+      const { data: newUser, error } = await supabase
+        .from('auth_users')
+        .insert([{
           email: email.toLowerCase().trim(),
-          passwordHash,
-          fullName: fullName.trim(),
-          isActive: true
-        })
-        .returning();
+          password_hash: passwordHash,
+          full_name: fullName.trim(),
+          is_active: true
+        }])
+        .select()
+        .single();
 
-      const newUser = newUsers[0];
-      if (!newUser) {
-        console.error('Erro ao criar usuário: No data returned');
+      if (error) {
+        console.error('Erro ao criar usuário:', error);
         return res.status(500).json({ message: 'Erro ao criar conta. Tente novamente.' });
       }
 
@@ -135,8 +144,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: {
           id: newUser.id,
           email: newUser.email,
-          fullName: newUser.fullName,
-          createdAt: newUser.createdAt
+          fullName: newUser.full_name,
+          createdAt: newUser.created_at
         }
       });
 
@@ -166,20 +175,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = tokenParts[1];
 
       // Buscar usuário
-      const users = await db.select({
-          id: authUsers.id,
-          email: authUsers.email,
-          fullName: authUsers.fullName,
-          createdAt: authUsers.createdAt,
-          lastLogin: authUsers.lastLogin,
-          isActive: authUsers.isActive
-        })
-        .from(authUsers)
-        .where(eq(authUsers.id, parseInt(userId)))
-        .limit(1);
+      const { data: user, error } = await supabase
+        .from('auth_users')
+        .select('id, email, full_name, created_at, last_login, is_active')
+        .eq('id', userId)
+        .eq('is_active', true)
+        .single();
 
-      const user = users[0];
-      if (!user || !user.isActive) {
+      if (error || !user) {
         return res.status(401).json({ message: 'Usuário não encontrado' });
       }
 
@@ -187,9 +190,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: {
           id: user.id,
           email: user.email,
-          fullName: user.fullName,
-          createdAt: user.createdAt,
-          lastLogin: user.lastLogin
+          fullName: user.full_name,
+          createdAt: user.created_at,
+          lastLogin: user.last_login
         }
       });
 
@@ -334,13 +337,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get current user data
-      const users = await db.select()
-        .from(authUsers)
-        .where(eq(authUsers.id, parseInt(userId)))
-        .limit(1);
+      const { data: user, error: fetchError } = await supabase
+        .from('auth_users')
+        .select('*')
+        .eq('id', userId)
+        .eq('is_active', true)
+        .single();
 
-      const user = users[0];
-      if (!user || !user.isActive) {
+      if (fetchError || !user) {
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
@@ -365,9 +369,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = {
         id: user.id,
         email: user.email,
-        fullName: user.fullName,
-        createdAt: user.createdAt,
-        lastLogin: user.lastLogin,
+        fullName: user.full_name,
+        createdAt: user.created_at,
+        lastLogin: user.last_login,
         startDate: timerStartDate // Current time as start date
       };
 
@@ -423,30 +427,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
 
-      const users = await db.select({
-          id: authUsers.id,
-          email: authUsers.email,
-          fullName: authUsers.fullName,
-          createdAt: authUsers.createdAt,
-          lastLogin: authUsers.lastLogin,
-          isActive: authUsers.isActive
-        })
-        .from(authUsers)
-        .where(eq(authUsers.id, parseInt(userId)))
-        .limit(1);
+      const { data: user, error } = await supabase
+        .from('auth_users')
+        .select('id, email, full_name, created_at, last_login')
+        .eq('id', userId)
+        .eq('is_active', true)
+        .single();
 
-      const user = users[0];
-      if (!user || !user.isActive) {
+      if (error || !user) {
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
       const userData = {
         id: user.id,
         email: user.email,
-        fullName: user.fullName,
-        createdAt: user.createdAt,
-        lastLogin: user.lastLogin,
-        startDate: user.createdAt // Use created_at as startDate
+        fullName: user.full_name,
+        createdAt: user.created_at,
+        lastLogin: user.last_login,
+        startDate: user.created_at // Use created_at as startDate
       };
 
       res.json({ user: userData });
