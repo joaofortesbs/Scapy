@@ -363,7 +363,8 @@ export default function AIAssistant(): JSX.Element {
                 timestamp: Date.now(),
                 source: 'sync-from-daily'
               };
-              localStorage.setItem(individualMoodKey, JSON.stringify(syncData));
+              const mainMoodKey = `scapy_mood_${userId}_${todayKey}`;
+              localStorage.setItem(mainMoodKey, JSON.stringify(syncData));
             }
           } catch (error) {
             console.error('❌ Erro ao parsear humor da chave diária:', error);
@@ -399,7 +400,8 @@ export default function AIAssistant(): JSX.Element {
               source: 'api-sync'
             };
             
-            localStorage.setItem(individualMoodKey, JSON.stringify(moodData));
+            const apiSyncMoodKey = `scapy_mood_${userId}_${todayKey}`;
+            localStorage.setItem(apiSyncMoodKey, JSON.stringify(moodData));
             
             const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
             if (!allMoods[userId.toString()]) {
@@ -439,6 +441,9 @@ export default function AIAssistant(): JSX.Element {
     try {
       console.log(`🎯 Selecionando humor: ${mood} para usuário ${user.id}`);
 
+      // Definir chave do dia atual
+      const todayKey = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
       // 1. Registrar seleção de humor (normalizado sem acentos)
       const normalizedMood = mood.toLowerCase()
         .normalize("NFD")
@@ -451,12 +456,17 @@ export default function AIAssistant(): JSX.Element {
 
       console.log(`💭 Humor registrado com sucesso`);
 
-      // 2. Gerar sugestões personalizadas
+      // 2. Atualizar estado do humor imediatamente para feedback instantâneo
+      setTodayMood(normalizedMood);
+      console.log(`🎯 Estado todayMood atualizado INSTANTANEAMENTE para: ${normalizedMood}`);
+
+      // 3. Gerar sugestões personalizadas de forma otimizada
       toast({
-        title: "Analisando seu perfil...",
-        description: "Nossa IA está criando atividades personalizadas para você!",
+        title: "🚀 Processando instantaneamente...",
+        description: "Nossa IA Gemini está gerando suas metas personalizadas!",
       });
 
+      // Processar geração de metas com tratamento otimizado
       const suggestionResponse = await apiRequest('POST', '/api/generate-suggestions', {
         userId: user.id.toString(),
         mood: normalizedMood
@@ -464,19 +474,97 @@ export default function AIAssistant(): JSX.Element {
 
       const suggestionData = await suggestionResponse.json();
       
-      console.log(`✅ Sugestões geradas:`, suggestionData);
+      console.log(`✅ [GEMINI] Metas geradas instantaneamente:`, suggestionData);
 
-      // 3. Atualizar estado do humor imediatamente
-      setTodayMood(normalizedMood);
-      console.log(`🎯 Estado todayMood atualizado para: ${normalizedMood}`);
+      // 4. Persistir metas geradas com sistema robusto
+      if (suggestionData && suggestionData.tasks && suggestionData.tasks.length > 0) {
+        const tasksData = {
+          userId: user.id.toString(),
+          tasks: suggestionData.tasks,
+          mood: normalizedMood,
+          date: todayKey,
+          timestamp: Date.now(),
+          source: 'gemini-ai-assistant',
+          version: '2.0'
+        };
+
+        // === SISTEMA DE PERSISTÊNCIA DE METAS ULTRA-ROBUSTO ===
+        
+        // 1. Salvar metas principais
+        const tasksKey = `scapy_ai_tasks_${user.id}_${todayKey}`;
+        localStorage.setItem(tasksKey, JSON.stringify(tasksData));
+        
+        // 2. Backup das metas
+        const tasksBackupKey = `scapy_ai_tasks_backup_${user.id}_${todayKey}_${Date.now()}`;
+        localStorage.setItem(tasksBackupKey, JSON.stringify(tasksData));
+        
+        // 3. Sincronização com sistema geral
+        const allTasks = JSON.parse(localStorage.getItem('scapy_all_ai_tasks') || '{}');
+        if (!allTasks[user.id.toString()]) {
+          allTasks[user.id.toString()] = {};
+        }
+        allTasks[user.id.toString()][todayKey] = suggestionData.tasks;
+        localStorage.setItem('scapy_all_ai_tasks', JSON.stringify(allTasks));
+        
+        // 4. Sincronizar com OptimizedMoodStorage para WeeklyTracker
+        try {
+          const weeklyMoodsData = JSON.parse(localStorage.getItem('scapy_weekly_moods_v3') || '{}');
+          const userId = user.id.toString();
+          
+          if (!weeklyMoodsData[userId]) {
+            weeklyMoodsData[userId] = {};
+          }
+          
+          // Calcular chave da semana atual
+          const startOfWeek = new Date();
+          startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+          startOfWeek.setHours(0, 0, 0, 0);
+          const weekKey = startOfWeek.toISOString().split('T')[0];
+          
+          // Inicializar dados da semana se não existir
+          if (!weeklyMoodsData[userId][weekKey]) {
+            weeklyMoodsData[userId][weekKey] = {
+              userId: userId,
+              weekStart: startOfWeek.toISOString(),
+              weekEnd: new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString(),
+              moodByDay: [null, null, null, null, null, null, null],
+              timestamp: Date.now(),
+              version: '3.0.0'
+            };
+          }
+          
+          // Atualizar humor do dia atual
+          const dayOfWeek = new Date().getDay();
+          weeklyMoodsData[userId][weekKey].moodByDay[dayOfWeek] = normalizedMood;
+          
+          localStorage.setItem('scapy_weekly_moods_v3', JSON.stringify(weeklyMoodsData));
+          console.log(`🔄 [GEMINI] Sincronizado com OptimizedMoodStorage para dia ${dayOfWeek}`);
+        } catch (error) {
+          console.error('❌ Erro ao sincronizar com OptimizedMoodStorage:', error);
+        }
+
+        // 5. Disparar eventos de sincronização para metas
+        const tasksEvent = new CustomEvent('tasksGenerated', {
+          detail: {
+            userId: user.id.toString(),
+            tasks: suggestionData.tasks,
+            mood: normalizedMood,
+            date: todayKey,
+            timestamp: Date.now(),
+            source: 'gemini-ai-assistant'
+          }
+        });
+        window.dispatchEvent(tasksEvent);
+        
+        console.log(`💾 [GEMINI] Metas salvas com ULTRA-PERSISTÊNCIA para ${todayKey}`);
+      }
       
       toast({
-        title: "Sugestões criadas!",
-        description: `${suggestionData.tasks.length} atividades personalizadas foram adicionadas às suas metas do dia!`,
+        title: "✅ Metas criadas instantaneamente!",
+        description: `${suggestionData.tasks.length} atividades personalizadas foram geradas e salvas!`,
       });
 
-      // 4. Salvar humor imediatamente no localStorage ULTRA-PERSISTENTE
-      const todayKey = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      // 5. Salvar humor imediatamente no localStorage ULTRA-PERSISTENTE
       const moodData = {
         userId: user.id.toString(),
         mood: normalizedMood,
