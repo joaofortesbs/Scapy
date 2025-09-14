@@ -17,8 +17,6 @@ import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { getDailyPhrase } from "./gemini-service";
-import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -344,34 +342,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'ID do usuário é obrigatório' });
       }
 
-      // Get current user data
-      const { data: user, error: fetchError } = await supabase
-        .from('auth_users')
-        .select('*')
-        .eq('id', userId)
-        .eq('is_active', true)
-        .single();
-
-      if (fetchError || !user) {
-        return res.status(404).json({ message: 'Usuário não encontrado' });
-      }
-
       // Create timer start time
       const timerStartDate = new Date().toISOString();
 
-      // Save timer using Drizzle ORM
-      try {
-        const timerData = await db.insert(timers).values({
-          user_id: userId,
-          start_date: new Date(timerStartDate),
-          is_active: true
-        }).returning();
+      // Update user's start_date using Supabase
+      const { data: updatedUser, error: updateError } = await supabase
+        .from('auth_users')
+        .update({
+          start_date: timerStartDate
+        })
+        .eq('id', userId)
+        .eq('is_active', true)
+        .select('*');
 
-        console.log('Timer salvo no banco:', timerData[0]);
-      } catch (sqlError) {
-        console.error('Erro ao salvar timer no banco:', sqlError);
-        return res.status(500).json({ message: 'Erro ao salvar timer no banco de dados' });
+      if (updateError) {
+        console.error('Erro ao atualizar timer do usuário:', updateError);
+        return res.status(500).json({ message: 'Erro ao salvar timer' });
       }
+
+      if (!updatedUser || updatedUser.length === 0) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      const user = updatedUser[0];
+      console.log('Timer iniciado para usuário:', user);
 
       // Return user data with timer start date
       const userData = {
@@ -404,16 +398,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User ID is required" });
       }
 
-      const timerData = await db
-        .select()
-        .from(timers)
-        .where(and(eq(timers.user_id, userId), eq(timers.is_active, true)))
-        .orderBy(desc(timers.created_at))
-        .limit(1);
+      // Buscar o usuário e seu start_date
+      const { data: user, error: fetchError } = await supabase
+        .from('auth_users')
+        .select('id, start_date')
+        .eq('id', userId)
+        .eq('is_active', true)
+        .single();
 
-      const hasActiveTimer = timerData.length > 0;
-      const latestTimer = hasActiveTimer ? timerData[0] : null;
+      if (fetchError) {
+        console.error('Erro ao buscar usuário:', fetchError);
+        return res.status(500).json({ message: 'Erro ao buscar timer' });
+      }
 
+      const hasActiveTimer = user && user.start_date !== null;
+      
       // Set cache headers to ensure fresh data
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.set('Pragma', 'no-cache');
@@ -421,8 +420,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         hasActiveTimer,
-        timer: latestTimer,
-        startDate: latestTimer ? latestTimer.start_date : null
+        timer: hasActiveTimer ? { 
+          id: user.id,
+          user_id: user.id,
+          start_date: user.start_date,
+          created_at: user.start_date 
+        } : null,
+        startDate: hasActiveTimer ? user.start_date : null
       });
     } catch (error) {
       console.error('Erro ao verificar status do timer:', error);
