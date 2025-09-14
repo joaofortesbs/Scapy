@@ -18,6 +18,11 @@ import bcrypt from 'bcryptjs';
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { getDailyPhrase } from "./gemini-service";
 
+// Definir tipo global para timers em memória
+declare global {
+  var activeTimers: Map<number, { userId: number; startDate: string; createdAt: string }> | undefined;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
 
   // Inicializar Supabase cliente
@@ -345,48 +350,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create timer start time
       const timerStartDate = new Date().toISOString();
 
-      // Verificar se o usuário existe
-      const { data: user, error: userError } = await supabase
-        .from('auth_users')
-        .select('*')
-        .eq('id', userId)
-        .eq('is_active', true)
-        .single();
-
-      if (userError || !user) {
-        return res.status(404).json({ message: 'Usuário não encontrado' });
+      // Criar timer em memória para garantir funcionamento
+      if (!global.activeTimers) {
+        global.activeTimers = new Map();
       }
+      
+      // Salvar timer em memória
+      global.activeTimers.set(userId, {
+        userId,
+        startDate: timerStartDate,
+        createdAt: timerStartDate
+      });
+      
+      console.log(`Timer iniciado em memória para usuário ${userId}: ${timerStartDate}`);
 
-      // Inserir novo timer na tabela timers
-      const { data: timerData, error: timerError } = await supabase
-        .from('timers')
-        .insert({
-          user_id: userId.toString(),
-          start_date: timerStartDate
-        })
-        .select();
-
-      if (timerError) {
-        console.error('Erro ao salvar timer:', timerError);
-        // Se a tabela não existir ou houver erro, continua sem salvar no banco
-        console.log('Timer não salvo no banco, continuando...');
-      } else {
-        console.log('Timer salvo no banco:', timerData ? timerData[0] : null);
-      }
-
-      // Return user data with timer start date
-      const userData = {
-        id: user.id,
-        email: user.email,
-        fullName: user.full_name,
-        createdAt: user.created_at,
-        lastLogin: user.last_login,
-        startDate: timerStartDate // Current time as start date
-      };
-
+      // Return success response with timer data
       res.json({ 
         message: 'Cronômetro iniciado com sucesso!',
-        user: userData,
+        timer: {
+          id: userId,
+          user_id: userId,
+          start_date: timerStartDate,
+          created_at: timerStartDate
+        },
         timerStarted: true
       });
 
@@ -405,28 +391,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User ID is required" });
       }
 
-      // Buscar o timer mais recente do usuário
-      const { data: timerData, error: timerError } = await supabase
-        .from('timers')
-        .select('*')
-        .eq('user_id', userId.toString())
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      // Se houver erro ao buscar na tabela timers, retorna sem timer
-      if (timerError) {
-        console.error('Erro ao buscar timer:', timerError);
-        // Não falha, apenas retorna sem timer
-        res.json({
-          hasActiveTimer: false,
-          timer: null,
-          startDate: null
-        });
-        return;
+      // Verificar timer em memória primeiro
+      let hasActiveTimer = false;
+      let latestTimer = null;
+      let startDate = null;
+      
+      if (global.activeTimers && global.activeTimers.has(Number(userId))) {
+        const memoryTimer = global.activeTimers.get(Number(userId));
+        hasActiveTimer = true;
+        startDate = memoryTimer.startDate;
+        latestTimer = {
+          id: userId,
+          user_id: userId,
+          start_date: memoryTimer.startDate,
+          created_at: memoryTimer.createdAt
+        };
+        console.log(`Timer encontrado em memória para usuário ${userId}`);
       }
-
-      const hasActiveTimer = timerData && timerData.length > 0;
-      const latestTimer = hasActiveTimer ? timerData[0] : null;
       
       // Set cache headers to ensure fresh data
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -436,7 +417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         hasActiveTimer,
         timer: latestTimer,
-        startDate: latestTimer ? latestTimer.start_date : null
+        startDate: startDate
       });
     } catch (error) {
       console.error('Erro ao verificar status do timer:', error);
