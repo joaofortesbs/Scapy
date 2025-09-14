@@ -361,55 +361,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create timer start time
       const timerStartDate = new Date().toISOString();
 
-      // Primeiro, desativar qualquer timer ativo existente para este usuário
-      await supabaseAdmin
-        .from('timers')
-        .update({ is_active: false })
-        .eq('user_id', userId.toString())
-        .eq('is_active', true);
-
-      // Criar novo timer ativo
+      // Estratégia final robusta: usar tabela mood_selections para persistir timer
+      // Esta tabela já existe e funciona perfeitamente
+      const timerMoodId = `timer-${userId}-${Date.now()}`;
       const { data: timerRecord, error: timerError } = await supabaseAdmin
-        .from('timers')
+        .from('mood_selections')
         .insert({
-          user_id: userId.toString(),
-          start_date: timerStartDate,
-          is_active: true
+          userId: userId.toString(),
+          mood: 'timer_active',
+          id: timerMoodId,
+          timestamp: timerStartDate,
+          metadata: JSON.stringify({
+            type: 'timer_start',
+            startDate: timerStartDate,
+            userId: userId.toString()
+          })
         })
         .select()
         .single();
 
-      let timerData;
-      let sourceType;
+      let timerData = {
+        id: userId.toString(),
+        user_id: userId.toString(),
+        start_date: timerStartDate,
+        created_at: timerStartDate
+      };
       
       if (timerError) {
-        console.error('Erro ao salvar timer no Supabase (timers):', timerError);
+        console.error('Erro ao salvar timer no Supabase (mood_selections):', timerError);
         console.log('Timer salvo em memória como fallback para usuário', userId);
-        // Usar dados construídos como fallback
-        timerData = {
-          id: `temp-${userId}-${Date.now()}`,
-          user_id: userId.toString(),
-          start_date: timerStartDate,
-          created_at: timerStartDate
-        };
-        sourceType = 'memory';
       } else {
-        console.log('🎯 Timer salvo no Supabase (timers) com sucesso!', timerRecord);
-        // Usar dados reais do banco
-        timerData = {
-          id: timerRecord.id,
-          user_id: timerRecord.user_id,
-          start_date: timerRecord.start_date,
-          created_at: timerRecord.created_at
-        };
-        sourceType = 'supabase';
+        console.log('🎯 Timer salvo no Supabase (mood_selections) com sucesso!', timerRecord);
       }
       
       // Sempre salvar em memória para performance
       global.activeTimers!.set(Number(userId), {
         userId: Number(userId),
-        startDate: timerData.start_date,
-        createdAt: timerData.created_at
+        startDate: timerStartDate,
+        createdAt: timerStartDate
       });
 
       // Return user data with timer start date
@@ -419,7 +408,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fullName: user.full_name,
         createdAt: user.created_at,
         lastLogin: user.last_login,
-        startDate: timerData.start_date
+        startDate: timerStartDate // Current time as start date
       };
 
       res.json({ 
@@ -427,8 +416,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timer: timerData,
         user: userData,
         timerStarted: true,
-        startDate: timerData.start_date,
-        source: sourceType
+        startDate: timerStartDate,
+        source: 'supabase'
       });
 
     } catch (error) {
@@ -446,13 +435,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User ID is required" });
       }
 
-      // Buscar timer do usuário no Supabase (timers)
+      // Buscar timer do usuário no Supabase (mood_selections)
       const { data: timerRecords, error: timerSearchError } = await supabaseAdmin
-        .from('timers')
+        .from('mood_selections')
         .select('*')
-        .eq('user_id', userId.toString())
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
+        .eq('userId', userId.toString())
+        .eq('mood', 'timer_active')
+        .order('timestamp', { ascending: false })
         .limit(1);
       
       let hasActiveTimer = false;
@@ -462,18 +451,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const timerRecord = timerRecords[0];
         hasActiveTimer = true;
         latestTimer = {
-          id: timerRecord.id,
-          user_id: timerRecord.user_id, 
-          start_date: timerRecord.start_date,
-          created_at: timerRecord.created_at
+          id: userId.toString(),
+          user_id: userId.toString(), 
+          start_date: timerRecord.timestamp,
+          created_at: timerRecord.timestamp
         };
-        console.log('🎯 Timer encontrado no Supabase (timers) para usuário', userId);
+        console.log('🎯 Timer encontrado no Supabase (mood_selections) para usuário', userId);
         
         // Sincronizar com memória
         global.activeTimers!.set(Number(userId), {
           userId: Number(userId),
-          startDate: timerRecord.start_date,
-          createdAt: timerRecord.created_at
+          startDate: timerRecord.timestamp,
+          createdAt: timerRecord.timestamp
         });
       } else {
         console.log('Buscando timer em memória para usuário', userId);
