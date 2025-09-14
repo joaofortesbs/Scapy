@@ -74,15 +74,41 @@ export default function AIAssistant(): JSX.Element {
       }
     };
 
+    // 🎯 NOVO: Listener específico para sincronização com WeeklyTracker
+    const handleWeeklyTrackerUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (user && customEvent.detail?.userId === user.id.toString()) {
+        const { mood, dayOfWeek } = customEvent.detail;
+        const today = new Date().getDay();
+        
+        // Se o humor atualizado é para o dia de hoje
+        if (dayOfWeek === today && mood) {
+          console.log(`🔄 [AIAssistant] Sincronizando com WeeklyTracker: ${mood} para hoje (dia ${dayOfWeek})`);
+          setTodayMood(mood);
+        }
+      }
+    };
+
     // Registrar todos os listeners
-    window.addEventListener('moodUpdated', handleMoodUpdate);
-    window.addEventListener('newDayDetected', handleNewDayDetected);
-    window.addEventListener('moodResetComplete', handleMoodReset);
+    const events = [
+      'moodUpdated',
+      'newDayDetected', 
+      'moodResetComplete',
+      'weeklyMoodUpdated',
+      'dailyMoodUpdated'
+    ];
+
+    events.forEach(eventName => {
+      window.addEventListener(eventName, handleMoodUpdate);
+    });
+
+    window.addEventListener('weeklyMoodUpdated', handleWeeklyTrackerUpdate);
     
     return () => {
-      window.removeEventListener('moodUpdated', handleMoodUpdate);
-      window.removeEventListener('newDayDetected', handleNewDayDetected);
-      window.removeEventListener('moodResetComplete', handleMoodReset);
+      events.forEach(eventName => {
+        window.removeEventListener(eventName, handleMoodUpdate);
+      });
+      window.removeEventListener('weeklyMoodUpdated', handleWeeklyTrackerUpdate);
     };
   }, [user]);
 
@@ -219,10 +245,57 @@ export default function AIAssistant(): JSX.Element {
       // Obter data atual sempre atualizada
       const now = new Date();
       const todayKey = now.toISOString().split('T')[0];
+      const dayOfWeek = now.getDay(); // 0-6 (domingo a sábado)
       
-      console.log(`🕒 [AIAssistant] Verificando humor para: ${todayKey} às ${now.toLocaleTimeString()}`);
+      console.log(`🕒 [AIAssistant] Verificando humor para: ${todayKey} (dia ${dayOfWeek}) às ${now.toLocaleTimeString()}`);
       
-      // Verificação robusta com limpeza automática de dados antigos
+      // 🎯 PRIORIDADE 1: Verificar WeeklyTracker Storage (fonte principal)
+      try {
+        const weeklyStorageKey = 'scapy_weekly_mood_storage';
+        const weeklyStorageData = localStorage.getItem(weeklyStorageKey);
+        
+        if (weeklyStorageData) {
+          const weeklyData = JSON.parse(weeklyStorageData);
+          const userWeeklyData = weeklyData[userId.toString()];
+          
+          if (userWeeklyData && userWeeklyData.moodByDay && userWeeklyData.moodByDay[dayOfWeek]) {
+            const weeklyMood = userWeeklyData.moodByDay[dayOfWeek];
+            setTodayMood(weeklyMood);
+            console.log(`🎯 [AIAssistant] Humor carregado do WeeklyTracker: ${weeklyMood} para dia ${dayOfWeek}`);
+            return; // Encontrou no WeeklyTracker, usar este como autoridade
+          }
+        }
+      } catch (weeklyError) {
+        console.warn('⚠️ [AIAssistant] Erro ao carregar do WeeklyTracker:', weeklyError);
+      }
+      
+      // 🎯 PRIORIDADE 2: Verificar API do WeeklyMood
+      try {
+        const weeklyMoodResponse = await apiRequest('GET', `/api/weekly-mood/${userId}`);
+        const weeklyMoodData = await weeklyMoodResponse.json();
+        
+        if (weeklyMoodData && weeklyMoodData.moodByDay && weeklyMoodData.moodByDay[dayOfWeek]) {
+          const apiWeeklyMood = weeklyMoodData.moodByDay[dayOfWeek];
+          setTodayMood(apiWeeklyMood);
+          console.log(`🌐 [AIAssistant] Humor carregado da API WeeklyMood: ${apiWeeklyMood} para dia ${dayOfWeek}`);
+          
+          // Sincronizar com localStorage do WeeklyTracker
+          const weeklyStorageKey = 'scapy_weekly_mood_storage';
+          const existingData = JSON.parse(localStorage.getItem(weeklyStorageKey) || '{}');
+          
+          if (!existingData[userId.toString()]) {
+            existingData[userId.toString()] = weeklyMoodData;
+            localStorage.setItem(weeklyStorageKey, JSON.stringify(existingData));
+            console.log(`💾 [AIAssistant] WeeklyTracker sincronizado com API`);
+          }
+          
+          return; // Encontrou na API do WeeklyMood
+        }
+      } catch (weeklyApiError) {
+        console.warn('⚠️ [AIAssistant] Erro na API WeeklyMood:', weeklyApiError);
+      }
+      
+      // 🎯 PRIORIDADE 3: Verificar localStorage individual (fallback)
       const individualMoodKey = `scapy_mood_${userId}_${todayKey}`;
       const savedIndividualMood = localStorage.getItem(individualMoodKey);
       
@@ -239,91 +312,32 @@ export default function AIAssistant(): JSX.Element {
             
             if (moodTimestamp >= todayStart && moodTimestamp <= todayEnd) {
               setTodayMood(moodData.mood);
-              console.log(`💿 [AIAssistant] Humor válido carregado: ${moodData.mood} para ${todayKey}`);
-              
-              console.log(`🎨 [AIAssistant] Humor persistido carregado - interface mantém estado limpo`);
-              
-              // Reset selectedMood para evitar conflitos visuais
-              setTimeout(() => {
-                setSelectedMood(null);
-              }, 100);
+              console.log(`💿 [AIAssistant] Humor válido carregado do localStorage: ${moodData.mood} para ${todayKey}`);
+              return;
             } else {
               console.log(`🗑️ [AIAssistant] Humor com timestamp inválido, removendo...`);
               localStorage.removeItem(individualMoodKey);
-              setTodayMood(null);
             }
           } else {
-            // Humor é de outro dia, limpar imediatamente
             console.log(`🗑️ [AIAssistant] Humor de data diferente (${moodData.date}), removendo...`);
             localStorage.removeItem(individualMoodKey);
-            setTodayMood(null);
           }
         } catch (error) {
           console.error('❌ Erro ao parsear humor, removendo:', error);
           localStorage.removeItem(individualMoodKey);
-          setTodayMood(null);
-        }
-      } else {
-        // Verificar e limpar registros antigos do sistema geral
-        try {
-          const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
-          const userMoods = allMoods[userId.toString()] || {};
-          
-          // Limpar automaticamente humores antigos (mais de 7 dias)
-          const sevenDaysAgo = new Date();
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          
-          Object.keys(userMoods).forEach(dateKey => {
-            const dateObj = new Date(dateKey);
-            if (dateObj < sevenDaysAgo) {
-              delete userMoods[dateKey];
-              console.log(`🧹 [AIAssistant] Removido humor antigo: ${dateKey}`);
-            }
-          });
-          
-          // Salvar dados limpos
-          allMoods[userId.toString()] = userMoods;
-          localStorage.setItem('scapy_all_moods', JSON.stringify(allMoods));
-          
-          // Verificar humor de hoje
-          const todayMoodFromGeneral = userMoods[todayKey];
-          if (todayMoodFromGeneral) {
-            setTodayMood(todayMoodFromGeneral);
-            console.log(`💿 [AIAssistant] Humor recuperado do sistema geral: ${todayMoodFromGeneral}`);
-            
-            console.log(`🎨 [AIAssistant] Humor do sistema geral carregado - mantendo interface limpa`);
-            
-            // Reset selectedMood para evitar conflitos
-            setTimeout(() => {
-              setSelectedMood(null);
-            }, 100);
-          } else {
-            setTodayMood(null);
-            console.log(`📋 [AIAssistant] Nenhum humor encontrado para hoje (${todayKey})`);
-          }
-        } catch (error) {
-          console.error('❌ Erro ao processar sistema geral:', error);
-          setTodayMood(null);
         }
       }
       
-      // 2. SEGUNDO: Verificar API e sincronizar
+      // 🎯 PRIORIDADE 4: Verificar API individual (último fallback)
       try {
         const response = await apiRequest('GET', `/api/today-mood/${userId}`);
         const apiData = await response.json();
         
         if (apiData && apiData.mood && apiData.date === todayKey) {
-          // Se a API tem um humor válido para hoje, usar ele
           setTodayMood(apiData.mood);
+          console.log(`🌐 [AIAssistant] Humor carregado da API individual: ${apiData.mood} para ${todayKey}`);
           
-          console.log(`🎨 [AIAssistant] Humor da API carregado - mantendo interface limpa`);
-          
-          // Reset selectedMood para evitar conflitos
-          setTimeout(() => {
-            setSelectedMood(null);
-          }, 100);
-          
-          // Sincronizar localStorage com dados da API
+          // Sincronizar localStorage
           const moodData = {
             userId: userId.toString(),
             mood: apiData.mood,
@@ -332,24 +346,16 @@ export default function AIAssistant(): JSX.Element {
           };
           
           localStorage.setItem(individualMoodKey, JSON.stringify(moodData));
-          
-          const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
-          if (!allMoods[userId.toString()]) {
-            allMoods[userId.toString()] = {};
-          }
-          allMoods[userId.toString()][todayKey] = apiData.mood;
-          localStorage.setItem('scapy_all_moods', JSON.stringify(allMoods));
-          
-          console.log(`🌐 [AIAssistant] Humor sincronizado da API: ${apiData.mood} para ${todayKey}`);
-        } else if (!savedIndividualMood) {
-          // Se nem localStorage nem API têm humor válido para hoje
-          setTodayMood(null);
-          console.log(`📋 [AIAssistant] Nenhum humor registrado para hoje (${todayKey})`);
+          return;
         }
       } catch (apiError) {
-        console.error('⚠️ Erro na API, usando dados do localStorage:', apiError);
-        // Se API falhar, manter o que foi carregado do localStorage
+        console.error('⚠️ Erro na API individual:', apiError);
       }
+      
+      // Se chegou até aqui, não há humor registrado para hoje
+      setTodayMood(null);
+      console.log(`📋 [AIAssistant] Nenhum humor encontrado para hoje (${todayKey})`);
+      
     } catch (error) {
       console.error('❌ Erro ao verificar humor de hoje:', error);
       setTodayMood(null);
