@@ -202,7 +202,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
 
     try {
       console.log(`🔍 [WeeklyTracker] Carregando humor semanal para usuário ${user.id}`);
-      
+
       // Carregar dados locais primeiro
       const localMood = OptimizedMoodStorage.loadWeeklyMood(user.id.toString());
       if (localMood) {
@@ -214,15 +214,15 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
       const todayKey = new Date().toISOString().split('T')[0];
       const todayMoodKey = `scapy_daily_mood_${user.id}_${todayKey}`;
       const todayMoodData = localStorage.getItem(todayMoodKey);
-      
+
       if (todayMoodData) {
         try {
           const moodData = JSON.parse(todayMoodData);
           const today = new Date();
           const dayOfWeek = today.getDay();
-          
+
           console.log(`🎯 [WeeklyTracker] Humor de hoje encontrado: ${moodData.mood} para o dia ${dayOfWeek}`);
-          
+
           // Atualizar humor semanal com o humor de hoje
           setWeeklyMood(prevMood => {
             const startOfWeek = new Date(today);
@@ -264,16 +264,16 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
                 mergedMoodByDay[index] = mood;
               }
             });
-            
+
             const mergedMood = {
               ...apiMood,
               moodByDay: mergedMoodByDay
             };
-            
+
             OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), mergedMood);
             return mergedMood;
           }
-          
+
           // Se não temos dados locais, usar da API
           OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
           return apiMood;
@@ -337,7 +337,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
 
     // Adicionar mais listeners para capturar todas as atualizações
     const events = ['moodUpdated', 'weeklyMoodUpdated', 'dailyMoodUpdated', 'aiMoodSelected'];
-    
+
     events.forEach(eventName => {
       window.addEventListener(eventName, handleMoodUpdate as EventListener);
     });
@@ -401,7 +401,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
           break;
       }
     }
-    
+
     // Depois verificar se está concluído (para sobrescrever se necessário)
     if (isCompleted) {
       classes.push('completed');
@@ -420,7 +420,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
     if (dayMood) {
       const moodLabels = {
         'medo': 'Medo',
-        'estavel': 'Estável', 
+        'estavel': 'Estável',
         'feliz': 'Feliz'
       };
       const normalizedMood = dayMood.toLowerCase()
@@ -469,6 +469,8 @@ function Timer({ user, onUserUpdate }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isStarting, setIsStarting] = useState(false);
   const [localUser, setLocalUser] = useState(user);
+  const [hasActiveTimer, setHasActiveTimer] = useState(false); // Estado para controlar se o timer está ativo
+  const [hasJourneyStarted, setHasJourneyStarted] = useState(false); // Estado para controlar se a jornada começou
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -484,6 +486,64 @@ function Timer({ user, onUserUpdate }: TimerProps) {
       localStorage.setItem('user', JSON.stringify(user));
     }
   }, [user]);
+
+  // Verificar status do timer na inicialização com retry automático
+  useEffect(() => {
+    if (user?.id) {
+      checkTimerStatus();
+
+      // Verificar novamente após 2 segundos para garantir consistência
+      const retryTimer = setTimeout(() => {
+        checkTimerStatus();
+      }, 2000);
+
+      return () => clearTimeout(retryTimer);
+    }
+  }, [user?.id]);
+
+  const checkTimerStatus = async () => {
+    if (!user?.id) return;
+
+    try {
+      console.log(`🔍 [Frontend Timer] Verificando status do timer para usuário ${user.id}`);
+
+      const response = await fetch(`/api/timer/status/${user.id}`, {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log(`📊 [Frontend Timer] Status recebido:`, data);
+
+        setHasActiveTimer(data.hasActiveTimer);
+        setHasJourneyStarted(data.hasJourneyStarted);
+
+        if (data.hasActiveTimer && data.startDate) {
+          const updatedUser = { ...user, startDate: data.startDate };
+          setLocalUser(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+
+          console.log(`✅ [Frontend Timer] Timer recuperado: ${data.startDate}`);
+
+          if (onUserUpdate) {
+            onUserUpdate(updatedUser);
+          }
+        } else if (!data.hasActiveTimer) {
+          console.log(`ℹ️ [Frontend Timer] Nenhum timer ativo encontrado para usuário ${user.id}`);
+        }
+      } else {
+        console.error('❌ [Frontend Timer] Erro na resposta:', data);
+      }
+    } catch (error) {
+      console.error('❌ [Frontend Timer] Erro ao verificar status do timer:', error);
+    }
+  };
+
 
   const handleStartTimer = async () => {
     if (!user?.id || isStarting) return;
@@ -504,6 +564,8 @@ function Timer({ user, onUserUpdate }: TimerProps) {
       if (response.ok) {
         setLocalUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
+        setHasActiveTimer(true); // Atualizar estado do timer
+        setHasJourneyStarted(true); // Marcar jornada como iniciada
 
         if (onUserUpdate) {
           onUserUpdate(data.user);
@@ -725,12 +787,12 @@ export default function PainelInterface({
 
       try {
         console.log('🔍 [PainelInterface] Verificando se usuário já passou da tela inicial...');
-        
+
         // 1. Verificação prioritária: localStorage (mais rápida)
         const localJourneyStarted = localStorage.getItem('scapy_journey_started');
         const userJourneyKey = `scapy_user_journey_${user.id}`;
         const userSpecificJourney = localStorage.getItem(userJourneyKey);
-        
+
         if (localJourneyStarted === 'true' || userSpecificJourney === 'true') {
           console.log('✅ [PainelInterface] Jornada já iniciada (localStorage)');
           setHasStartedJourney(true);
@@ -753,7 +815,7 @@ export default function PainelInterface({
         const hasActiveTimer = timerData?.hasActiveTimer || false;
         const hasJourneyStarted = timerData?.hasJourneyStarted || false;
         const hasMoodRegistered = moodData && moodData.mood;
-        const hasWeeklyMoods = weeklyMoodData && weeklyMoodData.moodByDay && 
+        const hasWeeklyMoods = weeklyMoodData && weeklyMoodData.moodByDay &&
                                weeklyMoodData.moodByDay.some((mood: any) => mood !== null);
 
         console.log('🔍 [PainelInterface] Evidências encontradas:', {
@@ -789,7 +851,7 @@ export default function PainelInterface({
         const localJourneyStarted = localStorage.getItem('scapy_journey_started');
         const userJourneyKey = `scapy_user_journey_${user.id}`;
         const userSpecificJourney = localStorage.getItem(userJourneyKey);
-        
+
         if (localJourneyStarted === 'true' || userSpecificJourney === 'true') {
           setHasStartedJourney(true);
         } else {
@@ -828,16 +890,16 @@ export default function PainelInterface({
   const handleStartJourney = async () => {
     console.log('🚀 [PainelInterface] Iniciando jornada para usuário:', user?.id);
     setHasStartedJourney(true);
-    
+
     try {
       if (user?.id) {
         // Marcar imediatamente no localStorage (múltiplas chaves para redundância)
         localStorage.setItem('scapy_journey_started', 'true');
         localStorage.setItem(`scapy_user_journey_${user.id}`, 'true');
         localStorage.setItem(`scapy_journey_timestamp_${user.id}`, new Date().toISOString());
-        
+
         console.log('✅ [PainelInterface] Jornada marcada no localStorage');
-        
+
         // Marcar jornada como iniciada no Supabase
         const journeyResponse = await fetch('/api/journey/mark-started', {
           method: 'POST',
@@ -848,7 +910,7 @@ export default function PainelInterface({
             userId: user.id,
           }),
         });
-        
+
         if (journeyResponse.ok) {
           console.log('✅ [PainelInterface] Jornada marcada no Supabase com sucesso');
         } else {
@@ -865,7 +927,7 @@ export default function PainelInterface({
     console.log('🔄 [PainelInterface] Atualizando dados do usuário:', updatedUser?.id);
     setLocalUser(updatedUser);
     setHasStartedJourney(true);
-    
+
     // Marcar jornada como iniciada com múltiplas chaves
     if (updatedUser?.id) {
       localStorage.setItem('scapy_journey_started', 'true');
@@ -915,7 +977,7 @@ export default function PainelInterface({
                 <JourneyStart onStartJourney={handleStartJourney} />
               ) : (
                 <>
-                  <div 
+                  <div
                     className="floating-avatar mb-6 cursor-pointer transition-transform hover:scale-105 active:scale-95"
                     onClick={() => setLocation('/avatares-evolutivos')}
                     data-testid="evolutionary-avatar-clickable"
