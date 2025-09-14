@@ -40,6 +40,57 @@ export default function AIAssistant(): JSX.Element {
     }
   }, []);
 
+  // Sistema de sincronização automática com Dias da Semana
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const syncWithWeeklyMood = () => {
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const todayKey = today.toISOString().split('T')[0];
+
+      // Verificar dados do componente Dias da Semana
+      const weeklyStorageKey = 'scapy_weekly_moods_v3';
+      try {
+        const weeklyData = JSON.parse(localStorage.getItem(weeklyStorageKey) || '{}');
+        const userWeeklyData = weeklyData[user.id.toString()];
+        
+        if (userWeeklyData) {
+          // Buscar dados da semana atual
+          const currentWeekKey = (() => {
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+            startOfWeek.setHours(0, 0, 0, 0);
+            return startOfWeek.toISOString().split('T')[0];
+          })();
+
+          const currentWeekData = userWeeklyData[currentWeekKey];
+          if (currentWeekData && currentWeekData.moodByDay) {
+            const todayMoodFromWeekly = currentWeekData.moodByDay[dayOfWeek];
+            
+            if (todayMoodFromWeekly && todayMoodFromWeekly !== todayMood) {
+              console.log(`🔄 [AIAssistant] Sincronizando humor do componente Dias da Semana: ${todayMoodFromWeekly}`);
+              setTodayMood(todayMoodFromWeekly);
+              
+              // Garantir que selectedMood seja resetado para mostrar o humor persistido
+              setSelectedMood(null);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Erro na sincronização com Dias da Semana:', error);
+      }
+    };
+
+    // Sincronização inicial
+    syncWithWeeklyMood();
+
+    // Sincronização periódica para capturar mudanças
+    const syncInterval = setInterval(syncWithWeeklyMood, 5000);
+
+    return () => clearInterval(syncInterval);
+  }, [user?.id, todayMood]);
+
   // Escutar atualizações de humor e eventos de reinicialização
   useEffect(() => {
     const handleMoodUpdate = () => {
@@ -219,10 +270,40 @@ export default function AIAssistant(): JSX.Element {
       // Obter data atual sempre atualizada
       const now = new Date();
       const todayKey = now.toISOString().split('T')[0];
+      const dayOfWeek = now.getDay();
       
       console.log(`🕒 [AIAssistant] Verificando humor para: ${todayKey} às ${now.toLocaleTimeString()}`);
       
-      // Verificação robusta com limpeza automática de dados antigos
+      // 1. PRIMEIRO: Verificar dados do componente Dias da Semana (PRIORIDADE MÁXIMA)
+      const weeklyStorageKey = 'scapy_weekly_moods_v3';
+      try {
+        const weeklyData = JSON.parse(localStorage.getItem(weeklyStorageKey) || '{}');
+        const userWeeklyData = weeklyData[userId.toString()];
+        
+        if (userWeeklyData) {
+          const currentWeekKey = (() => {
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay());
+            startOfWeek.setHours(0, 0, 0, 0);
+            return startOfWeek.toISOString().split('T')[0];
+          })();
+
+          const currentWeekData = userWeeklyData[currentWeekKey];
+          if (currentWeekData && currentWeekData.moodByDay && currentWeekData.moodByDay[dayOfWeek]) {
+            const weeklyMood = currentWeekData.moodByDay[dayOfWeek];
+            setTodayMood(weeklyMood);
+            console.log(`🎯 [AIAssistant] Humor recuperado do Dias da Semana: ${weeklyMood} (PRIORIDADE MÁXIMA)`);
+            
+            // Garantir que selectedMood seja null para mostrar o humor persistido
+            setSelectedMood(null);
+            return; // Sair aqui - dados do Dias da Semana têm prioridade absoluta
+          }
+        }
+      } catch (weeklyError) {
+        console.error('⚠️ Erro ao verificar dados semanais:', weeklyError);
+      }
+      
+      // 2. SEGUNDO: Verificar dados individuais
       const individualMoodKey = `scapy_mood_${userId}_${todayKey}`;
       const savedIndividualMood = localStorage.getItem(individualMoodKey);
       
@@ -241,87 +322,54 @@ export default function AIAssistant(): JSX.Element {
               setTodayMood(moodData.mood);
               console.log(`💿 [AIAssistant] Humor válido carregado: ${moodData.mood} para ${todayKey}`);
               
-              console.log(`🎨 [AIAssistant] Humor persistido carregado - interface mantém estado limpo`);
-              
               // Reset selectedMood para evitar conflitos visuais
-              setTimeout(() => {
-                setSelectedMood(null);
-              }, 100);
+              setSelectedMood(null);
+              return;
             } else {
               console.log(`🗑️ [AIAssistant] Humor com timestamp inválido, removendo...`);
               localStorage.removeItem(individualMoodKey);
-              setTodayMood(null);
             }
           } else {
             // Humor é de outro dia, limpar imediatamente
             console.log(`🗑️ [AIAssistant] Humor de data diferente (${moodData.date}), removendo...`);
             localStorage.removeItem(individualMoodKey);
-            setTodayMood(null);
           }
         } catch (error) {
           console.error('❌ Erro ao parsear humor, removendo:', error);
           localStorage.removeItem(individualMoodKey);
-          setTodayMood(null);
-        }
-      } else {
-        // Verificar e limpar registros antigos do sistema geral
-        try {
-          const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
-          const userMoods = allMoods[userId.toString()] || {};
-          
-          // Limpar automaticamente humores antigos (mais de 7 dias)
-          const sevenDaysAgo = new Date();
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          
-          Object.keys(userMoods).forEach(dateKey => {
-            const dateObj = new Date(dateKey);
-            if (dateObj < sevenDaysAgo) {
-              delete userMoods[dateKey];
-              console.log(`🧹 [AIAssistant] Removido humor antigo: ${dateKey}`);
-            }
-          });
-          
-          // Salvar dados limpos
-          allMoods[userId.toString()] = userMoods;
-          localStorage.setItem('scapy_all_moods', JSON.stringify(allMoods));
-          
-          // Verificar humor de hoje
-          const todayMoodFromGeneral = userMoods[todayKey];
-          if (todayMoodFromGeneral) {
-            setTodayMood(todayMoodFromGeneral);
-            console.log(`💿 [AIAssistant] Humor recuperado do sistema geral: ${todayMoodFromGeneral}`);
-            
-            console.log(`🎨 [AIAssistant] Humor do sistema geral carregado - mantendo interface limpa`);
-            
-            // Reset selectedMood para evitar conflitos
-            setTimeout(() => {
-              setSelectedMood(null);
-            }, 100);
-          } else {
-            setTodayMood(null);
-            console.log(`📋 [AIAssistant] Nenhum humor encontrado para hoje (${todayKey})`);
-          }
-        } catch (error) {
-          console.error('❌ Erro ao processar sistema geral:', error);
-          setTodayMood(null);
         }
       }
       
-      // 2. SEGUNDO: Verificar API e sincronizar
+      // 3. TERCEIRO: Verificar sistema geral
+      try {
+        const allMoods = JSON.parse(localStorage.getItem('scapy_all_moods') || '{}');
+        const userMoods = allMoods[userId.toString()] || {};
+        
+        // Verificar humor de hoje
+        const todayMoodFromGeneral = userMoods[todayKey];
+        if (todayMoodFromGeneral) {
+          setTodayMood(todayMoodFromGeneral);
+          console.log(`💿 [AIAssistant] Humor recuperado do sistema geral: ${todayMoodFromGeneral}`);
+          
+          // Reset selectedMood para evitar conflitos
+          setSelectedMood(null);
+          return;
+        }
+      } catch (error) {
+        console.error('❌ Erro ao processar sistema geral:', error);
+      }
+      
+      // 4. QUARTO: Verificar API como última opção
       try {
         const response = await apiRequest('GET', `/api/today-mood/${userId}`);
         const apiData = await response.json();
         
         if (apiData && apiData.mood && apiData.date === todayKey) {
-          // Se a API tem um humor válido para hoje, usar ele
           setTodayMood(apiData.mood);
-          
-          console.log(`🎨 [AIAssistant] Humor da API carregado - mantendo interface limpa`);
+          console.log(`🌐 [AIAssistant] Humor da API carregado: ${apiData.mood}`);
           
           // Reset selectedMood para evitar conflitos
-          setTimeout(() => {
-            setSelectedMood(null);
-          }, 100);
+          setSelectedMood(null);
           
           // Sincronizar localStorage com dados da API
           const moodData = {
@@ -341,18 +389,21 @@ export default function AIAssistant(): JSX.Element {
           localStorage.setItem('scapy_all_moods', JSON.stringify(allMoods));
           
           console.log(`🌐 [AIAssistant] Humor sincronizado da API: ${apiData.mood} para ${todayKey}`);
-        } else if (!savedIndividualMood) {
-          // Se nem localStorage nem API têm humor válido para hoje
-          setTodayMood(null);
-          console.log(`📋 [AIAssistant] Nenhum humor registrado para hoje (${todayKey})`);
+          return;
         }
       } catch (apiError) {
         console.error('⚠️ Erro na API, usando dados do localStorage:', apiError);
-        // Se API falhar, manter o que foi carregado do localStorage
       }
+      
+      // 5. Se não encontrou nada, definir como null
+      setTodayMood(null);
+      setSelectedMood(null);
+      console.log(`📋 [AIAssistant] Nenhum humor registrado para hoje (${todayKey})`);
+      
     } catch (error) {
       console.error('❌ Erro ao verificar humor de hoje:', error);
       setTodayMood(null);
+      setSelectedMood(null);
     }
   };
 
@@ -533,9 +584,23 @@ export default function AIAssistant(): JSX.Element {
 
       <div className="flex justify-between space-x-2">
         {moodOptions.map(({ id, label, icon: Icon, color }) => {
-          // 🎯 CORREÇÃO: Verificar se este humor está selecionado (persistido)
-          const isSelected = todayMood === id;
+          // 🎯 VERIFICAÇÃO ROBUSTA: Normalizar comparação de humores
+          const normalizedTodayMood = todayMood ? todayMood.toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") : null;
+          
+          const normalizedOptionId = id.toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+          
+          // Verificar se este humor está selecionado (persistido)
+          const isSelected = normalizedTodayMood === normalizedOptionId;
           const isCurrentlySelecting = selectedMood === label && isGenerating;
+          
+          // Log para debug
+          if (todayMood && normalizedTodayMood) {
+            console.log(`🎨 [AIAssistant] Comparando: ${normalizedTodayMood} === ${normalizedOptionId} = ${isSelected}`);
+          }
           
           return (
             <Button
@@ -547,7 +612,8 @@ export default function AIAssistant(): JSX.Element {
               } ${isCurrentlySelecting ? 'animate-pulse' : ''}`}
               style={{ 
                 opacity: isSelected ? 1 : todayMood ? 0.3 : 0.73,
-                transform: isSelected ? 'scale(1.05)' : 'scale(1)'
+                transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+                transition: 'all 0.3s ease'
               }}
               onClick={() => handleMoodSelect(label)}
               data-testid={`mood-${id}`}
