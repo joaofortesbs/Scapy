@@ -715,92 +715,32 @@ export default function PainelInterface({
   const [daysProgress, setDaysProgress] = useState(0);
   const [currentAvatar, setCurrentAvatar] = useState(getCurrentAvatar(0));
 
-  // Check timer status e verificação de primeira visita otimizado
+  // Check timer status otimizado
   useEffect(() => {
-    const checkUserJourneyStatus = async () => {
+    const checkTimerStatus = async () => {
       if (!user?.id) {
         setIsLoading(false);
         return;
       }
 
       try {
-        console.log('🔍 [PainelInterface] Verificando se usuário já passou da tela inicial...');
-        
-        // 1. Verificação prioritária: localStorage (mais rápida)
-        const localJourneyStarted = localStorage.getItem('scapy_journey_started');
-        const userJourneyKey = `scapy_user_journey_${user.id}`;
-        const userSpecificJourney = localStorage.getItem(userJourneyKey);
-        
-        if (localJourneyStarted === 'true' || userSpecificJourney === 'true') {
-          console.log('✅ [PainelInterface] Jornada já iniciada (localStorage)');
-          setHasStartedJourney(true);
-          setIsLoading(false);
-          return;
+        const response = await fetch(`/api/timer/status/${user.id}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setHasStartedJourney(data.hasActiveTimer);
+          if (data.hasActiveTimer && data.startDate) {
+            setLocalUser(prev => prev ? { ...prev, startDate: data.startDate } : prev);
+          }
         }
-
-        // 2. Verificação no Supabase - múltiplas fontes de evidência
-        const [timerResponse, moodResponse, weeklyMoodResponse] = await Promise.all([
-          fetch(`/api/timer/status/${user.id}`),
-          fetch(`/api/today-mood/${user.id}`),
-          fetch(`/api/weekly-mood/${user.id}`)
-        ]);
-
-        const timerData = await timerResponse.json();
-        const moodData = await moodResponse.json();
-        const weeklyMoodData = await weeklyMoodResponse.json();
-
-        // Verificar evidências de uso anterior
-        const hasActiveTimer = timerData?.hasActiveTimer || false;
-        const hasJourneyStarted = timerData?.hasJourneyStarted || false;
-        const hasMoodRegistered = moodData && moodData.mood;
-        const hasWeeklyMoods = weeklyMoodData && weeklyMoodData.moodByDay && 
-                               weeklyMoodData.moodByDay.some((mood: any) => mood !== null);
-
-        console.log('🔍 [PainelInterface] Evidências encontradas:', {
-          hasActiveTimer,
-          hasJourneyStarted,
-          hasMoodRegistered: !!hasMoodRegistered,
-          hasWeeklyMoods,
-          userId: user.id
-        });
-
-        // Se encontrou qualquer evidência, usuário já passou da tela inicial
-        const hasStarted = hasActiveTimer || hasJourneyStarted || hasMoodRegistered || hasWeeklyMoods;
-
-        if (hasStarted) {
-          console.log('✅ [PainelInterface] Evidência de uso anterior encontrada - saltando tela inicial');
-          setHasStartedJourney(true);
-          // Salvar evidência no localStorage para futuras sessões
-          localStorage.setItem('scapy_journey_started', 'true');
-          localStorage.setItem(userJourneyKey, 'true');
-        } else {
-          console.log('❌ [PainelInterface] Nenhuma evidência encontrada - mostrar tela inicial');
-          setHasStartedJourney(false);
-        }
-
-        // Atualizar dados do timer se ativo
-        if (hasActiveTimer && timerData.startDate) {
-          setLocalUser(prev => prev ? { ...prev, startDate: timerData.startDate } : prev);
-        }
-
       } catch (error) {
-        console.error('❌ [PainelInterface] Erro ao verificar status da jornada:', error);
-        // Fallback: verificar localStorage
-        const localJourneyStarted = localStorage.getItem('scapy_journey_started');
-        const userJourneyKey = `scapy_user_journey_${user.id}`;
-        const userSpecificJourney = localStorage.getItem(userJourneyKey);
-        
-        if (localJourneyStarted === 'true' || userSpecificJourney === 'true') {
-          setHasStartedJourney(true);
-        } else {
-          setHasStartedJourney(false);
-        }
+        console.error('Erro ao verificar status do timer:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkUserJourneyStatus();
+    checkTimerStatus();
   }, [user?.id]);
 
   // Update local user
@@ -825,54 +765,13 @@ export default function PainelInterface({
     return () => clearInterval(interval);
   }, [localUser?.startDate]);
 
-  const handleStartJourney = async () => {
-    console.log('🚀 [PainelInterface] Iniciando jornada para usuário:', user?.id);
+  const handleStartJourney = () => {
     setHasStartedJourney(true);
-    
-    try {
-      if (user?.id) {
-        // Marcar imediatamente no localStorage (múltiplas chaves para redundância)
-        localStorage.setItem('scapy_journey_started', 'true');
-        localStorage.setItem(`scapy_user_journey_${user.id}`, 'true');
-        localStorage.setItem(`scapy_journey_timestamp_${user.id}`, new Date().toISOString());
-        
-        console.log('✅ [PainelInterface] Jornada marcada no localStorage');
-        
-        // Marcar jornada como iniciada no Supabase
-        const journeyResponse = await fetch('/api/journey/mark-started', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: user.id,
-          }),
-        });
-        
-        if (journeyResponse.ok) {
-          console.log('✅ [PainelInterface] Jornada marcada no Supabase com sucesso');
-        } else {
-          console.warn('⚠️ [PainelInterface] Erro ao marcar jornada no Supabase, mas localStorage já salvo');
-        }
-      }
-    } catch (error) {
-      console.error('❌ [PainelInterface] Erro ao marcar início da jornada:', error);
-      // Não reverter a UI - o localStorage já foi definido para UX
-    }
   };
 
   const handleUserUpdate = useCallback((updatedUser: any) => {
-    console.log('🔄 [PainelInterface] Atualizando dados do usuário:', updatedUser?.id);
     setLocalUser(updatedUser);
     setHasStartedJourney(true);
-    
-    // Marcar jornada como iniciada com múltiplas chaves
-    if (updatedUser?.id) {
-      localStorage.setItem('scapy_journey_started', 'true');
-      localStorage.setItem(`scapy_user_journey_${updatedUser.id}`, 'true');
-      localStorage.setItem(`scapy_journey_timestamp_${updatedUser.id}`, new Date().toISOString());
-      console.log('✅ [PainelInterface] Jornada marcada após atualização do usuário');
-    }
 
     if (updatedUser.startDate) {
       const days = calculateProgressInDays(updatedUser.startDate);

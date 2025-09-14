@@ -337,56 +337,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ========== ROTAS DO CRONÔMETRO ==========
 
-  // Marcar jornada como iniciada (sem necessariamente iniciar o timer)
-  app.post("/api/journey/mark-started", async (req, res) => {
-    try {
-      const { userId } = req.body;
-
-      if (!userId) {
-        return res.status(400).json({ message: 'ID do usuário é obrigatório' });
-      }
-
-      console.log(`🚀 [Journey] Marcando jornada como iniciada para usuário ${userId}`);
-
-      // Marcar na tabela mood_selections como evidência de início
-      const journeyMarkId = `journey-started-${userId}-${Date.now()}`;
-      const timestamp = new Date().toISOString();
-      
-      const { data: journeyRecord, error: journeyError } = await supabaseAdmin
-        .from('mood_selections')
-        .insert({
-          userId: userId.toString(),
-          mood: 'journey_started',
-          id: journeyMarkId,
-          timestamp: timestamp,
-          metadata: JSON.stringify({
-            type: 'journey_started',
-            timestamp: timestamp,
-            userId: userId.toString()
-          })
-        })
-        .select()
-        .single();
-
-      if (journeyError) {
-        console.error('Erro ao marcar jornada no Supabase:', journeyError);
-        return res.status(500).json({ message: 'Erro ao marcar jornada no banco de dados' });
-      }
-
-      console.log(`✅ [Journey] Jornada marcada com sucesso:`, journeyRecord);
-
-      res.json({ 
-        message: 'Jornada marcada como iniciada com sucesso!',
-        record: journeyRecord,
-        timestamp: timestamp
-      });
-
-    } catch (error) {
-      console.error('Erro ao marcar jornada como iniciada:', error);
-      res.status(500).json({ message: 'Erro interno do servidor' });
-    }
-  });
-
   // Start timer for user
   app.post("/api/timer/start", async (req, res) => {
     try {
@@ -485,50 +435,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User ID is required" });
       }
 
-      // Buscar evidências de timer ativo e jornada iniciada no Supabase
-      const { data: evidenceRecords, error: evidenceSearchError } = await supabaseAdmin
+      // Buscar timer do usuário no Supabase (mood_selections)
+      const { data: timerRecords, error: timerSearchError } = await supabaseAdmin
         .from('mood_selections')
         .select('*')
         .eq('userId', userId.toString())
-        .in('mood', ['timer_active', 'journey_started'])
-        .order('timestamp', { ascending: false });
+        .eq('mood', 'timer_active')
+        .order('timestamp', { ascending: false })
+        .limit(1);
       
       let hasActiveTimer = false;
-      let hasJourneyStarted = false;
       let latestTimer: any = null;
       
-      if (!evidenceSearchError && evidenceRecords && evidenceRecords.length > 0) {
-        // Verificar timer ativo
-        const timerRecord = evidenceRecords.find(record => record.mood === 'timer_active');
-        if (timerRecord) {
-          hasActiveTimer = true;
-          latestTimer = {
-            id: userId.toString(),
-            user_id: userId.toString(), 
-            start_date: timerRecord.timestamp,
-            created_at: timerRecord.timestamp
-          };
-          console.log('🎯 Timer encontrado no Supabase para usuário', userId);
-          
-          // Sincronizar com memória
-          global.activeTimers!.set(Number(userId), {
-            userId: Number(userId),
-            startDate: timerRecord.timestamp,
-            createdAt: timerRecord.timestamp
-          });
-        }
-
-        // Verificar jornada iniciada
-        const journeyRecord = evidenceRecords.find(record => record.mood === 'journey_started');
-        if (journeyRecord) {
-          hasJourneyStarted = true;
-          console.log('🚀 Jornada iniciada encontrada no Supabase para usuário', userId);
-        }
-      }
-
-      // Fallback: verificar em memória se não encontrou no Supabase
-      if (!hasActiveTimer) {
+      if (!timerSearchError && timerRecords && timerRecords.length > 0) {
+        const timerRecord = timerRecords[0];
+        hasActiveTimer = true;
+        latestTimer = {
+          id: userId.toString(),
+          user_id: userId.toString(), 
+          start_date: timerRecord.timestamp,
+          created_at: timerRecord.timestamp
+        };
+        console.log('🎯 Timer encontrado no Supabase (mood_selections) para usuário', userId);
+        
+        // Sincronizar com memória
+        global.activeTimers!.set(Number(userId), {
+          userId: Number(userId),
+          startDate: timerRecord.timestamp,
+          createdAt: timerRecord.timestamp
+        });
+      } else {
         console.log('Buscando timer em memória para usuário', userId);
+        
+        // Fallback: verificar em memória
         const memoryTimer = global.activeTimers!.get(Number(userId));
         
         if (memoryTimer) {
@@ -540,11 +479,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             created_at: memoryTimer.createdAt
           };
           console.log('Timer encontrado em memória para usuário', userId);
+        } else {
+          console.log('Nenhum timer ativo para usuário', userId);
         }
-      }
-
-      if (!hasActiveTimer && !hasJourneyStarted) {
-        console.log('Nenhuma evidência de timer ou jornada para usuário', userId);
       }
 
       // Set cache headers to ensure fresh data
@@ -554,7 +491,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         hasActiveTimer,
-        hasJourneyStarted,
         timer: latestTimer,
         startDate: latestTimer ? latestTimer.start_date : null
       });
