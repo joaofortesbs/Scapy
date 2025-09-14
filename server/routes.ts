@@ -361,7 +361,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create timer start time
       const timerStartDate = new Date().toISOString();
 
-      // Usar tabela timers adequada para persistir cronômetro
+      // Primeiro, desativar qualquer timer ativo existente para este usuário
+      await supabaseAdmin
+        .from('timers')
+        .update({ is_active: false })
+        .eq('user_id', userId.toString())
+        .eq('is_active', true);
+
+      // Criar novo timer ativo
       const { data: timerRecord, error: timerError } = await supabaseAdmin
         .from('timers')
         .insert({
@@ -372,25 +379,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .select()
         .single();
 
-      let timerData = {
-        id: userId.toString(),
-        user_id: userId.toString(),
-        start_date: timerStartDate,
-        created_at: timerStartDate
-      };
+      let timerData;
+      let sourceType;
       
       if (timerError) {
         console.error('Erro ao salvar timer no Supabase (timers):', timerError);
         console.log('Timer salvo em memória como fallback para usuário', userId);
+        // Usar dados construídos como fallback
+        timerData = {
+          id: `temp-${userId}-${Date.now()}`,
+          user_id: userId.toString(),
+          start_date: timerStartDate,
+          created_at: timerStartDate
+        };
+        sourceType = 'memory';
       } else {
         console.log('🎯 Timer salvo no Supabase (timers) com sucesso!', timerRecord);
+        // Usar dados reais do banco
+        timerData = {
+          id: timerRecord.id,
+          user_id: timerRecord.user_id,
+          start_date: timerRecord.start_date,
+          created_at: timerRecord.created_at
+        };
+        sourceType = 'supabase';
       }
       
       // Sempre salvar em memória para performance
       global.activeTimers!.set(Number(userId), {
         userId: Number(userId),
-        startDate: timerStartDate,
-        createdAt: timerStartDate
+        startDate: timerData.start_date,
+        createdAt: timerData.created_at
       });
 
       // Return user data with timer start date
@@ -400,7 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fullName: user.full_name,
         createdAt: user.created_at,
         lastLogin: user.last_login,
-        startDate: timerStartDate // Current time as start date
+        startDate: timerData.start_date
       };
 
       res.json({ 
@@ -408,8 +427,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timer: timerData,
         user: userData,
         timerStarted: true,
-        startDate: timerStartDate,
-        source: 'supabase'
+        startDate: timerData.start_date,
+        source: sourceType
       });
 
     } catch (error) {
