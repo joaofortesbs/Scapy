@@ -351,22 +351,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create timer start time
       const timerStartDate = new Date().toISOString();
 
-      // Save timer using Supabase
-      const { data: timerData, error: timerError } = await supabaseAdmin
-        .from('timers')
-        .insert({
-          user_id: userId.toString(),
-          start_date: timerStartDate
-        })
-        .select()
-        .single();
-
-      if (timerError) {
-        console.error('Erro ao salvar timer no Supabase:', timerError);
-        return res.status(500).json({ message: 'Erro ao salvar timer no banco de dados' });
+      // Salvar timer em memória (solução temporária devido à estrutura do banco)
+      if (!global.activeTimers) {
+        global.activeTimers = new Map();
       }
-
-      console.log('Timer salvo no Supabase:', timerData);
+      
+      // Salvar timer em memória
+      const timerData = {
+        id: userId,
+        user_id: userId,
+        start_date: timerStartDate,
+        created_at: timerStartDate
+      };
+      
+      global.activeTimers.set(Number(userId), {
+        userId: Number(userId),
+        startDate: timerStartDate,
+        createdAt: timerStartDate
+      });
+      
+      console.log('Timer iniciado em memória para usuário', userId, ':', timerStartDate);
+      
+      // Tentar salvar no Supabase (melhor esforço)
+      try {
+        // Atualizar o campo start_date do usuário na tabela auth_users
+        await supabaseAdmin
+          .from('auth_users')
+          .update({ start_date: timerStartDate })
+          .eq('id', userId);
+      } catch (dbError) {
+        console.warn('Aviso: Não foi possível persistir no banco:', dbError);
+      }
 
       // Return user data with timer start date
       const userData = {
@@ -401,13 +416,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User ID is required" });
       }
 
-      // Get active timer from Supabase (latest timer for user)
-      const { data: timerData, error: timerError } = await supabaseAdmin
-        .from('timers')
-        .select('*')
-        .eq('user_id', userId.toString())
-        .order('created_at', { ascending: false })
-        .limit(1);
+      // Por enquanto, usar solução em memória devido a incompatibilidade estrutural
+      // TODO: Corrigir estrutura da tabela timers no Supabase
+      
+      // Verificar timer em memória primeiro
+      if (!global.activeTimers) {
+        global.activeTimers = new Map();
+      }
+      
+      const memoryTimer = global.activeTimers.get(Number(userId));
+      
+      let timerData = null;
+      let timerError = null;
+      
+      if (memoryTimer) {
+        timerData = [{
+          id: userId.toString(),
+          user_id: userId.toString(), 
+          start_date: memoryTimer.startDate,
+          created_at: memoryTimer.createdAt
+        }];
+      } else {
+        timerData = [];
+      }
 
       if (timerError) {
         console.error('Erro ao buscar timer no Supabase:', timerError);
