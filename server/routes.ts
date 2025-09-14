@@ -9,14 +9,16 @@ import {
   insertMoodSelectionSchema,
   insertUserObjectiveSchema,
   insertDailyTaskSchema,
-  insertUserCustomGoalSchema
+  insertUserCustomGoalSchema,
+  timers
 } from "@shared/schema";
 import { aiProcessor } from "./aiProcessor";
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
-import { neon } from '@neondatabase/serverless';
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { getDailyPhrase } from "./gemini-service";
+import { db } from "./db";
+import { eq, and, desc } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -27,9 +29,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole);
-
-  // Direct PostgreSQL connection for bypassing Supabase cache issues
-  const sql = neon(process.env.DATABASE_URL!);
 
   // ========== ROTAS DE AUTENTICAÇÃO ==========
 
@@ -351,13 +350,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create timer start time
       const timerStartDate = new Date().toISOString();
 
-      // Save timer using direct SQL to bypass Supabase cache issues
+      // Save timer using Drizzle ORM
       try {
-        const timerData = await sql`
-          INSERT INTO timers (user_id, start_date, is_active)
-          VALUES (${userId}, ${timerStartDate}, true)
-          RETURNING *
-        `;
+        const timerData = await db.insert(timers).values({
+          user_id: userId,
+          start_date: new Date(timerStartDate),
+          is_active: true
+        }).returning();
 
         console.log('Timer salvo no banco:', timerData[0]);
       } catch (sqlError) {
@@ -396,12 +395,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User ID is required" });
       }
 
-      const timerData = await sql`
-        SELECT * FROM timers 
-        WHERE user_id = ${userId} AND is_active = true 
-        ORDER BY created_at DESC 
-        LIMIT 1
-      `;
+      const timerData = await db
+        .select()
+        .from(timers)
+        .where(and(eq(timers.user_id, userId), eq(timers.is_active, true)))
+        .orderBy(desc(timers.created_at))
+        .limit(1);
 
       const hasActiveTimer = timerData.length > 0;
       const latestTimer = hasActiveTimer ? timerData[0] : null;
