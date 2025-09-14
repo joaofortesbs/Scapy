@@ -345,27 +345,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create timer start time
       const timerStartDate = new Date().toISOString();
 
-      // Update user's start_date using Supabase
-      const { data: updatedUser, error: updateError } = await supabase
+      // Verificar se o usuário existe
+      const { data: user, error: userError } = await supabase
         .from('auth_users')
-        .update({
-          start_date: timerStartDate
-        })
+        .select('*')
         .eq('id', userId)
         .eq('is_active', true)
-        .select('*');
+        .single();
 
-      if (updateError) {
-        console.error('Erro ao atualizar timer do usuário:', updateError);
-        return res.status(500).json({ message: 'Erro ao salvar timer' });
-      }
-
-      if (!updatedUser || updatedUser.length === 0) {
+      if (userError || !user) {
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
-      const user = updatedUser[0];
-      console.log('Timer iniciado para usuário:', user);
+      // Inserir novo timer na tabela timers
+      const { data: timerData, error: timerError } = await supabase
+        .from('timers')
+        .insert({
+          user_id: userId.toString(),
+          start_date: timerStartDate
+        })
+        .select();
+
+      if (timerError) {
+        console.error('Erro ao salvar timer:', timerError);
+        // Se a tabela não existir ou houver erro, continua sem salvar no banco
+        console.log('Timer não salvo no banco, continuando...');
+      } else {
+        console.log('Timer salvo no banco:', timerData ? timerData[0] : null);
+      }
 
       // Return user data with timer start date
       const userData = {
@@ -398,20 +405,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User ID is required" });
       }
 
-      // Buscar o usuário e seu start_date
-      const { data: user, error: fetchError } = await supabase
-        .from('auth_users')
-        .select('id, start_date')
-        .eq('id', userId)
-        .eq('is_active', true)
-        .single();
+      // Buscar o timer mais recente do usuário
+      const { data: timerData, error: timerError } = await supabase
+        .from('timers')
+        .select('*')
+        .eq('user_id', userId.toString())
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-      if (fetchError) {
-        console.error('Erro ao buscar usuário:', fetchError);
-        return res.status(500).json({ message: 'Erro ao buscar timer' });
+      // Se houver erro ao buscar na tabela timers, retorna sem timer
+      if (timerError) {
+        console.error('Erro ao buscar timer:', timerError);
+        // Não falha, apenas retorna sem timer
+        res.json({
+          hasActiveTimer: false,
+          timer: null,
+          startDate: null
+        });
+        return;
       }
 
-      const hasActiveTimer = user && user.start_date !== null;
+      const hasActiveTimer = timerData && timerData.length > 0;
+      const latestTimer = hasActiveTimer ? timerData[0] : null;
       
       // Set cache headers to ensure fresh data
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -420,13 +435,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         hasActiveTimer,
-        timer: hasActiveTimer ? { 
-          id: user.id,
-          user_id: user.id,
-          start_date: user.start_date,
-          created_at: user.start_date 
-        } : null,
-        startDate: hasActiveTimer ? user.start_date : null
+        timer: latestTimer,
+        startDate: latestTimer ? latestTimer.start_date : null
       });
     } catch (error) {
       console.error('Erro ao verificar status do timer:', error);
