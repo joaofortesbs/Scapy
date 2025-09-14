@@ -26,42 +26,6 @@ declare global {
 // Inicializar timers globalmente
 if (!global.activeTimers) {
   global.activeTimers = new Map();
-  
-  // Recuperar timers ativos do Supabase na inicialização
-  setTimeout(async () => {
-    try {
-      console.log('🔄 [Timer Recovery] Recuperando timers ativos do Supabase...');
-      
-      const { data: activeTimerRecords, error } = await supabaseAdmin
-        .from('mood_selections')
-        .select('*')
-        .eq('mood', 'timer_active')
-        .order('timestamp', { ascending: false });
-      
-      if (!error && activeTimerRecords && activeTimerRecords.length > 0) {
-        console.log(`🔄 [Timer Recovery] Encontrados ${activeTimerRecords.length} timers ativos no banco`);
-        
-        // Restaurar timers em memória
-        activeTimerRecords.forEach(record => {
-          const userId = parseInt(record.userId);
-          if (!isNaN(userId)) {
-            global.activeTimers!.set(userId, {
-              userId: userId,
-              startDate: record.timestamp,
-              createdAt: record.timestamp
-            });
-            console.log(`✅ [Timer Recovery] Timer restaurado para usuário ${userId}`);
-          }
-        });
-        
-        console.log(`✅ [Timer Recovery] ${global.activeTimers!.size} timers restaurados com sucesso!`);
-      } else {
-        console.log('ℹ️ [Timer Recovery] Nenhum timer ativo encontrado no banco');
-      }
-    } catch (error) {
-      console.error('❌ [Timer Recovery] Erro ao recuperar timers:', error);
-    }
-  }, 1000); // Aguardar 1 segundo para garantir que o Supabase esteja pronto
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -447,9 +411,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create timer start time
       const timerStartDate = new Date().toISOString();
 
-      console.log(`⏰ [Timer Start] Iniciando cronômetro para usuário ${userId} em: ${timerStartDate}`);
-
-      // Estratégia robusta: usar tabela mood_selections para persistir timer
+      // Estratégia final robusta: usar tabela mood_selections para persistir timer
+      // Esta tabela já existe e funciona perfeitamente
       const timerMoodId = `timer-${userId}-${Date.now()}`;
       const { data: timerRecord, error: timerError } = await supabaseAdmin
         .from('mood_selections')
@@ -461,8 +424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           metadata: JSON.stringify({
             type: 'timer_start',
             startDate: timerStartDate,
-            userId: userId.toString(),
-            serverRestart: false
+            userId: userId.toString()
           })
         })
         .select()
@@ -476,10 +438,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       if (timerError) {
-        console.error('❌ [Timer Start] Erro ao salvar timer no Supabase:', timerError);
-        console.log('⚠️ [Timer Start] Timer salvo em memória como fallback para usuário', userId);
+        console.error('Erro ao salvar timer no Supabase (mood_selections):', timerError);
+        console.log('Timer salvo em memória como fallback para usuário', userId);
       } else {
-        console.log(`✅ [Timer Start] Timer persistido no Supabase com sucesso! ID: ${timerRecord.id}`);
+        console.log('🎯 Timer salvo no Supabase (mood_selections) com sucesso!', timerRecord);
       }
       
       // Sempre salvar em memória para performance
@@ -523,8 +485,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User ID is required" });
       }
 
-      console.log(`🔍 [Timer Status] Verificando status do timer para usuário ${userId}`);
-
       // Buscar evidências de timer ativo e jornada iniciada no Supabase
       const { data: evidenceRecords, error: evidenceSearchError } = await supabaseAdmin
         .from('mood_selections')
@@ -538,8 +498,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let latestTimer: any = null;
       
       if (!evidenceSearchError && evidenceRecords && evidenceRecords.length > 0) {
-        console.log(`🔍 [Timer Status] Encontrados ${evidenceRecords.length} registros no Supabase`);
-        
         // Verificar timer ativo
         const timerRecord = evidenceRecords.find(record => record.mood === 'timer_active');
         if (timerRecord) {
@@ -550,9 +508,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             start_date: timerRecord.timestamp,
             created_at: timerRecord.timestamp
           };
-          console.log(`✅ [Timer Status] Timer ativo encontrado no Supabase para usuário ${userId} - iniciado em: ${timerRecord.timestamp}`);
+          console.log('🎯 Timer encontrado no Supabase para usuário', userId);
           
-          // Sincronizar com memória para performance
+          // Sincronizar com memória
           global.activeTimers!.set(Number(userId), {
             userId: Number(userId),
             startDate: timerRecord.timestamp,
@@ -564,15 +522,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const journeyRecord = evidenceRecords.find(record => record.mood === 'journey_started');
         if (journeyRecord) {
           hasJourneyStarted = true;
-          console.log(`🚀 [Timer Status] Jornada iniciada encontrada no Supabase para usuário ${userId}`);
+          console.log('🚀 Jornada iniciada encontrada no Supabase para usuário', userId);
         }
-      } else if (evidenceSearchError) {
-        console.error(`❌ [Timer Status] Erro ao buscar no Supabase:`, evidenceSearchError);
       }
 
       // Fallback: verificar em memória se não encontrou no Supabase
       if (!hasActiveTimer) {
-        console.log(`🔍 [Timer Status] Buscando timer em memória para usuário ${userId}`);
+        console.log('Buscando timer em memória para usuário', userId);
         const memoryTimer = global.activeTimers!.get(Number(userId));
         
         if (memoryTimer) {
@@ -583,34 +539,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             start_date: memoryTimer.startDate,
             created_at: memoryTimer.createdAt
           };
-          console.log(`✅ [Timer Status] Timer encontrado em memória para usuário ${userId}`);
-          
-          // Tentar sincronizar com Supabase se não estiver lá
-          try {
-            const timerMoodId = `timer-${userId}-${Date.now()}`;
-            await supabaseAdmin
-              .from('mood_selections')
-              .insert({
-                userId: userId.toString(),
-                mood: 'timer_active',
-                id: timerMoodId,
-                timestamp: memoryTimer.startDate,
-                metadata: JSON.stringify({
-                  type: 'timer_start',
-                  startDate: memoryTimer.startDate,
-                  userId: userId.toString(),
-                  recovered: true
-                })
-              });
-            console.log(`🔄 [Timer Status] Timer sincronizado do memória para Supabase`);
-          } catch (syncError) {
-            console.error(`⚠️ [Timer Status] Erro ao sincronizar timer:`, syncError);
-          }
+          console.log('Timer encontrado em memória para usuário', userId);
         }
       }
 
       if (!hasActiveTimer && !hasJourneyStarted) {
-        console.log(`ℹ️ [Timer Status] Nenhuma evidência de timer ou jornada para usuário ${userId}`);
+        console.log('Nenhuma evidência de timer ou jornada para usuário', userId);
       }
 
       // Set cache headers to ensure fresh data
@@ -618,18 +552,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.set('Pragma', 'no-cache');
       res.set('Expires', '0');
 
-      const result = {
+      res.json({
         hasActiveTimer,
         hasJourneyStarted,
         timer: latestTimer,
         startDate: latestTimer ? latestTimer.start_date : null
-      };
-
-      console.log(`📊 [Timer Status] Resultado para usuário ${userId}:`, result);
-
-      res.json(result);
+      });
     } catch (error) {
-      console.error('❌ [Timer Status] Erro ao verificar status do timer:', error);
+      console.error('Erro ao verificar status do timer:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   });
