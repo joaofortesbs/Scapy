@@ -417,7 +417,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: userData,
         timerStarted: true,
         startDate: timerStartDate,
-        source: 'supabase'
+        source: 'supabase',
+        // 🎯 INSTRUÇÕES PARA PERSISTÊNCIA LOCAL
+        persistenceInstructions: {
+          action: 'saveTimer',
+          userId: userId.toString(),
+          startDate: timerStartDate,
+          timestamp: Date.now()
+        }
       });
 
     } catch (error) {
