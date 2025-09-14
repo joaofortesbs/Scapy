@@ -234,13 +234,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // ========== VERIFICAR SE USUÁRIO EXISTE PRIMEIRO ==========
-      const checkUserQuery = `SELECT id, email FROM auth_users WHERE id = $1`;
       console.log('🔍 DEBUG - Verificando usuário:', userId);
 
-      const userCheck = await sql(checkUserQuery, [userId]);
+      const { data: userCheck, error: checkError } = await supabase
+        .from('auth_users')
+        .select('id, email')
+        .eq('id', userId);
+
+      if (checkError) throw checkError;
+
       console.log('🔍 DEBUG - Resultado da verificação:', userCheck);
 
-      if (userCheck.length === 0) {
+      if (!userCheck || userCheck.length === 0) {
         console.log('❌ DEBUG - Usuário não encontrado na tabela auth_users');
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
@@ -274,20 +279,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       values.push(userId); // Add userId as the last parameter
 
-      const updateQuery = `
-        UPDATE auth_users 
-        SET ${updateFields.join(', ')}
-        WHERE id = $${placeholderIndex}
-        RETURNING id, email, full_name, profile_image
-      `;
+      // Update usando Supabase
+      const updateObj: any = {};
+      if (updateData.profileImage) updateObj.profile_image = updateData.profileImage;
+      if (updateData.fullName) updateObj.full_name = updateData.fullName;
 
-      console.log('🔍 DEBUG - Query de update:', updateQuery);
-      console.log('🔍 DEBUG - Valores:', values);
+      console.log('🔍 DEBUG - Dados para update:', updateObj);
 
-      const result = await sql(updateQuery, values);
+      const { data: result, error: updateError } = await supabase
+        .from('auth_users')
+        .update(updateObj)
+        .eq('id', userId)
+        .select('id, email, full_name, profile_image');
+
+      if (updateError) throw updateError;
+
       console.log('🔍 DEBUG - Resultado do update:', result);
 
-      if (result.length === 0) {
+      if (!result || result.length === 0) {
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
@@ -554,21 +563,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verificar se já existe um quiz para este usuário
-      const existingQuiz = await sql`
-        SELECT * FROM quiz_contextualizacao 
-        WHERE user_id = ${userId.toString()}
-      `;
+      const { data: existingQuiz } = await supabase
+        .from('quiz_contextualizacao')
+        .select('*')
+        .eq('user_id', userId.toString());
 
-      if (existingQuiz.length > 0) {
+      if (existingQuiz && existingQuiz.length > 0) {
         return res.json({ quiz: existingQuiz[0] });
       }
 
       // Criar novo quiz
-      const newQuiz = await sql`
-        INSERT INTO quiz_contextualizacao (user_id, user_full_name)
-        VALUES (${userId.toString()}, ${userFullName})
-        RETURNING *
-      `;
+      const { data: newQuiz, error: createError } = await supabase
+        .from('quiz_contextualizacao')
+        .insert({
+          user_id: userId.toString(),
+          user_full_name: userFullName
+        })
+        .select();
+      
+      if (createError) throw createError;
 
       res.json({ quiz: newQuiz[0] });
 
@@ -604,15 +617,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: `Nome da etapa inválido: ${stepName}` });
       }
 
-      // Usar query SQL direta para atualizar
-      const updateQuery = `
-        UPDATE quiz_contextualizacao 
-        SET ${stepInfo.column} = $1, current_step = $2, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = $3::text
-        RETURNING *
-      `;
+      // Usar Supabase para atualizar
+      const updateObj: any = {};
+      updateObj[stepInfo.column] = stepValue;
+      updateObj.current_step = stepInfo.step;
+      updateObj.updated_at = new Date().toISOString();
 
-      const updatedQuiz = await sql(updateQuery, [stepValue, stepInfo.step, userId.toString()]);
+      const { data: updatedQuiz, error: updateError } = await supabase
+        .from('quiz_contextualizacao')
+        .update(updateObj)
+        .eq('user_id', userId.toString())
+        .select();
+
+      if (updateError) throw updateError;
 
       console.log('Quiz atualizado via save-step:', updatedQuiz);
 
@@ -639,12 +656,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Completando quiz para usuário:', userId);
 
-      const completedQuiz = await sql`
-        UPDATE quiz_contextualizacao 
-        SET completed = true, current_step = 8, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = ${userId.toString()}
-        RETURNING *
-      `;
+      const { data: completedQuiz, error: completeError } = await supabase
+        .from('quiz_contextualizacao')
+        .update({
+          completed: true,
+          current_step: 8,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId.toString())
+        .select();
+      
+      if (completeError) throw completeError;
 
       console.log('Quiz completado:', completedQuiz);
 
@@ -665,10 +687,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
 
-      const quiz = await sql`
-        SELECT * FROM quiz_contextualizacao 
-        WHERE user_id = ${userId}
-      `;
+      const { data: quiz, error: quizError } = await supabase
+        .from('quiz_contextualizacao')
+        .select('*')
+        .eq('user_id', userId);
+      
+      if (quizError) throw quizError;
 
       if (quiz.length === 0) {
         return res.status(404).json({ message: 'Quiz não encontrado para este usuário' });
@@ -692,21 +716,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Resetar o quiz para permitir refazer
-      const resetQuiz = await sql`
-        UPDATE quiz_contextualizacao 
-        SET 
-          genero = null,
-          frequencia = null,
-          idade = null,
-          motivacao = null,
-          gatilhos = null,
-          religiao = null,
-          completed = false,
-          current_step = 1,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = ${userId.toString()}
-        RETURNING *
-      `;
+      const { data: resetQuiz, error: resetError } = await supabase
+        .from('quiz_contextualizacao')
+        .update({
+          genero: null,
+          frequencia: null,
+          idade: null,
+          motivacao: null,
+          gatilhos: null,
+          religiao: null,
+          completed: false,
+          current_step: 1,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId.toString())
+        .select();
+      
+      if (resetError) throw resetError;
 
       if (resetQuiz.length === 0) {
         return res.status(404).json({ message: 'Quiz não encontrado para este usuário' });
@@ -729,11 +755,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'User ID é obrigatório' });
       }
 
-      const deletedQuiz = await sql`
-        DELETE FROM quiz_contextualizacao 
-        WHERE user_id = ${userId}
-        RETURNING *
-      `;
+      const { data: deletedQuiz, error: deleteError } = await supabase
+        .from('quiz_contextualizacao')
+        .delete()
+        .eq('user_id', userId)
+        .select();
+      
+      if (deleteError) throw deleteError;
 
       if (deletedQuiz.length === 0) {
         return res.status(404).json({ message: 'Quiz não encontrado' });
@@ -880,15 +908,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Buscar dados do usuário
       const objectives = await storage.getUserObjectives(userId);
 
-      // Buscar quiz do usuário usando SQL direto
-      const quizResult = await sql`
-        SELECT * FROM quiz_contextualizacao 
-        WHERE user_id = ${userId} AND completed = true
-        ORDER BY created_at DESC
-        LIMIT 1
-      `;
+      // Buscar quiz do usuário usando Supabase
+      const { data: quizResult } = await supabase
+        .from('quiz_contextualizacao')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('completed', true)
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-      const motivation = quizResult.length > 0 ? quizResult[0].motivacao : null;
+      const motivation = quizResult && quizResult.length > 0 ? quizResult[0].motivacao : null;
       const previousTasks = await storage.getUserDailyTasks(userId, new Date());
 
       // Preparar dados para a IA
