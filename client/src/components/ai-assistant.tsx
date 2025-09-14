@@ -49,8 +49,9 @@ export default function AIAssistant(): JSX.Element {
       }
     };
 
-    const handleNewDayDetected = (event: CustomEvent) => {
-      if (user && event.detail?.userId === user.id) {
+    const handleNewDayDetected = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (user && customEvent.detail?.userId === user.id) {
         console.log('🌅 [AIAssistant] Evento de novo dia recebido, reiniciando...');
         setTodayMood(null);
         setSelectedMood(null);
@@ -63,8 +64,9 @@ export default function AIAssistant(): JSX.Element {
       }
     };
 
-    const handleMoodReset = (event: CustomEvent) => {
-      if (user && event.detail?.userId === user.id) {
+    const handleMoodReset = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (user && customEvent.detail?.userId === user.id) {
         console.log('🔄 [AIAssistant] Reset de humor detectado');
         setTodayMood(null);
         setSelectedMood(null);
