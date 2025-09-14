@@ -715,32 +715,59 @@ export default function PainelInterface({
   const [daysProgress, setDaysProgress] = useState(0);
   const [currentAvatar, setCurrentAvatar] = useState(getCurrentAvatar(0));
 
-  // Check timer status otimizado
+  // Check timer status e verificação de primeira visita otimizado
   useEffect(() => {
-    const checkTimerStatus = async () => {
+    const checkUserJourneyStatus = async () => {
       if (!user?.id) {
         setIsLoading(false);
         return;
       }
 
       try {
-        const response = await fetch(`/api/timer/status/${user.id}`);
-        const data = await response.json();
+        // Verificação rápida no Supabase - timer ativo ou mood registrado
+        const [timerResponse, moodResponse] = await Promise.all([
+          fetch(`/api/timer/status/${user.id}`),
+          fetch(`/api/today-mood/${user.id}`)
+        ]);
 
-        if (response.ok) {
-          setHasStartedJourney(data.hasActiveTimer);
-          if (data.hasActiveTimer && data.startDate) {
-            setLocalUser(prev => prev ? { ...prev, startDate: data.startDate } : prev);
+        const timerData = await timerResponse.json();
+        const moodData = await moodResponse.json();
+
+        // Se tem timer ativo ou já registrou humor, já passou da tela inicial
+        const hasActiveTimer = timerData.hasActiveTimer;
+        const hasMoodRegistered = moodData && moodData.mood;
+        const hasStarted = hasActiveTimer || hasMoodRegistered;
+
+        // Fallback: verificar localStorage se não encontrou no Supabase
+        if (!hasStarted) {
+          const localJourneyStarted = localStorage.getItem('scapy_journey_started');
+          if (localJourneyStarted === 'true') {
+            setHasStartedJourney(true);
+          } else {
+            setHasStartedJourney(false);
           }
+        } else {
+          setHasStartedJourney(true);
+          // Salvar no localStorage para cache
+          localStorage.setItem('scapy_journey_started', 'true');
         }
+
+        // Atualizar dados do timer se ativo
+        if (hasActiveTimer && timerData.startDate) {
+          setLocalUser(prev => prev ? { ...prev, startDate: timerData.startDate } : prev);
+        }
+
       } catch (error) {
-        console.error('Erro ao verificar status do timer:', error);
+        console.error('Erro ao verificar status da jornada:', error);
+        // Fallback total: usar apenas localStorage
+        const localJourneyStarted = localStorage.getItem('scapy_journey_started');
+        setHasStartedJourney(localJourneyStarted === 'true');
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkTimerStatus();
+    checkUserJourneyStatus();
   }, [user?.id]);
 
   // Update local user
@@ -765,13 +792,37 @@ export default function PainelInterface({
     return () => clearInterval(interval);
   }, [localUser?.startDate]);
 
-  const handleStartJourney = () => {
+  const handleStartJourney = async () => {
     setHasStartedJourney(true);
+    
+    try {
+      // Marcar no localStorage imediatamente para UX rápida
+      localStorage.setItem('scapy_journey_started', 'true');
+      
+      // Iniciar timer no Supabase (isso marca que o usuário passou da tela inicial)
+      if (user?.id) {
+        await fetch('/api/timer/start', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: user.id,
+          }),
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao marcar início da jornada:', error);
+      // Não reverter a UI mesmo com erro - localStorage já foi definido
+    }
   };
 
   const handleUserUpdate = useCallback((updatedUser: any) => {
     setLocalUser(updatedUser);
     setHasStartedJourney(true);
+    
+    // Marcar jornada como iniciada
+    localStorage.setItem('scapy_journey_started', 'true');
 
     if (updatedUser.startDate) {
       const days = calculateProgressInDays(updatedUser.startDate);
