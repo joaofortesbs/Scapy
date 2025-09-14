@@ -351,19 +351,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create timer start time
       const timerStartDate = new Date().toISOString();
 
-      // Save timer using direct SQL to bypass Supabase cache issues
-      try {
-        const timerData = await sql`
-          INSERT INTO timers (user_id, start_date, is_active)
-          VALUES (${userId}, ${timerStartDate}, true)
-          RETURNING *
-        `;
+      // Save timer using Supabase
+      const { data: timerData, error: timerError } = await supabaseAdmin
+        .from('timers')
+        .insert({
+          user_id: userId.toString(),
+          start_date: timerStartDate
+        })
+        .select()
+        .single();
 
-        console.log('Timer salvo no banco:', timerData[0]);
-      } catch (sqlError) {
-        console.error('Erro ao salvar timer no banco:', sqlError);
+      if (timerError) {
+        console.error('Erro ao salvar timer no Supabase:', timerError);
         return res.status(500).json({ message: 'Erro ao salvar timer no banco de dados' });
       }
+
+      console.log('Timer salvo no Supabase:', timerData);
 
       // Return user data with timer start date
       const userData = {
@@ -377,8 +380,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ 
         message: 'Cronômetro iniciado com sucesso!',
+        timer: timerData,
         user: userData,
-        timerStarted: true
+        timerStarted: true,
+        startDate: timerStartDate
       });
 
     } catch (error) {
@@ -396,14 +401,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User ID is required" });
       }
 
-      const timerData = await sql`
-        SELECT * FROM timers 
-        WHERE user_id = ${userId} AND is_active = true 
-        ORDER BY created_at DESC 
-        LIMIT 1
-      `;
+      // Get active timer from Supabase (latest timer for user)
+      const { data: timerData, error: timerError } = await supabaseAdmin
+        .from('timers')
+        .select('*')
+        .eq('user_id', userId.toString())
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-      const hasActiveTimer = timerData.length > 0;
+      if (timerError) {
+        console.error('Erro ao buscar timer no Supabase:', timerError);
+        return res.status(500).json({ message: 'Erro ao buscar timer' });
+      }
+
+      const hasActiveTimer = timerData && timerData.length > 0;
       const latestTimer = hasActiveTimer ? timerData[0] : null;
 
       // Set cache headers to ensure fresh data
