@@ -240,6 +240,13 @@ export default function AIAssistant(): JSX.Element {
             if (moodTimestamp >= todayStart && moodTimestamp <= todayEnd) {
               setTodayMood(moodData.mood);
               console.log(`💿 [AIAssistant] Humor válido carregado: ${moodData.mood} para ${todayKey}`);
+              
+              console.log(`🎨 [AIAssistant] Humor persistido carregado - interface mantém estado limpo`);
+              
+              // Reset selectedMood para evitar conflitos visuais
+              setTimeout(() => {
+                setSelectedMood(null);
+              }, 100);
             } else {
               console.log(`🗑️ [AIAssistant] Humor com timestamp inválido, removendo...`);
               localStorage.removeItem(individualMoodKey);
@@ -283,6 +290,13 @@ export default function AIAssistant(): JSX.Element {
           if (todayMoodFromGeneral) {
             setTodayMood(todayMoodFromGeneral);
             console.log(`💿 [AIAssistant] Humor recuperado do sistema geral: ${todayMoodFromGeneral}`);
+            
+            console.log(`🎨 [AIAssistant] Humor do sistema geral carregado - mantendo interface limpa`);
+            
+            // Reset selectedMood para evitar conflitos
+            setTimeout(() => {
+              setSelectedMood(null);
+            }, 100);
           } else {
             setTodayMood(null);
             console.log(`📋 [AIAssistant] Nenhum humor encontrado para hoje (${todayKey})`);
@@ -301,6 +315,13 @@ export default function AIAssistant(): JSX.Element {
         if (apiData && apiData.mood && apiData.date === todayKey) {
           // Se a API tem um humor válido para hoje, usar ele
           setTodayMood(apiData.mood);
+          
+          console.log(`🎨 [AIAssistant] Humor da API carregado - mantendo interface limpa`);
+          
+          // Reset selectedMood para evitar conflitos
+          setTimeout(() => {
+            setSelectedMood(null);
+          }, 100);
           
           // Sincronizar localStorage com dados da API
           const moodData = {
@@ -512,6 +533,7 @@ export default function AIAssistant(): JSX.Element {
 
       <div className="flex justify-between space-x-2">
         {moodOptions.map(({ id, label, icon: Icon, color }) => {
+          // 🎯 CORREÇÃO: Verificar se este humor está selecionado (persistido)
           const isSelected = todayMood === id;
           const isCurrentlySelecting = selectedMood === label && isGenerating;
           
@@ -519,16 +541,20 @@ export default function AIAssistant(): JSX.Element {
             <Button
               key={id}
               variant="outline"
-              disabled={isGenerating || todayMood !== null}
+              disabled={isGenerating || (todayMood !== null && !isSelected)}
               className={`flex-1 h-12 border ${color} hover:opacity-80 transition-all duration-300 rounded-full ${
-                isSelected ? 'opacity-100 ring-2 ring-primary' : ''
+                isSelected ? 'opacity-100 ring-2 ring-primary scale-105' : ''
               } ${isCurrentlySelecting ? 'animate-pulse' : ''}`}
-              style={{ opacity: isSelected ? 1 : todayMood ? 0.3 : 0.73 }}
+              style={{ 
+                opacity: isSelected ? 1 : todayMood ? 0.3 : 0.73,
+                transform: isSelected ? 'scale(1.05)' : 'scale(1)'
+              }}
               onClick={() => handleMoodSelect(label)}
               data-testid={`mood-${id}`}
             >
               <Icon className="w-5 h-5 mr-1" />
               {label}
+              {isSelected && <CheckCircle2 className="w-4 h-4 ml-1 text-green-400" />}
             </Button>
           );
         })}
