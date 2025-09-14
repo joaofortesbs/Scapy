@@ -53,26 +53,61 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
           }
         }
 
-        // Segundo: buscar dados atualizados da API se temos um usuário
+        // Segundo: buscar dados com nova persistência de cronômetros
         if (userData?.id) {
           try {
-            const response = await fetch(`/api/timer/status/${userData.id}`);
-            if (response.ok) {
-              const data = await response.json();
-              if (data.hasActiveTimer && data.startDate) {
-                userData = {
-                  ...userData,
-                  startDate: data.startDate
-                };
-                console.log('🔄 [PanicPage] Dados atualizados da API:', userData);
-                
-                // Salvar dados atualizados
-                localStorage.setItem('user', JSON.stringify(userData));
-              }
+            // Primeiro carregar do localStorage usando TimerPersistence
+            const { TimerPersistence } = await import('@/lib/timer-persistence');
+            const localTimer = TimerPersistence.loadTimer(userData.id.toString());
+            
+            if (localTimer && localTimer.startDate) {
+              userData = {
+                ...userData,
+                startDate: new Date(localTimer.startDate)
+              };
+              console.log('💿 [PanicPage] Cronômetro carregado do localStorage:', localTimer.startDate);
             }
-          } catch (apiError) {
-            console.warn('⚠️ [PanicPage] Erro na API (não crítico):', apiError);
-            // Continua com dados locais
+
+            // Sincronizar com API em background (não bloquear UI)
+            setTimeout(async () => {
+              try {
+                const syncedTimer = await TimerPersistence.syncWithAPI(userData?.id?.toString() || '');
+                if (syncedTimer && userData && new Date(syncedTimer.startDate).getTime() !== userData.startDate.getTime()) {
+                  const updatedUser = {
+                    ...userData!,
+                    startDate: new Date(syncedTimer.startDate)
+                  };
+                  setUser(updatedUser);
+                  localStorage.setItem('user', JSON.stringify(updatedUser));
+                  console.log('🌐 [PanicPage] Cronômetro atualizado da API:', syncedTimer.startDate);
+                }
+              } catch (syncError) {
+                console.warn('⚠️ [PanicPage] Erro na sincronização (não crítico):', syncError);
+              }
+            }, 100);
+          } catch (timerError) {
+            console.warn('⚠️ [PanicPage] Erro no sistema de cronômetros, usando API tradicional:', timerError);
+            
+            // Fallback para API tradicional
+            try {
+              const response = await fetch(`/api/timer/status/${userData.id}`);
+              if (response.ok) {
+                const data = await response.json();
+                if (data.hasActiveTimer && data.startDate) {
+                  userData = {
+                    ...userData!,
+                    startDate: new Date(data.startDate)
+                  };
+                  console.log('🔄 [PanicPage] Dados atualizados da API (fallback):', userData);
+                  
+                  // Salvar dados atualizados
+                  localStorage.setItem('user', JSON.stringify(userData));
+                }
+              }
+            } catch (apiError) {
+              console.warn('⚠️ [PanicPage] Erro na API (não crítico):', apiError);
+              // Continua com dados locais
+            }
           }
         }
 
