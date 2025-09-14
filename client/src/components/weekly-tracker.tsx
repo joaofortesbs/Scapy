@@ -36,15 +36,17 @@ export default function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
 
   // Escutar eventos de atualização de humor
   useEffect(() => {
-    const handleMoodUpdate = (event: CustomEvent) => {
-      if (user && event.detail?.userId === user.id.toString()) {
-        console.log('🔄 [WeeklyTracker] Atualização de humor recebida:', event.detail);
+    const handleMoodUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (user && customEvent.detail?.userId === user.id.toString()) {
+        console.log('🔄 [WeeklyTracker] Atualização de humor recebida:', customEvent.detail);
         loadWeeklyMoods(user.id);
       }
     };
 
-    const handleNewDay = (event: CustomEvent) => {
-      if (user && event.detail?.userId === user.id) {
+    const handleNewDay = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (user && customEvent.detail?.userId === user.id) {
         console.log('🌅 [WeeklyTracker] Novo dia detectado, recarregando humores...');
         loadWeeklyMoods(user.id);
       }
@@ -168,9 +170,7 @@ export default function WeeklyTracker({ weeklyProgress }: WeeklyTrackerProps) {
         {weekDays.map((day, index) => (
           <button
             key={index}
-            className={`day-circle ${
-              weeklyProgress?.dayCompleted[index] ? 'completed' : ''
-            }`}
+            className={getDayClasses(index)}
             onClick={() => handleDayClick(index)}
             title={`${dayNames[index]} - ${weeklyProgress?.dayCompleted[index] ? 'Concluído' : 'Pendente'}`}
             data-testid={`day-circle-${index}`}
