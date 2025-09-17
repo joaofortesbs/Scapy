@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"; // Import useEffect
 import { useQuery } from "@tanstack/react-query";
 import type { User, WeeklyProgress } from "@shared/schema";
 import PainelInterface from "@/interface/secao/painel";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useLocation } from "wouter"; // Import useLocation from wouter
 
 interface DashboardProps {
   user?: any;
@@ -11,9 +11,9 @@ interface DashboardProps {
 
 export default function Dashboard({ user: initialUser, onLogout }: DashboardProps) {
   const [activeSection, setActiveSection] = useState("painel");
-  const [user, setUser] = useState<User | null>(null); // State to hold user data
+  const [user, setUser] = useState<User | undefined>(undefined); // State to hold user data
   const [isLoading, setIsLoading] = useState(true); // State to manage loading status
-  const navigate = useNavigate(); // Initialize useNavigate
+  const [, setLocation] = useLocation(); // Initialize navigation with wouter
 
   const { data: weeklyProgress } = useQuery<WeeklyProgress>({
     queryKey: ["/api/weekly-progress"],
@@ -28,7 +28,7 @@ export default function Dashboard({ user: initialUser, onLogout }: DashboardProp
 
         if (!AuthService.isAuthenticated()) {
           console.warn('⚠️ [Dashboard] Usuário não autenticado, redirecionando...');
-          navigate('/auth');
+          setLocation('/auth');
           return;
         }
 
@@ -38,18 +38,18 @@ export default function Dashboard({ user: initialUser, onLogout }: DashboardProp
           console.log('✅ [Dashboard] Usuário autenticado:', userData.email);
         } else {
           console.warn('⚠️ [Dashboard] Dados do usuário não encontrados');
-          navigate('/auth');
+          setLocation('/auth');
         }
       } catch (error) {
         console.error('❌ [Dashboard] Erro na verificação de autenticação:', error);
-        navigate('/auth');
+        setLocation('/auth');
       } finally {
         setIsLoading(false);
       }
     };
 
     checkAuth();
-  }, [navigate]);
+  }, [setLocation]);
 
   const handleSectionChange = (section: string) => {
     if (section !== "painel") {
