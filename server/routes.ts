@@ -9,14 +9,22 @@ import {
   insertMoodSelectionSchema,
   insertUserObjectiveSchema,
   insertDailyTaskSchema,
-  insertUserCustomGoalSchema
+  insertUserCustomGoalSchema,
+  authUsers,
+  insertAuthUserSchema,
+  loginSchema,
+  registerSchema
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 import { aiProcessor } from "./aiProcessor";
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import { neon } from '@neondatabase/serverless';
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { getDailyPhrase } from "./gemini-service";
+import { verifyJWT, generateJWT } from "./auth-middleware";
+import { ZodError } from 'zod';
 
 // Definir tipo global para timers em memória
 declare global {
@@ -30,13 +38,17 @@ if (!global.activeTimers) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
-  // Inicializar Supabase cliente
-  const supabaseUrl = process.env.SUPABASE_URL || 'https://ddatgvruplfcutjwores.supabase.co';
-  const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkYXRndnJ1cGxmY3V0andvcmVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxMzQ3NjcsImV4cCI6MjA3MjcxMDc2N30.gkE2EWLU7gvxonWptK_bbiRuAm1d6xIxLVeCYegA5es';
-  const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkYXRndnJ1cGxmY3V0andvcmVzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzEzNDc2NywiZXhwIjoyMDcyNzEwNzY3fQ.MWY548tNrRJsr-uIxSwWz4Vd6q9YE58bf9XQrKvhAZE';
+  // Inicializar Supabase cliente - Use environment variables for security
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_ANON_KEY;
+  const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!supabaseUrl || !supabaseKey || !supabaseServiceRole) {
+    console.warn('Supabase credentials not found in environment variables. Some features may not work.');
+  }
 
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRole);
+  const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+  const supabaseAdmin = supabaseUrl && supabaseServiceRole ? createClient(supabaseUrl, supabaseServiceRole) : null;
 
   // Direct PostgreSQL connection for bypassing Supabase cache issues
   const sql = neon(process.env.DATABASE_URL!);
@@ -46,53 +58,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rota de Login
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { email, password } = req.body;
-
-      if (!email || !password) {
-        return res.status(400).json({ message: 'Email e senha são obrigatórios' });
-      }
+      // Validate request data with Zod
+      const validatedData = loginSchema.parse(req.body);
+      const { email, password } = validatedData;
 
       // Buscar usuário pelo email
-      const { data: user, error } = await supabase
-        .from('auth_users')
-        .select('*')
-        .eq('email', email.toLowerCase().trim())
-        .eq('is_active', true)
-        .single();
+      const user = await db.select()
+        .from(authUsers)
+        .where(and(
+          eq(authUsers.email, email.toLowerCase().trim()),
+          eq(authUsers.isActive, true)
+        ))
+        .limit(1);
 
-      if (error || !user) {
+      if (!user || user.length === 0) {
         return res.status(401).json({ message: 'Email ou senha inválidos' });
       }
 
+      const authUser = user[0];
+
       // Verificar senha
-      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+      const isPasswordValid = await bcrypt.compare(password, authUser.passwordHash);
 
       if (!isPasswordValid) {
         return res.status(401).json({ message: 'Email ou senha inválidos' });
       }
 
+      // Generate secure JWT token
+      const jwtToken = generateJWT(authUser.id, authUser.email, authUser.isActive);
+
       // Atualizar último login
-      await supabase
-        .from('auth_users')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', user.id);
+      await db.update(authUsers)
+        .set({ lastLogin: new Date() })
+        .where(eq(authUsers.id, authUser.id));
 
       // Retornar dados do usuário (sem a senha)
       const userData = {
-        id: user.id,
-        email: user.email,
-        fullName: user.full_name,
-        createdAt: user.created_at,
+        id: authUser.id,
+        email: authUser.email,
+        fullName: authUser.fullName,
+        createdAt: authUser.createdAt,
         lastLogin: new Date().toISOString()
       };
 
       res.json({ 
         message: 'Login realizado com sucesso!',
         user: userData,
-        token: `auth_${user.id}_${Date.now()}`
+        token: jwtToken
       });
 
     } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ 
+          message: 'Dados inválidos',
+          errors: error.errors.map(err => ({ field: err.path.join('.'), message: err.message }))
+        });
+      }
       console.error('Erro no login:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
@@ -101,30 +122,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rota de Cadastro
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { email, password, fullName } = req.body;
-
-      // Validações
-      if (!email || !password || !fullName) {
-        return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
-      }
-
-      if (password.length < 6) {
-        return res.status(400).json({ message: 'A senha deve ter pelo menos 6 caracteres' });
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({ message: 'Email inválido' });
-      }
+      // Validate request data with Zod
+      const validatedData = registerSchema.parse(req.body);
+      const { email, password, fullName } = validatedData;
 
       // Verificar se o email já existe
-      const { data: existingUser } = await supabase
-        .from('auth_users')
-        .select('email')
-        .eq('email', email.toLowerCase().trim())
-        .single();
+      const existingUser = await db.select()
+        .from(authUsers)
+        .where(eq(authUsers.email, email.toLowerCase().trim()))
+        .limit(1);
 
-      if (existingUser) {
+      if (existingUser.length > 0) {
         return res.status(409).json({ message: 'Este email já está cadastrado' });
       }
 
@@ -133,76 +141,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Criar usuário
-      const { data: newUser, error } = await supabase
-        .from('auth_users')
-        .insert([{
+      const newUser = await db.insert(authUsers)
+        .values({
           email: email.toLowerCase().trim(),
-          password_hash: passwordHash,
-          full_name: fullName.trim(),
-          is_active: true
-        }])
-        .select()
-        .single();
+          passwordHash: passwordHash,
+          fullName: fullName.trim(),
+          isActive: true
+        })
+        .returning();
 
-      if (error) {
-        console.error('Erro ao criar usuário:', error);
+      if (!newUser || newUser.length === 0) {
+        console.error('Erro ao criar usuário');
         return res.status(500).json({ message: 'Erro ao criar conta. Tente novamente.' });
       }
+
+      const createdUser = newUser[0];
 
       res.status(201).json({ 
         message: 'Conta criada com sucesso!',
         user: {
-          id: newUser.id,
-          email: newUser.email,
-          fullName: newUser.full_name,
-          createdAt: newUser.created_at
+          id: createdUser.id,
+          email: createdUser.email,
+          fullName: createdUser.fullName,
+          createdAt: createdUser.createdAt
         }
       });
 
     } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ 
+          message: 'Dados inválidos',
+          errors: error.errors.map(err => ({ field: err.path.join('.'), message: err.message }))
+        });
+      }
       console.error('Erro no cadastro:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   });
 
-  // Rota para verificar se usuário está autenticado
-  app.get("/api/auth/me", async (req, res) => {
+  // Rota para verificar se usuário está autenticado (now using JWT verification middleware)
+  app.get("/api/auth/me", verifyJWT, async (req: any, res) => {
     try {
-      const authHeader = req.headers.authorization;
+      // User data is already available from the verifyJWT middleware
+      const user = req.user;
 
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: 'Token não fornecido' });
-      }
-
-      const token = authHeader.substring(7);
-
-      // Extrair ID do usuário do token (formato: auth_ID_timestamp)
-      const tokenParts = token.split('_');
-      if (tokenParts.length !== 3 || tokenParts[0] !== 'auth') {
-        return res.status(401).json({ message: 'Token inválido' });
-      }
-
-      const userId = tokenParts[1];
-
-      // Buscar usuário
-      const { data: user, error } = await supabase
-        .from('auth_users')
-        .select('id, email, full_name, created_at, last_login, is_active')
-        .eq('id', userId)
-        .eq('is_active', true)
-        .single();
-
-      if (error || !user) {
-        return res.status(401).json({ message: 'Usuário não encontrado' });
+      if (!user) {
+        return res.status(401).json({ message: 'Dados do usuário não encontrados' });
       }
 
       res.json({
         user: {
           id: user.id,
           email: user.email,
-          fullName: user.full_name,
-          createdAt: user.created_at,
-          lastLogin: user.last_login
+          fullName: user.fullName
         }
       });
 

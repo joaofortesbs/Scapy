@@ -432,6 +432,10 @@ export class MemStorage implements IStorage {
     const customGoal: UserCustomGoal = {
       ...goal,
       id,
+      descricao: goal.descricao ?? null,
+      categoria: goal.categoria ?? null,
+      prioridade: goal.prioridade ?? 3,
+      concluida: goal.concluida ?? false,
       date: goal.date ? (typeof goal.date === 'string' ? new Date(goal.date) : goal.date) : now,
       createdAt: now,
       updatedAt: now,
@@ -476,25 +480,25 @@ export class MemStorage implements IStorage {
     const targetDate = date.toISOString().split('T')[0];
 
     // Remove daily tasks for the date
-    for (const [id, task] of this.dailyTasks.entries()) {
+    Array.from(this.dailyTasks.entries()).forEach(([id, task]) => {
       if (task.userId === userId && task.date.toISOString().split('T')[0] === targetDate) {
         this.dailyTasks.delete(id);
       }
-    }
+    });
 
     // Remove custom goals for the date
-    for (const [id, goal] of this.userCustomGoals.entries()) {
+    Array.from(this.userCustomGoals.entries()).forEach(([id, goal]) => {
       if (goal.userId === userId && goal.date.toISOString().split('T')[0] === targetDate) {
         this.userCustomGoals.delete(id);
       }
-    }
+    });
 
     // Remove mood selections for the date
-    for (const [id, mood] of this.moodSelections.entries()) {
+    Array.from(this.moodSelections.entries()).forEach(([id, mood]) => {
       if (mood.userId === userId && mood.date.toISOString().split('T')[0] === targetDate) {
         this.moodSelections.delete(id);
       }
-    }
+    });
 
     console.log(`🧹 Dados do dia ${targetDate} limpos para usuário ${userId}`);
   }

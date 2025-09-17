@@ -1,8 +1,12 @@
 
 import fetch from 'node-fetch';
 
-const GEMINI_API_KEY = 'AIzaSyCTFP7NXclzBjV5M2JzhealO_SQ8rDrzDg';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
+if (!GEMINI_API_KEY) {
+  console.warn("⚠️  GEMINI_API_KEY not found. Daily phrase generation will use fallback phrases only.");
+}
 
 export interface DailyPhrase {
   id: string;
@@ -16,6 +20,10 @@ let lastGeneratedDate: string | null = null;
 
 export async function generateDailyPhrase(): Promise<string> {
   try {
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY not available');
+    }
+    
     const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {

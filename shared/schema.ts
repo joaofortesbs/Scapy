@@ -13,6 +13,17 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const authUsers = pgTable("auth_users", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  email: text("email").unique().notNull(),
+  passwordHash: text("password_hash").notNull(),
+  fullName: text("full_name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  lastLogin: timestamp("last_login"),
+});
+
 export const weeklyProgress = pgTable("weekly_progress", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
@@ -43,6 +54,24 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   startDate: true,
   createdAt: true,
+});
+
+export const insertAuthUserSchema = createInsertSchema(authUsers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Auth validation schemas
+export const loginSchema = z.object({
+  email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
+  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres')
+});
+
+export const registerSchema = z.object({
+  email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
+  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
+  fullName: z.string().min(1, 'Nome completo é obrigatório').max(255, 'Nome muito longo')
 });
 
 export const insertWeeklyProgressSchema = createInsertSchema(weeklyProgress).omit({
@@ -86,6 +115,8 @@ export const insertTimerSchema = createInsertSchema(timers).omit({
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type AuthUser = typeof authUsers.$inferSelect;
+export type InsertAuthUser = z.infer<typeof insertAuthUserSchema>;
 export type WeeklyProgress = typeof weeklyProgress.$inferSelect;
 export type InsertWeeklyProgress = z.infer<typeof insertWeeklyProgressSchema>;
 export type UserGoals = typeof userGoals.$inferSelect;
