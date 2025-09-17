@@ -56,7 +56,7 @@ interface TaskProgress {
   progressPercentage: number;
 }
 
-export default function DailyGoals() {
+export function DailyGoals() {
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [customGoals, setCustomGoals] = useState<CustomGoal[]>([]);
   const [isLoading, setIsLoading] = useState(true);

@@ -1,22 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { User } from "@shared/schema";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
 import { TimerPersistence, type TimerData } from "@/lib/timer-persistence";
-import { AuthService } from "@/lib/auth";
 
 interface TimerProps {
   user: User | null;
-  onUserUpdate?: (updatedUser: User) => void;
-  setError?: (message: string) => void;
-  setSuccess?: (message: string) => void;
 }
 
-export default function Timer({ user, onUserUpdate, setError, setSuccess }: TimerProps) {
+export default function Timer({ user }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [timerData, setTimerData] = useState<TimerData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isStarting, setIsStarting] = useState(false);
 
   // Atualizar tempo a cada segundo
   useEffect(() => {
@@ -38,12 +33,19 @@ export default function Timer({ user, onUserUpdate, setError, setSuccess }: Time
     const loadTimerData = async () => {
       try {
         console.log(`🔍 [Timer] Carregando cronômetro para usuário ${user.id}`);
-
+        
         // 1. PRIMEIRO: Carregar do localStorage (fonte primária)
         const localTimer = TimerPersistence.loadTimer(user.id.toString());
         if (localTimer) {
           setTimerData(localTimer);
           console.log(`💿 [Timer] Cronômetro carregado do localStorage: ${localTimer.startDate}`);
+          
+          // Atualizar dados do usuário para sincronização
+          const updatedUser = {
+            ...user,
+            startDate: localTimer.startDate
+          };
+          localStorage.setItem('user', JSON.stringify(updatedUser));
         }
 
         // 2. SEGUNDO: Sincronizar com API em background (não bloquear UI)
@@ -53,7 +55,7 @@ export default function Timer({ user, onUserUpdate, setError, setSuccess }: Time
             if (syncedTimer && (!localTimer || syncedTimer.startDate !== localTimer.startDate)) {
               setTimerData(syncedTimer);
               console.log(`🌐 [Timer] Cronômetro atualizado da API: ${syncedTimer.startDate}`);
-
+              
               // Atualizar localStorage com dados da API se diferentes
               const updatedUser = {
                 ...user,
@@ -80,7 +82,7 @@ export default function Timer({ user, onUserUpdate, setError, setSuccess }: Time
   useEffect(() => {
     const handleTimerUpdate = (event: CustomEvent) => {
       const { userId, startDate } = event.detail || {};
-
+      
       if (user?.id && userId === user.id.toString() && startDate) {
         console.log(`🔄 [Timer] Cronômetro atualizado via evento: ${startDate}`);
         const newTimer = TimerPersistence.loadTimer(user.id.toString());
@@ -92,66 +94,12 @@ export default function Timer({ user, onUserUpdate, setError, setSuccess }: Time
 
     window.addEventListener('timerUpdated', handleTimerUpdate as EventListener);
     window.addEventListener('timerStarted', handleTimerUpdate as EventListener);
-
+    
     return () => {
       window.removeEventListener('timerUpdated', handleTimerUpdate as EventListener);
       window.removeEventListener('timerStarted', handleTimerUpdate as EventListener);
     };
   }, [user?.id]);
-
-  // Função para iniciar cronômetro
-  const handleStartTimer = useCallback(async () => {
-    if (!user?.id || isStarting) return;
-
-    setIsStarting(true);
-    setError?.('');
-
-    try {
-      // Verificar autenticação antes de fazer a requisição
-      if (!AuthService.isAuthenticated()) {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-          setError?.('Token de autenticação não encontrado. Faça login novamente.');
-          return;
-        }
-      }
-
-      const response = await AuthService.authenticatedFetch('/api/timer/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId: user.id // Enviar userId explicitamente
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      // Atualizar localStorage
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      if (onUserUpdate) {
-        onUserUpdate(data.user);
-      }
-
-      setSuccess?.('✅ Cronômetro iniciado com sucesso!');
-      console.log('✅ [Timer] Cronômetro iniciado para usuário:', user.id);
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      console.error('❌ [Timer] Erro ao iniciar cronômetro:', errorMessage);
-      setError?.(`Erro ao iniciar cronômetro: ${errorMessage}`);
-    } finally {
-      setIsStarting(false);
-    }
-  }, [user?.id, isStarting, onUserUpdate, setError, setSuccess]);
-
 
   // Loading state
   if (isLoading) {
@@ -172,19 +120,12 @@ export default function Timer({ user, onUserUpdate, setError, setSuccess }: Time
   // Determinar startDate de forma robusta
   const startDate = timerData?.startDate || user?.startDate;
 
-  // Se não há cronômetro ativo, mostrar botão para iniciar
+  // Safety check para dados válidos
   if (!startDate) {
     return (
       <Card className="p-6 text-center">
         <CardContent>
-          <p className="text-muted-foreground mb-4">Cronômetro não iniciado</p>
-          <button
-            onClick={handleStartTimer}
-            disabled={isStarting}
-            className="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isStarting ? '⏳ Iniciando...' : '🚀 INICIAR CRONÔMETRO'}
-          </button>
+          <p className="text-muted-foreground">Cronômetro não iniciado</p>
         </CardContent>
       </Card>
     );
