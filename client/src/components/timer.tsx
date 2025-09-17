@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { User } from "@shared/schema";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
 import { TimerPersistence, type TimerData } from "@/lib/timer-persistence";
+import { AuthService } from "@/lib/auth";
 
 interface TimerProps {
   user: User | null;
@@ -12,6 +14,7 @@ export default function Timer({ user }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [timerData, setTimerData] = useState<TimerData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isStarting, setIsStarting] = useState(false);
 
   // Atualizar tempo a cada segundo
   useEffect(() => {
@@ -39,13 +42,6 @@ export default function Timer({ user }: TimerProps) {
         if (localTimer) {
           setTimerData(localTimer);
           console.log(`💿 [Timer] Cronômetro carregado do localStorage: ${localTimer.startDate}`);
-          
-          // Atualizar dados do usuário para sincronização
-          const updatedUser = {
-            ...user,
-            startDate: localTimer.startDate
-          };
-          localStorage.setItem('user', JSON.stringify(updatedUser));
         }
 
         // 2. SEGUNDO: Sincronizar com API em background (não bloquear UI)
@@ -101,6 +97,65 @@ export default function Timer({ user }: TimerProps) {
     };
   }, [user?.id]);
 
+  // Função para iniciar cronômetro
+  const handleStartTimer = async () => {
+    if (!user?.id || isStarting) return;
+
+    setIsStarting(true);
+    try {
+      console.log(`🚀 [Timer] Iniciando cronômetro para usuário ${user.id}`);
+
+      // Fazer requisição autenticada para iniciar cronômetro
+      const response = await AuthService.authenticatedFetch('/api/timer/start', {
+        method: 'POST',
+        body: JSON.stringify({}) // Corpo vazio, userId vem do JWT
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao iniciar cronômetro');
+      }
+
+      const data = await response.json();
+      
+      if (data.timerStarted && data.startDate) {
+        // Salvar no sistema de persistência local
+        TimerPersistence.saveTimer(user.id.toString(), data.startDate);
+        
+        // Atualizar estado do componente
+        const newTimer: TimerData = {
+          userId: user.id.toString(),
+          startDate: data.startDate,
+          createdAt: data.startDate,
+          isActive: true,
+          timestamp: Date.now(),
+          version: '1.0.0',
+          source: 'api-start'
+        };
+        
+        setTimerData(newTimer);
+        
+        // Disparar evento para outros componentes
+        window.dispatchEvent(new CustomEvent('timerStarted', {
+          detail: {
+            userId: user.id.toString(),
+            startDate: data.startDate,
+            timestamp: Date.now()
+          }
+        }));
+
+        console.log(`✅ [Timer] Cronômetro iniciado com sucesso: ${data.startDate}`);
+      }
+
+    } catch (error) {
+      console.error('❌ [Timer] Erro ao iniciar cronômetro:', error);
+      // Mostrar erro para o usuário (você pode adicionar um toast aqui)
+      alert(`Erro ao iniciar cronômetro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -120,12 +175,19 @@ export default function Timer({ user }: TimerProps) {
   // Determinar startDate de forma robusta
   const startDate = timerData?.startDate || user?.startDate;
 
-  // Safety check para dados válidos
+  // Se não há cronômetro ativo, mostrar botão para iniciar
   if (!startDate) {
     return (
       <Card className="p-6 text-center">
         <CardContent>
-          <p className="text-muted-foreground">Cronômetro não iniciado</p>
+          <p className="text-muted-foreground mb-4">Cronômetro não iniciado</p>
+          <button
+            onClick={handleStartTimer}
+            disabled={isStarting}
+            className="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isStarting ? '⏳ Iniciando...' : '🚀 INICIAR CRONÔMETRO'}
+          </button>
         </CardContent>
       </Card>
     );
