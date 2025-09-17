@@ -491,12 +491,18 @@ function Timer({ user, onUserUpdate }: TimerProps) {
     setIsStarting(true);
 
     try {
-      const response = await fetch('/api/timer/start', {
+      // Importar AuthService dinamicamente
+      const { AuthService } = await import('@/lib/auth');
+
+      // Verificar se usuário está autenticado
+      if (!AuthService.isAuthenticated()) {
+        alert('Usuário não está autenticado. Faça login novamente.');
+        return;
+      }
+
+      const response = await AuthService.authenticatedFetch('/api/timer/start', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({}) // Corpo vazio, userId vem do JWT
       });
 
       const data = await response.json();

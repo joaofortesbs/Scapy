@@ -126,4 +126,46 @@ export class AuthService {
       console.error('❌ [AuthService] Erro no logout:', error);
     }
   }
+
+  /**
+   * Realiza requisições HTTP autenticadas com token JWT
+   * @param url - URL da requisição
+   * @param options - Opções da requisição (method, body, etc.)
+   * @returns {Promise<Response>} - Promise com a resposta da requisição
+   */
+  static async authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+    try {
+      const token = this.getToken();
+      
+      if (!token) {
+        throw new Error('Token de autenticação não encontrado');
+      }
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...options.headers
+      };
+
+      const response = await fetch(url, {
+        ...options,
+        headers
+      });
+
+      // Se token expirou ou é inválido, fazer logout
+      if (response.status === 401) {
+        console.warn('⚠️ [AuthService] Token inválido ou expirado, fazendo logout');
+        this.logout();
+        // Recarregar página para forçar novo login
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('❌ [AuthService] Erro na requisição autenticada:', error);
+      throw error;
+    }
+  }
 }

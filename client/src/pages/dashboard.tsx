@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"; // Import useEffect
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { User, WeeklyProgress } from "@shared/schema";
 import PainelInterface from "@/interface/secao/painel";
@@ -13,6 +13,8 @@ export default function Dashboard({ user: initialUser, onLogout }: DashboardProp
   const [activeSection, setActiveSection] = useState("painel");
   const [user, setUser] = useState<User | undefined>(undefined); // State to hold user data
   const [isLoading, setIsLoading] = useState(true); // State to manage loading status
+  const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<string>('');
   const [, setLocation] = useLocation(); // Initialize navigation with wouter
 
   const { data: weeklyProgress } = useQuery<WeeklyProgress>({
@@ -37,7 +39,7 @@ export default function Dashboard({ user: initialUser, onLogout }: DashboardProp
           // Tentar fallback com localStorage
           const savedAuth = localStorage.getItem('isAuthenticated');
           const savedUser = localStorage.getItem('user');
-          
+
           if (savedAuth === 'true' && savedUser) {
             try {
               const userData = JSON.parse(savedUser);
@@ -87,11 +89,65 @@ export default function Dashboard({ user: initialUser, onLogout }: DashboardProp
   }
 
   return (
-    <PainelInterface
-      user={user} // Pass the user state
-      weeklyProgress={weeklyProgress}
-      activeSection={activeSection}
-      onSectionChange={handleSectionChange}
-    />
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header user={currentUser} onLogout={onLogout} />
+
+      {/* Mensagens de Erro e Sucesso */}      
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mx-4 mt-4">
+          <span className="block sm:inline">{error}</span>
+          <button 
+            onClick={() => setError('')}
+            className="float-right font-bold text-red-700 hover:text-red-900"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mx-4 mt-4">
+          <span className="block sm:inline">{success}</span>
+          <button 
+            onClick={() => setSuccess('')}
+            className="float-right font-bold text-green-700 hover:text-green-900"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      <main className="flex-1 container mx-auto px-4 py-6 space-y-6">
+        {/* Seção do Cronômetro Principal */}        
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="md:col-span-2">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold">Jornada NoFap</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Timer 
+                user={currentUser} 
+                onUserUpdate={setCurrentUser}
+                setError={setError}
+                setSuccess={setSuccess}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Outras Seções */}        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <WeeklyTracker weeklyProgress={weeklyProgress} />
+          <FraseDoDia />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <EvolutionaryAvatar userId={currentUser?.id} />
+          <DailyGoals userId={currentUser?.id} />
+        </div>
+      </main>
+
+      <BottomNavigation activeSection={activeSection} onSectionChange={handleSectionChange} />
+    </div>
   );
 }

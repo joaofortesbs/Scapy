@@ -3,13 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { User } from "@shared/schema";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
 import { TimerPersistence, type TimerData } from "@/lib/timer-persistence";
-import { AuthService } from "@/lib/auth";
 
 interface TimerProps {
   user: User | null;
-  onUserUpdate?: (updatedUser: User) => void; // Adicionado para atualizar o usuário pai
-  setError: (message: string) => void; // Adicionado para gerenciar erros
-  setSuccess: (message: string) => void; // Adicionado para gerenciar sucessos
+  onUserUpdate?: (updatedUser: User) => void;
+  setError?: (message: string) => void;
+  setSuccess?: (message: string) => void;
 }
 
 export default function Timer({ user, onUserUpdate, setError, setSuccess }: TimerProps) {
@@ -107,6 +106,14 @@ export default function Timer({ user, onUserUpdate, setError, setSuccess }: Time
     try {
       console.log(`🚀 [Timer] Iniciando cronômetro para usuário ${user.id}`);
 
+      // Importar AuthService dinamicamente para evitar problemas de circular import
+      const { AuthService } = await import('@/lib/auth');
+
+      // Verificar se usuário está autenticado
+      if (!AuthService.isAuthenticated()) {
+        throw new Error('Usuário não está autenticado');
+      }
+
       // Fazer requisição autenticada para iniciar cronômetro
       const response = await AuthService.authenticatedFetch('/api/timer/start', {
         method: 'POST',
@@ -114,7 +121,7 @@ export default function Timer({ user, onUserUpdate, setError, setSuccess }: Time
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ message: 'Erro de comunicação com servidor' }));
         throw new Error(errorData.message || 'Erro ao iniciar cronômetro');
       }
 
@@ -137,6 +144,15 @@ export default function Timer({ user, onUserUpdate, setError, setSuccess }: Time
 
         setTimerData(newTimer);
 
+        // Atualizar dados do usuário se callback fornecido
+        if (onUserUpdate && data.user) {
+          onUserUpdate({
+            ...user,
+            ...data.user,
+            startDate: data.startDate
+          });
+        }
+
         // Disparar evento para outros componentes
         window.dispatchEvent(new CustomEvent('timerStarted', {
           detail: {
@@ -147,15 +163,27 @@ export default function Timer({ user, onUserUpdate, setError, setSuccess }: Time
         }));
 
         console.log(`✅ [Timer] Cronômetro iniciado com sucesso: ${data.startDate}`);
-        setSuccess('🚀 Cronômetro iniciado com sucesso!');
-        setTimeout(() => setSuccess(''), 3000);
+        
+        if (setSuccess) {
+          setSuccess('🚀 Cronômetro iniciado com sucesso!');
+          setTimeout(() => setSuccess(''), 3000);
+        }
+      } else {
+        throw new Error('Resposta inválida do servidor');
       }
 
     } catch (error) {
       console.error('❌ [Timer] Erro ao iniciar cronômetro:', error);
-      // Mostrar erro para o usuário (você pode adicionar um toast aqui)
-      setError(`Erro ao iniciar cronômetro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-      setTimeout(() => setError(''), 5000);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      
+      if (setError) {
+        setError(`Erro ao iniciar cronômetro: ${errorMessage}`);
+        setTimeout(() => setError(''), 5000);
+      } else {
+        // Fallback: usar alert se setError não estiver disponível
+        alert(`Erro ao iniciar cronômetro: ${errorMessage}`);
+      }
     } finally {
       setIsStarting(false);
     }
