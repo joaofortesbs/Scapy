@@ -2,7 +2,15 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { User, WeeklyProgress } from "@shared/schema";
 import PainelInterface from "@/interface/secao/painel";
-import { useLocation } from "wouter"; // Import useLocation from wouter
+import { useLocation } from "wouter";
+import { Header } from "@/components/header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Timer } from "@/components/timer";
+import { WeeklyTracker } from "@/components/weekly-tracker";
+import { FraseDoDia } from "@/components/frase-do-dia";
+import { EvolutionaryAvatar } from "@/components/evolutionary-avatar";
+import { DailyGoals } from "@/components/daily-goals";
+import { BottomNavigation } from "@/components/bottom-navigation";
 
 interface DashboardProps {
   user?: any;
@@ -90,7 +98,7 @@ export default function Dashboard({ user: initialUser, onLogout }: DashboardProp
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header user={currentUser} onLogout={onLogout} />
+      <Header user={user} onLogout={onLogout} />
 
       {/* Mensagens de Erro e Sucesso */}      
       {error && (
@@ -126,8 +134,8 @@ export default function Dashboard({ user: initialUser, onLogout }: DashboardProp
             </CardHeader>
             <CardContent className="text-center">
               <Timer 
-                user={currentUser} 
-                onUserUpdate={setCurrentUser}
+                user={user} 
+                onUserUpdate={setUser}
                 setError={setError}
                 setSuccess={setSuccess}
               />
@@ -142,8 +150,8 @@ export default function Dashboard({ user: initialUser, onLogout }: DashboardProp
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <EvolutionaryAvatar userId={currentUser?.id} />
-          <DailyGoals userId={currentUser?.id} />
+          <EvolutionaryAvatar userId={user?.id} />
+          <DailyGoals userId={user?.id} />
         </div>
       </main>
 
