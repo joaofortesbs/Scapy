@@ -722,22 +722,26 @@ export default function PainelInterface({
 
   // Update avatar progress otimizado
   useEffect(() => {
-    const updateProgress = () => {
-      if (localUser?.startDate) {
-        const days = calculateProgressInDays(localUser.startDate);
-        if (days !== daysProgress) {
-          setDaysProgress(days);
-          const avatar = getCurrentAvatar(days);
-          setCurrentAvatar(avatar);
-        }
-      }
-    };
+    if (!localUser?.startDate) return;
 
-    updateProgress();
-    const interval = setInterval(updateProgress, 60000); // A cada minuto
+    const days = calculateProgressInDays(localUser.startDate);
+    if (days !== daysProgress) {
+      setDaysProgress(days);
+      const avatar = getCurrentAvatar(days);
+      setCurrentAvatar(avatar);
+    }
+
+    const interval = setInterval(() => {
+      const newDays = calculateProgressInDays(localUser.startDate);
+      if (newDays !== daysProgress) {
+        setDaysProgress(newDays);
+        const newAvatar = getCurrentAvatar(newDays);
+        setCurrentAvatar(newAvatar);
+      }
+    }, 60000); // A cada minuto
 
     return () => clearInterval(interval);
-  }, [localUser?.startDate, daysProgress]); // Adicionar daysProgress como dependência
+  }, [localUser?.startDate]); // Remover daysProgress da dependência
 
   const handleStartJourney = () => {
     setHasStartedJourney(true);

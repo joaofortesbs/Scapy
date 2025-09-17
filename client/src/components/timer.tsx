@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { User } from "@shared/schema";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
 import { TimerPersistence, type TimerData } from "@/lib/timer-persistence";
+import { AuthService } from "@/lib/auth";
 
 interface TimerProps {
   user: User | null;
