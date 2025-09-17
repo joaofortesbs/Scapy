@@ -9,7 +9,7 @@ import Timer from "@/components/timer";
 import WeeklyTracker from "@/components/weekly-tracker";
 import FraseDoDia from "@/components/frase-do-dia";
 import EvolutionaryAvatar from "@/components/evolutionary-avatar";
-import { DailyGoals } from "@/components/daily-goals";
+import DailyGoals from "@/components/daily-goals";
 import { BottomNavigation } from "@/components/bottom-navigation";
 
 interface DashboardProps {
@@ -150,8 +150,8 @@ export default function Dashboard({ user: initialUser, onLogout }: DashboardProp
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <EvolutionaryAvatar userId={user?.id} />
-          <DailyGoals userId={user?.id} />
+          <EvolutionaryAvatar startDate={user?.startDate?.toISOString()} />
+          <DailyGoals />
         </div>
       </main>
 
