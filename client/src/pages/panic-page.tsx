@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { ArrowLeft, Hand } from "lucide-react";
@@ -35,10 +36,10 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
     const initializeComponent = async () => {
       try {
         console.log('🚀 [PanicPage] Inicializando componente...');
-
+        
         // Primeiro: definir usuário a partir das props ou localStorage
         let userData: User | null = propUser || null;
-
+        
         if (!userData) {
           const storedUser = localStorage.getItem('user');
           if (storedUser) {
@@ -58,7 +59,7 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
             // Primeiro carregar do localStorage usando TimerPersistence
             const { TimerPersistence } = await import('@/lib/timer-persistence');
             const localTimer = TimerPersistence.loadTimer(userData.id.toString());
-
+            
             if (localTimer && localTimer.startDate) {
               userData = {
                 ...userData,
@@ -67,31 +68,27 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
               console.log('💿 [PanicPage] Cronômetro carregado do localStorage:', localTimer.startDate);
             }
 
-            // Tentar sincronizar com API usando autenticação
-            try {
-              const { AuthService } = await import('@/lib/auth');
-              const response = await AuthService.authenticatedFetch(`/api/timer/status/${userData.id}`);
-              if (response.ok) {
-                const timerStatus = await response.json();
-                if (timerStatus.hasActiveTimer && timerStatus.startDate) {
-                  userData = {
-                    ...userData,
-                    startDate: new Date(timerStatus.startDate)
+            // Sincronizar com API em background (não bloquear UI)
+            setTimeout(async () => {
+              try {
+                const syncedTimer = await TimerPersistence.syncWithAPI(userData?.id?.toString() || '');
+                if (syncedTimer && userData && new Date(syncedTimer.startDate).getTime() !== userData.startDate.getTime()) {
+                  const updatedUser = {
+                    ...userData!,
+                    startDate: new Date(syncedTimer.startDate)
                   };
-                  console.log('🔄 [PanicPage] Dados atualizados da API (fallback):', userData);
-
-                  // Salvar dados atualizados
-                  localStorage.setItem('user', JSON.stringify(userData));
+                  setUser(updatedUser);
+                  localStorage.setItem('user', JSON.stringify(updatedUser));
+                  console.log('🌐 [PanicPage] Cronômetro atualizado da API:', syncedTimer.startDate);
                 }
+              } catch (syncError) {
+                console.warn('⚠️ [PanicPage] Erro na sincronização (não crítico):', syncError);
               }
-            } catch (apiError) {
-              console.warn('⚠️ [PanicPage] Erro na API (não crítico):', apiError);
-              // Continua com dados locais
-            }
+            }, 100);
           } catch (timerError) {
             console.warn('⚠️ [PanicPage] Erro no sistema de cronômetros, usando API tradicional:', timerError);
-
-            // Fallback para API tradicional (sem autenticação JWT explícita aqui, confiando em middleware de API)
+            
+            // Fallback para API tradicional
             try {
               const response = await fetch(`/api/timer/status/${userData.id}`);
               if (response.ok) {
@@ -102,7 +99,7 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
                     startDate: new Date(data.startDate)
                   };
                   console.log('🔄 [PanicPage] Dados atualizados da API (fallback):', userData);
-
+                  
                   // Salvar dados atualizados
                   localStorage.setItem('user', JSON.stringify(userData));
                 }
