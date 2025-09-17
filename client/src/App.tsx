@@ -22,35 +22,69 @@ function AppRouter() {
 
   // Inicializar sistema de sincronização global e verificar autenticação
   useEffect(() => {
-    // Inicializar sistema de limpeza automática do localStorage
-    initializeStorageCleanup();
-    console.log('🚀 Sistema de persistência robusta inicializado!');
-    
-    const savedAuth = localStorage.getItem('isAuthenticated');
-    const savedUser = localStorage.getItem('user');
-
-    if (savedAuth === 'true' && savedUser) {
+    const checkAuthentication = async () => {
       try {
-        const userData = JSON.parse(savedUser);
+        // Inicializar sistema de limpeza automática do localStorage
+        initializeStorageCleanup();
+        console.log('🚀 Sistema de persistência robusta inicializado!');
+        
+        // Importar AuthService dinamicamente
+        const { AuthService } = await import('@/lib/auth');
+        
+        // Verificar se há autenticação válida
+        if (AuthService.isAuthenticated()) {
+          const userData = AuthService.getCurrentUser();
+          
+          if (userData) {
+            console.log('🔍 Usuário autenticado carregado:', userData);
+            setIsAuthenticated(true);
+            setUser(userData);
+            
+            // Verificar se precisa mostrar quiz (apenas para novos usuários)
+            const quizCompleted = localStorage.getItem('quizCompleted');
+            if (!quizCompleted && userData.id) {
+              // Verificar se é um usuário novo (cadastrado hoje)
+              const createdAt = userData.createdAt || new Date().toISOString();
+              const today = new Date().toISOString().split('T')[0];
+              const userCreatedToday = createdAt.split('T')[0] === today;
+              setShowQuiz(userCreatedToday);
+            }
+          } else {
+            console.warn('⚠️ Dados do usuário não encontrados');
+            setIsAuthenticated(false);
+          }
+        } else {
+          // Tentar fallback com o método antigo
+          const savedAuth = localStorage.getItem('isAuthenticated');
+          const savedUser = localStorage.getItem('user');
 
-        // Normalizar dados do usuário
-        const normalizedUser = {
-          ...userData,
-          full_name: userData.full_name || userData.fullName || userData.username || 'Usuário'
-        };
+          if (savedAuth === 'true' && savedUser) {
+            try {
+              const userData = JSON.parse(savedUser);
+              const normalizedUser = {
+                ...userData,
+                full_name: userData.full_name || userData.fullName || userData.username || 'Usuário'
+              };
 
-        console.log('🔍 Usuário autenticado carregado:', normalizedUser);
-        setIsAuthenticated(true);
-        setUser(normalizedUser);
-
-        // Salvar dados normalizados
-        localStorage.setItem('user', JSON.stringify(normalizedUser));
+              console.log('🔍 Usuário autenticado carregado (fallback):', normalizedUser);
+              setIsAuthenticated(true);
+              setUser(normalizedUser);
+              localStorage.setItem('user', JSON.stringify(normalizedUser));
+            } catch (error) {
+              console.error('Erro ao carregar usuário (fallback):', error);
+              setIsAuthenticated(false);
+            }
+          }
+        }
       } catch (error) {
-        console.error('Erro ao carregar usuário:', error);
+        console.error('❌ Erro na verificação de autenticação:', error);
         setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    checkAuthentication();
   }, []);
 
   const handleLoginSuccess = (userData: any, isNewUser = false) => {
