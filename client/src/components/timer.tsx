@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { User } from "@shared/schema";
@@ -8,9 +7,12 @@ import { AuthService } from "@/lib/auth";
 
 interface TimerProps {
   user: User | null;
+  onUserUpdate?: (updatedUser: User) => void; // Adicionado para atualizar o usuário pai
+  setError: (message: string) => void; // Adicionado para gerenciar erros
+  setSuccess: (message: string) => void; // Adicionado para gerenciar sucessos
 }
 
-export default function Timer({ user }: TimerProps) {
+export default function Timer({ user, onUserUpdate, setError, setSuccess }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [timerData, setTimerData] = useState<TimerData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,7 +38,7 @@ export default function Timer({ user }: TimerProps) {
     const loadTimerData = async () => {
       try {
         console.log(`🔍 [Timer] Carregando cronômetro para usuário ${user.id}`);
-        
+
         // 1. PRIMEIRO: Carregar do localStorage (fonte primária)
         const localTimer = TimerPersistence.loadTimer(user.id.toString());
         if (localTimer) {
@@ -51,7 +53,7 @@ export default function Timer({ user }: TimerProps) {
             if (syncedTimer && (!localTimer || syncedTimer.startDate !== localTimer.startDate)) {
               setTimerData(syncedTimer);
               console.log(`🌐 [Timer] Cronômetro atualizado da API: ${syncedTimer.startDate}`);
-              
+
               // Atualizar localStorage com dados da API se diferentes
               const updatedUser = {
                 ...user,
@@ -78,7 +80,7 @@ export default function Timer({ user }: TimerProps) {
   useEffect(() => {
     const handleTimerUpdate = (event: CustomEvent) => {
       const { userId, startDate } = event.detail || {};
-      
+
       if (user?.id && userId === user.id.toString() && startDate) {
         console.log(`🔄 [Timer] Cronômetro atualizado via evento: ${startDate}`);
         const newTimer = TimerPersistence.loadTimer(user.id.toString());
@@ -90,7 +92,7 @@ export default function Timer({ user }: TimerProps) {
 
     window.addEventListener('timerUpdated', handleTimerUpdate as EventListener);
     window.addEventListener('timerStarted', handleTimerUpdate as EventListener);
-    
+
     return () => {
       window.removeEventListener('timerUpdated', handleTimerUpdate as EventListener);
       window.removeEventListener('timerStarted', handleTimerUpdate as EventListener);
@@ -117,11 +119,11 @@ export default function Timer({ user }: TimerProps) {
       }
 
       const data = await response.json();
-      
+
       if (data.timerStarted && data.startDate) {
         // Salvar no sistema de persistência local
         TimerPersistence.saveTimer(user.id.toString(), data.startDate);
-        
+
         // Atualizar estado do componente
         const newTimer: TimerData = {
           userId: user.id.toString(),
@@ -132,9 +134,9 @@ export default function Timer({ user }: TimerProps) {
           version: '1.0.0',
           source: 'api-start'
         };
-        
+
         setTimerData(newTimer);
-        
+
         // Disparar evento para outros componentes
         window.dispatchEvent(new CustomEvent('timerStarted', {
           detail: {
@@ -145,12 +147,15 @@ export default function Timer({ user }: TimerProps) {
         }));
 
         console.log(`✅ [Timer] Cronômetro iniciado com sucesso: ${data.startDate}`);
+        setSuccess('🚀 Cronômetro iniciado com sucesso!');
+        setTimeout(() => setSuccess(''), 3000);
       }
 
     } catch (error) {
       console.error('❌ [Timer] Erro ao iniciar cronômetro:', error);
       // Mostrar erro para o usuário (você pode adicionar um toast aqui)
-      alert(`Erro ao iniciar cronômetro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      setError(`Erro ao iniciar cronômetro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      setTimeout(() => setError(''), 5000);
     } finally {
       setIsStarting(false);
     }

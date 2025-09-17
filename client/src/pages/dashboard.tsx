@@ -23,12 +23,34 @@ export default function Dashboard({ user: initialUser, onLogout }: DashboardProp
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // Se já temos um usuário do prop, usar ele
+        if (initialUser) {
+          setUser(initialUser);
+          setIsLoading(false);
+          return;
+        }
+
         // Verificar autenticação JWT
         const { AuthService } = await import('@/lib/auth');
 
         if (!AuthService.isAuthenticated()) {
-          console.warn('⚠️ [Dashboard] Usuário não autenticado, redirecionando...');
-          setLocation('/auth');
+          // Tentar fallback com localStorage
+          const savedAuth = localStorage.getItem('isAuthenticated');
+          const savedUser = localStorage.getItem('user');
+          
+          if (savedAuth === 'true' && savedUser) {
+            try {
+              const userData = JSON.parse(savedUser);
+              setUser(userData);
+              console.log('✅ [Dashboard] Usuário autenticado (fallback):', userData.email);
+            } catch (error) {
+              console.warn('⚠️ [Dashboard] Erro no fallback, redirecionando...');
+              setLocation('/');
+            }
+          } else {
+            console.warn('⚠️ [Dashboard] Usuário não autenticado, redirecionando...');
+            setLocation('/');
+          }
           return;
         }
 
@@ -38,18 +60,18 @@ export default function Dashboard({ user: initialUser, onLogout }: DashboardProp
           console.log('✅ [Dashboard] Usuário autenticado:', userData.email);
         } else {
           console.warn('⚠️ [Dashboard] Dados do usuário não encontrados');
-          setLocation('/auth');
+          setLocation('/');
         }
       } catch (error) {
         console.error('❌ [Dashboard] Erro na verificação de autenticação:', error);
-        setLocation('/auth');
+        setLocation('/');
       } finally {
         setIsLoading(false);
       }
     };
 
     checkAuth();
-  }, [setLocation]);
+  }, [initialUser, setLocation]);
 
   const handleSectionChange = (section: string) => {
     if (section !== "painel") {
