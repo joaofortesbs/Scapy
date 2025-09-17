@@ -14,9 +14,9 @@ interface HeaderProps {
   onLogout?: () => void;
 }
 
-export function Header({ user, onLogout }: HeaderProps) {
+function Header({ user, onLogout }: HeaderProps) {
   const [, setLocation] = useLocation();
-
+  
   // Hook robusto para carregamento de imagem
   const { imageUrl } = useProfileImage(user);
 
@@ -39,9 +39,9 @@ export function Header({ user, onLogout }: HeaderProps) {
       </div>
 
       <div className="flex items-center space-x-3">
-        <button
+        <button 
           onClick={() => setLocation('/avatares-evolutivos')}
-          className="gradient-border w-12 h-12 hover:scale-105 transition-transform cursor-pointer"
+          className="gradient-border w-12 h-12 hover:scale-105 transition-transform cursor-pointer" 
           data-testid="avatares-evolutivos-button"
         >
           <div className="gradient-border-inner flex items-center justify-center">
@@ -49,9 +49,9 @@ export function Header({ user, onLogout }: HeaderProps) {
           </div>
         </button>
 
-        <button
+        <button 
           onClick={handleProfileClick}
-          className="gradient-border w-12 h-12 hover:scale-105 transition-transform cursor-pointer"
+          className="gradient-border w-12 h-12 hover:scale-105 transition-transform cursor-pointer" 
           data-testid="profile-container"
         >
           <div className="gradient-border-inner flex items-center justify-center">
@@ -75,3 +75,4 @@ export function Header({ user, onLogout }: HeaderProps) {
 }
 
 export { Header };
+export default Header;
