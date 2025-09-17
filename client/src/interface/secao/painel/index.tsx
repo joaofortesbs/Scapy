@@ -634,6 +634,9 @@ function PanicButton({ onPanicClick }: PanicButtonProps) {
   );
 }
 
+// Import do componente BottomNavigation
+import { BottomNavigation as BottomNavigationComponent } from "@/components/bottom-navigation";
+
 // Bottom Navigation Component
 interface BottomNavigationProps {
   activeSection: string;
