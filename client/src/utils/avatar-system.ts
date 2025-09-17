@@ -1,4 +1,3 @@
-
 export interface AvatarEvolution {
   id: number;
   title: string;
@@ -26,45 +25,33 @@ export const avatarEvolutions: AvatarEvolution[] = [
 export function getCurrentAvatar(progressInDays: number): AvatarEvolution {
   // Ordenar avatares pelos dias de forma decrescente para encontrar o correto
   const sortedAvatars = [...avatarEvolutions].sort((a, b) => b.days - a.days);
-  
+
   // Encontrar o primeiro avatar que o usuário já alcançou
   for (const avatar of sortedAvatars) {
     if (progressInDays >= avatar.days) {
-      console.log(`🎯 [AvatarSystem] Usuário com ${progressInDays} dias alcançou: ${avatar.title} (${avatar.days} dias necessários)`);
       return avatar;
     }
   }
-  
+
   // Fallback para o primeiro avatar (Homem das Cavernas)
-  console.log(`🎯 [AvatarSystem] Usuário com ${progressInDays} dias ainda no primeiro avatar`);
   return avatarEvolutions[0];
 }
 
 export function getNextAvatar(progressInDays: number): AvatarEvolution | null {
   // Encontrar o próximo avatar que o usuário pode alcançar
   const nextAvatar = avatarEvolutions.find(avatar => avatar.days > progressInDays);
-  
-  if (nextAvatar) {
-    console.log(`🎯 [AvatarSystem] Próximo avatar: ${nextAvatar.title} (faltam ${nextAvatar.days - progressInDays} dias)`);
-  } else {
-    console.log(`🎯 [AvatarSystem] Usuário já alcançou o avatar máximo!`);
-  }
-  
   return nextAvatar || null;
 }
 
 export function calculateProgressInDays(startDate: string, currentDate?: Date): number {
   if (!startDate) {
-    console.log('🎯 [AvatarSystem] Nenhuma data de início fornecida');
     return 0;
   }
-  
+
   const start = new Date(startDate);
   const now = currentDate || new Date();
   const diffTime = Math.abs(now.getTime() - start.getTime());
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  
-  console.log(`🎯 [AvatarSystem] Calculando progresso: início=${startDate}, agora=${now.toISOString()}, dias=${diffDays}`);
-  
+
   return diffDays;
 }
