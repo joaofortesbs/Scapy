@@ -316,7 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== ROTAS DO CRONÔMETRO ==========
 
   // Start timer for user
-  app.post("/api/timer/start", verifyJWT, async (req, res) => {
+  app.post("/api/timer/start", verifyJWT, async (req: any, res) => {
     try {
       // Use userId from JWT token instead of request body for security
       const userId = req.user?.id;
@@ -406,7 +406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Check if user has active timer
-  app.get("/api/timer/status/:userId", verifyJWT, async (req, res) => {
+  app.get("/api/timer/status/:userId", verifyJWT, async (req: any, res) => {
     try {
       const { userId } = req.params;
       
@@ -486,7 +486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get timer data for user (protected)
-  app.get("/api/timer/:userId", verifyJWT, async (req, res) => {
+  app.get("/api/timer/:userId", verifyJWT, async (req: any, res) => {
     try {
       const { userId } = req.params;
       

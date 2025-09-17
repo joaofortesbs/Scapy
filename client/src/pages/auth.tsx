@@ -75,6 +75,16 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
         console.log('💾 Salvando dados do usuário no login:', userData);
         localStorage.setItem('user', JSON.stringify(userData));
 
+        // Salvar o token JWT no localStorage
+        if (data.token) {
+          // Import AuthService
+          const { AuthService } = await import('@/lib/auth');
+          AuthService.saveUserData(data.user, data.token); // Assumindo que AuthService tem essa função
+          console.log('🔐 Token JWT salvo para futuras requisições');
+        } else {
+          console.warn('⚠️ Token JWT não recebido no login.');
+        }
+
         // Chamar callback de sucesso
         setTimeout(() => {
           onLoginSuccess(data.user);
@@ -154,6 +164,15 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
 
           console.log('📝 Salvando dados do usuário no registro:', userData);
           localStorage.setItem('user', JSON.stringify(userData));
+
+          // Salvar o token JWT no localStorage (se disponível no registro)
+          if (data.token) {
+            const { AuthService } = await import('@/lib/auth');
+            AuthService.saveUserData(data.user, data.token);
+            console.log('🔐 Token JWT salvo para futuras requisições');
+          } else {
+            console.warn('⚠️ Token JWT não recebido no registro.');
+          }
 
           // Redirecionar para o quiz de personalização (novo usuário)
           setTimeout(() => {
