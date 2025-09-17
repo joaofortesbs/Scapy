@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { User } from "@shared/schema";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
@@ -8,9 +7,12 @@ import { AuthService } from "@/lib/auth";
 
 interface TimerProps {
   user: User | null;
+  onUserUpdate?: (updatedUser: User) => void;
+  setError?: (message: string) => void;
+  setSuccess?: (message: string) => void;
 }
 
-export default function Timer({ user }: TimerProps) {
+export default function Timer({ user, onUserUpdate, setError, setSuccess }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [timerData, setTimerData] = useState<TimerData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,7 +38,7 @@ export default function Timer({ user }: TimerProps) {
     const loadTimerData = async () => {
       try {
         console.log(`🔍 [Timer] Carregando cronômetro para usuário ${user.id}`);
-        
+
         // 1. PRIMEIRO: Carregar do localStorage (fonte primária)
         const localTimer = TimerPersistence.loadTimer(user.id.toString());
         if (localTimer) {
@@ -51,7 +53,7 @@ export default function Timer({ user }: TimerProps) {
             if (syncedTimer && (!localTimer || syncedTimer.startDate !== localTimer.startDate)) {
               setTimerData(syncedTimer);
               console.log(`🌐 [Timer] Cronômetro atualizado da API: ${syncedTimer.startDate}`);
-              
+
               // Atualizar localStorage com dados da API se diferentes
               const updatedUser = {
                 ...user,
@@ -78,7 +80,7 @@ export default function Timer({ user }: TimerProps) {
   useEffect(() => {
     const handleTimerUpdate = (event: CustomEvent) => {
       const { userId, startDate } = event.detail || {};
-      
+
       if (user?.id && userId === user.id.toString() && startDate) {
         console.log(`🔄 [Timer] Cronômetro atualizado via evento: ${startDate}`);
         const newTimer = TimerPersistence.loadTimer(user.id.toString());
@@ -90,7 +92,7 @@ export default function Timer({ user }: TimerProps) {
 
     window.addEventListener('timerUpdated', handleTimerUpdate as EventListener);
     window.addEventListener('timerStarted', handleTimerUpdate as EventListener);
-    
+
     return () => {
       window.removeEventListener('timerUpdated', handleTimerUpdate as EventListener);
       window.removeEventListener('timerStarted', handleTimerUpdate as EventListener);
@@ -98,63 +100,58 @@ export default function Timer({ user }: TimerProps) {
   }, [user?.id]);
 
   // Função para iniciar cronômetro
-  const handleStartTimer = async () => {
+  const handleStartTimer = useCallback(async () => {
     if (!user?.id || isStarting) return;
 
     setIsStarting(true);
-    try {
-      console.log(`🚀 [Timer] Iniciando cronômetro para usuário ${user.id}`);
+    setError?.('');
 
-      // Fazer requisição autenticada para iniciar cronômetro
+    try {
+      // Verificar autenticação antes de fazer a requisição
+      if (!AuthService.isAuthenticated()) {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          setError?.('Token de autenticação não encontrado. Faça login novamente.');
+          return;
+        }
+      }
+
       const response = await AuthService.authenticatedFetch('/api/timer/start', {
         method: 'POST',
-        body: JSON.stringify({}) // Corpo vazio, userId vem do JWT
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: user.id // Enviar userId explicitamente
+        })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao iniciar cronômetro');
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
-      
-      if (data.timerStarted && data.startDate) {
-        // Salvar no sistema de persistência local
-        TimerPersistence.saveTimer(user.id.toString(), data.startDate);
-        
-        // Atualizar estado do componente
-        const newTimer: TimerData = {
-          userId: user.id.toString(),
-          startDate: data.startDate,
-          createdAt: data.startDate,
-          isActive: true,
-          timestamp: Date.now(),
-          version: '1.0.0',
-          source: 'api-start'
-        };
-        
-        setTimerData(newTimer);
-        
-        // Disparar evento para outros componentes
-        window.dispatchEvent(new CustomEvent('timerStarted', {
-          detail: {
-            userId: user.id.toString(),
-            startDate: data.startDate,
-            timestamp: Date.now()
-          }
-        }));
 
-        console.log(`✅ [Timer] Cronômetro iniciado com sucesso: ${data.startDate}`);
+      // Atualizar localStorage
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      if (onUserUpdate) {
+        onUserUpdate(data.user);
       }
 
+      setSuccess?.('✅ Cronômetro iniciado com sucesso!');
+      console.log('✅ [Timer] Cronômetro iniciado para usuário:', user.id);
+
     } catch (error) {
-      console.error('❌ [Timer] Erro ao iniciar cronômetro:', error);
-      // Mostrar erro para o usuário (você pode adicionar um toast aqui)
-      alert(`Erro ao iniciar cronômetro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      console.error('❌ [Timer] Erro ao iniciar cronômetro:', errorMessage);
+      setError?.(`Erro ao iniciar cronômetro: ${errorMessage}`);
     } finally {
       setIsStarting(false);
     }
-  };
+  }, [user?.id, isStarting, onUserUpdate, setError, setSuccess]);
+
 
   // Loading state
   if (isLoading) {

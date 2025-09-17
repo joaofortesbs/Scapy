@@ -491,12 +491,18 @@ function Timer({ user, onUserUpdate }: TimerProps) {
     setIsStarting(true);
 
     try {
-      const response = await fetch('/api/timer/start', {
+      // Importar AuthService dinamicamente
+      const { AuthService } = await import('@/lib/auth');
+
+      // Verificar se usuário está autenticado
+      if (!AuthService.isAuthenticated()) {
+        alert('Usuário não está autenticado. Faça login novamente.');
+        return;
+      }
+
+      const response = await AuthService.authenticatedFetch('/api/timer/start', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({}) // Corpo vazio, userId vem do JWT
       });
 
       const data = await response.json();
@@ -628,42 +634,8 @@ function PanicButton({ onPanicClick }: PanicButtonProps) {
   );
 }
 
-// Bottom Navigation Component
-interface BottomNavigationProps {
-  activeSection: string;
-  onSectionChange: (section: string) => void;
-}
-
-function BottomNavigation({ activeSection, onSectionChange }: BottomNavigationProps) {
-  const navItems = [
-    { id: 'scapy-ia', label: 'Scapy IA', icon: Bot, inactive: true },
-    { id: 'biblioteca', label: 'Biblioteca', icon: BookOpen, inactive: true },
-    { id: 'painel', label: 'Painel', icon: Home, inactive: false },
-    { id: 'desempenho', label: 'Desempenho', icon: BarChart3, inactive: true },
-    { id: 'comunidade', label: 'Comunidade', icon: Users, inactive: true },
-  ];
-
-  return (
-    <nav className="bg-transparent">
-      <div className="flex justify-center space-x-4 py-3">
-        {navItems.map(({ id, label, icon: Icon, inactive }) => (
-          <button
-            key={id}
-            className={`nav-item transition-colors ${
-              id === 'painel' ? 'active' : inactive ? 'inactive' : ''
-            }`}
-            onClick={() => onSectionChange(id)}
-            data-testid={`nav-${id}`}
-          >
-            <div className="w-10 h-10 bg-secondary/20 flex items-center justify-center">
-              <Icon className="w-6 h-6 font-extrabold" />
-            </div>
-          </button>
-        ))}
-      </div>
-    </nav>
-  );
-}
+// Import do componente BottomNavigation
+import { BottomNavigation } from "@/components/bottom-navigation";
 
 // Journey Start Component
 function JourneyStart({ onStartJourney }: { onStartJourney: () => void }) {
@@ -750,20 +722,26 @@ export default function PainelInterface({
 
   // Update avatar progress otimizado
   useEffect(() => {
-    const updateProgress = () => {
-      if (localUser?.startDate) {
-        const days = calculateProgressInDays(localUser.startDate);
-        setDaysProgress(days);
-        const avatar = getCurrentAvatar(days);
-        setCurrentAvatar(avatar);
-      }
-    };
+    if (!localUser?.startDate) return;
 
-    updateProgress();
-    const interval = setInterval(updateProgress, 60000); // A cada minuto
+    const days = calculateProgressInDays(localUser.startDate);
+    if (days !== daysProgress) {
+      setDaysProgress(days);
+      const avatar = getCurrentAvatar(days);
+      setCurrentAvatar(avatar);
+    }
+
+    const interval = setInterval(() => {
+      const newDays = calculateProgressInDays(localUser.startDate);
+      if (newDays !== daysProgress) {
+        setDaysProgress(newDays);
+        const newAvatar = getCurrentAvatar(newDays);
+        setCurrentAvatar(newAvatar);
+      }
+    }, 60000); // A cada minuto
 
     return () => clearInterval(interval);
-  }, [localUser?.startDate]);
+  }, [localUser?.startDate]); // Remover daysProgress da dependência
 
   const handleStartJourney = () => {
     setHasStartedJourney(true);

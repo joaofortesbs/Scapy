@@ -1,6 +1,6 @@
 
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { getCurrentAvatar, getNextAvatar, calculateProgressInDays } from '@/utils/avatar-system';
 
 interface EvolutionaryAvatarProps {
