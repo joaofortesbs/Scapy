@@ -316,15 +316,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== ROTAS DO CRONÔMETRO ==========
 
   // Start timer for user
-  app.post("/api/timer/start", verifyJWT, async (req: any, res) => {
+  app.post("/api/timer/start", verifyJWT, async (req, res) => {
     try {
       // Use userId from JWT token instead of request body for security
       const userId = req.user?.id;
 
-      console.log('🔍 [Timer API] Iniciando cronômetro para usuário:', userId);
-
       if (!userId) {
-        console.error('❌ [Timer API] UserId não encontrado no JWT token');
         return res.status(401).json({ message: 'Token JWT inválido ou não fornecido' });
       }
 
@@ -338,63 +335,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .limit(1);
 
       if (!user || user.length === 0) {
-        console.error(`❌ [Timer API] Usuário ${userId} não encontrado ou inativo`);
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
       const authUser = user[0];
-      console.log(`✅ [Timer API] Usuário encontrado: ${authUser.email}`);
-
-      // Verificar se já existe timer ativo para este usuário
-      const existingTimer = await db.select()
-        .from(timers)
-        .where(and(
-          eq(timers.user_id, authUser.id.toString()),
-          eq(timers.is_active, true)
-        ))
-        .limit(1);
-
-      if (existingTimer && existingTimer.length > 0) {
-        console.log(`⚠️ [Timer API] Timer já ativo para usuário ${userId}, retornando timer existente`);
-        const existingTimerData = existingTimer[0];
-        
-        // Atualizar memória
-        global.activeTimers!.set(Number(userId), {
-          userId: Number(userId),
-          startDate: existingTimerData.start_date.toISOString(),
-          createdAt: existingTimerData.created_at.toISOString()
-        });
-
-        return res.json({
-          message: 'Timer já estava ativo!',
-          timer: {
-            id: existingTimerData.id,
-            user_id: existingTimerData.user_id,
-            start_date: existingTimerData.start_date.toISOString(),
-            created_at: existingTimerData.created_at.toISOString()
-          },
-          user: {
-            id: authUser.id,
-            email: authUser.email,
-            fullName: authUser.fullName,
-            createdAt: authUser.createdAt,
-            lastLogin: authUser.lastLogin,
-            startDate: existingTimerData.start_date.toISOString()
-          },
-          timerStarted: true,
-          startDate: existingTimerData.start_date.toISOString(),
-          source: 'existing'
-        });
-      }
 
       // Create timer start time
       const timerStartDate = new Date().toISOString();
-      console.log(`🚀 [Timer API] Criando novo timer com data: ${timerStartDate}`);
 
       // Usar tabela timers dedicada para persistir timer
-      let timerRecord = null;
       try {
-        const insertResult = await db.insert(timers)
+        const timerRecord = await db.insert(timers)
           .values({
             user_id: authUser.id.toString(),
             start_date: new Date(timerStartDate),
@@ -402,15 +353,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           })
           .returning();
 
-        timerRecord = insertResult[0];
-        console.log('🎯 [Timer API] Timer salvo no Neon com sucesso!', timerRecord);
+        console.log('🎯 Timer salvo no Neon com sucesso!', timerRecord[0]);
       } catch (timerError) {
-        console.error('❌ [Timer API] Erro ao salvar timer no Neon:', timerError);
-        // Continuar mesmo com erro, usando fallback em memória
+        console.error('Erro ao salvar timer no Neon:', timerError);
+        console.log('Timer salvo em memória como fallback para usuário', userId);
       }
 
       let timerData = {
-        id: timerRecord?.id || userId.toString(),
+        id: userId.toString(),
         user_id: userId.toString(),
         start_date: timerStartDate,
         created_at: timerStartDate
@@ -423,8 +373,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: timerStartDate
       });
 
-      console.log(`💾 [Timer API] Timer salvo em memória para usuário ${userId}`);
-
       // Return user data with timer start date
       const userData = {
         id: authUser.id,
@@ -435,15 +383,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate: timerStartDate // Current time as start date
       };
 
-      console.log(`✅ [Timer API] Cronômetro iniciado com sucesso para usuário ${userId}`);
-
       res.json({ 
         message: 'Cronômetro iniciado com sucesso!',
         timer: timerData,
         user: userData,
         timerStarted: true,
         startDate: timerStartDate,
-        source: timerRecord ? 'neon' : 'memory',
+        source: 'neon',
         // 🎯 INSTRUÇÕES PARA PERSISTÊNCIA LOCAL
         persistenceInstructions: {
           action: 'saveTimer',
@@ -454,16 +400,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
     } catch (error) {
-      console.error('❌ [Timer API] Erro ao iniciar cronômetro:', error);
-      res.status(500).json({ 
-        message: 'Erro interno do servidor',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
-      });
+      console.error('Erro ao iniciar cronômetro:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
     }
   });
 
   // Check if user has active timer
-  app.get("/api/timer/status/:userId", verifyJWT, async (req: any, res) => {
+  app.get("/api/timer/status/:userId", verifyJWT, async (req, res) => {
     try {
       const { userId } = req.params;
       
@@ -543,7 +486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get timer data for user (protected)
-  app.get("/api/timer/:userId", verifyJWT, async (req: any, res) => {
+  app.get("/api/timer/:userId", verifyJWT, async (req, res) => {
     try {
       const { userId } = req.params;
       

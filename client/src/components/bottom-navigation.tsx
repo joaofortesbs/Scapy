@@ -11,7 +11,7 @@ interface BottomNavigationProps {
   onSectionChange: (section: string) => void;
 }
 
-export function BottomNavigation({ 
+export default function BottomNavigation({ 
   activeSection, 
   onSectionChange 
 }: BottomNavigationProps) {
