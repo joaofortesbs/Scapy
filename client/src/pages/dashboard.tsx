@@ -5,10 +5,10 @@ import PainelInterface from "@/interface/secao/painel";
 import { useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Timer } from "@/components/timer";
-import { WeeklyTracker } from "@/components/weekly-tracker";
-import { FraseDoDia } from "@/components/frase-do-dia";
-import { EvolutionaryAvatar } from "@/components/evolutionary-avatar";
+import Timer from "@/components/timer";
+import WeeklyTracker from "@/components/weekly-tracker";
+import FraseDoDia from "@/components/frase-do-dia";
+import EvolutionaryAvatar from "@/components/evolutionary-avatar";
 import { DailyGoals } from "@/components/daily-goals";
 import { BottomNavigation } from "@/components/bottom-navigation";
 
