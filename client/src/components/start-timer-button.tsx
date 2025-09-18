@@ -77,11 +77,30 @@ export default function StartTimerButton({ userId, onTimerStarted, disabled }: S
     } catch (error) {
       console.error('❌ [StartTimerButton] Erro ao iniciar cronômetro:', error);
       
+      let errorMessage = "Erro de conexão. Tente novamente.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('401') || error.message.includes('Token')) {
+          errorMessage = "Sessão expirada. Faça login novamente.";
+        } else if (error.message.includes('400')) {
+          errorMessage = "Você já possui um cronômetro ativo.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Erro ao iniciar cronômetro",
-        description: error instanceof Error ? error.message : "Erro de conexão. Tente novamente.",
+        description: errorMessage,
         variant: "destructive"
       });
+      
+      // Se erro de autenticação, redirecionar para login
+      if (errorMessage.includes('Sessão expirada')) {
+        setTimeout(() => {
+          window.location.href = '/auth';
+        }, 2000);
+      }
     } finally {
       setIsLoading(false);
     }
