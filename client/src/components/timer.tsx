@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { User } from "@shared/schema";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
 import { TimerPersistence, type TimerData } from "@/lib/timer-persistence";
-import StartTimerButton from "./start-timer-button";
 
 interface TimerProps {
   user: User | null;
@@ -121,33 +120,12 @@ export default function Timer({ user }: TimerProps) {
   // Determinar startDate de forma robusta
   const startDate = timerData?.startDate || user?.startDate;
 
-  // Safety check para dados válidos - se não há cronômetro, mostrar botão de iniciar
-  if (!startDate && user?.id) {
-    return (
-      <Card className="p-6 text-center">
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground mb-4">Cronômetro não iniciado</p>
-          <StartTimerButton 
-            userId={user.id.toString()}
-            onTimerStarted={(newStartDate) => {
-              console.log(`🔄 [Timer] Cronômetro iniciado via botão: ${newStartDate}`);
-              // Recarregar dados do timer
-              const newTimer = TimerPersistence.loadTimer(user.id.toString());
-              if (newTimer) {
-                setTimerData(newTimer);
-              }
-            }}
-          />
-        </CardContent>
-      </Card>
-    );
-  }
-
+  // Safety check para dados válidos
   if (!startDate) {
     return (
       <Card className="p-6 text-center">
         <CardContent>
-          <p className="text-muted-foreground">Faça login para iniciar seu cronômetro</p>
+          <p className="text-muted-foreground">Cronômetro não iniciado</p>
         </CardContent>
       </Card>
     );
