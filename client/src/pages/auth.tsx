@@ -7,7 +7,6 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import ParticlesBackground from '@/components/particles-background';
-import { AuthService } from '@/lib/auth';
 
 interface AuthPageProps {
   onLoginSuccess: (user: any, isNewUser?: boolean) => void;
@@ -61,30 +60,24 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
         setMessage('Login realizado com sucesso!');
         setMessageType('success');
 
-        // Salvar dados do usuário e token com AuthService
+        // Salvar dados do usuário no localStorage
         const userData = {
           id: data.user.id,
           email: data.user.email,
           username: data.user.username,
-          fullName: data.user.fullName || data.user.full_name || data.user.username || 'Usuário',
+          full_name: data.user.full_name || data.user.fullName || data.user.username || 'Usuário',
           startDate: data.user.startDate || new Date().toISOString(),
           bestStreak: data.user.bestStreak || 0,
           relapseCount: data.user.relapseCount || 0,
           scapyPoints: data.user.scapyPoints || 0
         };
 
-        console.log('💾 [Login] Salvando dados do usuário e token:', { user: userData, hasToken: !!data.token });
-        
-        if (data.token) {
-          AuthService.saveUserData(data.token, userData);
-        } else {
-          console.warn('⚠️ [Login] Token não recebido do servidor, salvando apenas dados do usuário');
-          localStorage.setItem('user', JSON.stringify(userData));
-        }
+        console.log('💾 Salvando dados do usuário no login:', userData);
+        localStorage.setItem('user', JSON.stringify(userData));
 
         // Chamar callback de sucesso
         setTimeout(() => {
-          onLoginSuccess(userData);
+          onLoginSuccess(data.user);
         }, 1000);
       } else {
         setMessage(data.message || 'Erro ao fazer login');
@@ -152,26 +145,20 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
             id: data.user.id,
             email: data.user.email,
             username: data.user.username,
-            fullName: data.user.fullName || data.user.full_name || registerData.fullName || data.user.username || 'Usuário',
+            full_name: data.user.full_name || data.user.fullName || registerData.fullName || data.user.username || 'Usuário',
             startDate: new Date().toISOString(),
             bestStreak: 0,
             relapseCount: 0,
             scapyPoints: 0
           };
 
-          console.log('📝 [Registro] Salvando dados do usuário:', { user: userData, hasToken: !!data.token });
-          
-          if (data.token) {
-            AuthService.saveUserData(data.token, userData);
-          } else {
-            console.warn('⚠️ [Registro] Token não recebido do servidor, salvando apenas dados do usuário');
-            localStorage.setItem('user', JSON.stringify(userData));
-          }
+          console.log('📝 Salvando dados do usuário no registro:', userData);
+          localStorage.setItem('user', JSON.stringify(userData));
 
           // Redirecionar para o quiz de personalização (novo usuário)
           setTimeout(() => {
             try {
-              onLoginSuccess(userData, true); // true indica que é um novo usuário
+              onLoginSuccess(data.user, true); // true indica que é um novo usuário
             } catch (domError) {
               console.error('Erro de DOM durante redirecionamento:', domError);
               // Fallback: tentar novamente após um delay
@@ -183,7 +170,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
         } catch (storageError) {
           console.error('Erro ao salvar no localStorage:', storageError);
           // Mesmo assim, tentar redirecionar
-          onLoginSuccess(data.user || {}, true);
+          onLoginSuccess(data.user, true);
         }
       } else {
         setMessage(data.message || 'Erro ao criar conta');

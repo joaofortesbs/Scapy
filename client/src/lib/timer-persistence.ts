@@ -190,8 +190,7 @@ export class TimerPersistence {
    */
   static async syncWithAPI(userId: string): Promise<TimerData | null> {
     try {
-      const { AuthService } = await import('@/lib/auth');
-      const response = await AuthService.authenticatedFetch(`/api/timer/status/${userId}`);
+      const response = await fetch(`/api/timer/status/${userId}`);
       if (!response.ok) {
         console.warn('⚠️ [TimerPersistence] API não disponível, usando localStorage');
         return this.loadTimer(userId);
