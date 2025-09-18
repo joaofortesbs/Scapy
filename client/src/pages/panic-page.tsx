@@ -90,8 +90,7 @@ export default function PanicPage({ user: propUser, onBackFromPanic }: PanicPage
             
             // Fallback para API tradicional
             try {
-              const { AuthService } = await import('@/lib/auth');
-              const response = await AuthService.authenticatedFetch(`/api/timer/status/${userData.id}`);
+              const response = await fetch(`/api/timer/status/${userData.id}`);
               if (response.ok) {
                 const data = await response.json();
                 if (data.hasActiveTimer && data.startDate) {
