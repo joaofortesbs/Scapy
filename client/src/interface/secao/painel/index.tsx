@@ -29,6 +29,7 @@ import PanicPage from "@/pages/panic-page";
 import EvolutionaryAvatar from "@/components/evolutionary-avatar";
 import { getCurrentAvatar, calculateProgressInDays } from "@/utils/avatar-system";
 import type { User, WeeklyProgress } from "@shared/schema";
+import { authenticatedFetch, isAuthenticated } from '@/lib/auth-utils';
 
 // Header Component
 interface HeaderInternalProps {
@@ -202,7 +203,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
 
     try {
       console.log(`🔍 [WeeklyTracker] Carregando humor semanal para usuário ${user.id}`);
-      
+
       // Carregar dados locais primeiro
       const localMood = OptimizedMoodStorage.loadWeeklyMood(user.id.toString());
       if (localMood) {
@@ -214,15 +215,15 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
       const todayKey = new Date().toISOString().split('T')[0];
       const todayMoodKey = `scapy_daily_mood_${user.id}_${todayKey}`;
       const todayMoodData = localStorage.getItem(todayMoodKey);
-      
+
       if (todayMoodData) {
         try {
           const moodData = JSON.parse(todayMoodData);
           const today = new Date();
           const dayOfWeek = today.getDay();
-          
+
           console.log(`🎯 [WeeklyTracker] Humor de hoje encontrado: ${moodData.mood} para o dia ${dayOfWeek}`);
-          
+
           // Atualizar humor semanal com o humor de hoje
           setWeeklyMood(prevMood => {
             const startOfWeek = new Date(today);
@@ -264,16 +265,16 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
                 mergedMoodByDay[index] = mood;
               }
             });
-            
+
             const mergedMood = {
               ...apiMood,
               moodByDay: mergedMoodByDay
             };
-            
+
             OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), mergedMood);
             return mergedMood;
           }
-          
+
           // Se não temos dados locais, usar da API
           OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
           return apiMood;
@@ -337,7 +338,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
 
     // Adicionar mais listeners para capturar todas as atualizações
     const events = ['moodUpdated', 'weeklyMoodUpdated', 'dailyMoodUpdated', 'aiMoodSelected'];
-    
+
     events.forEach(eventName => {
       window.addEventListener(eventName, handleMoodUpdate as EventListener);
     });
@@ -401,7 +402,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
           break;
       }
     }
-    
+
     // Depois verificar se está concluído (para sobrescrever se necessário)
     if (isCompleted) {
       classes.push('completed');
@@ -420,7 +421,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
     if (dayMood) {
       const moodLabels = {
         'medo': 'Medo',
-        'estavel': 'Estável', 
+        'estavel': 'Estável',
         'feliz': 'Feliz'
       };
       const normalizedMood = dayMood.toLowerCase()
@@ -491,7 +492,7 @@ function Timer({ user, onUserUpdate }: TimerProps) {
     setIsStarting(true);
 
     try {
-      const response = await fetch('/api/timer/start', {
+      const response = await authenticatedFetch('/api/timer/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -724,7 +725,7 @@ export default function PainelInterface({
       }
 
       try {
-        const response = await fetch(`/api/timer/status/${user.id}`);
+        const response = await authenticatedFetch(`/api/timer/status/${user.id}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -789,6 +790,14 @@ export default function PainelInterface({
     setShowPanicPage(false);
   }, []);
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      setLocation('/login');
+    }
+  }, [setLocation]);
+
+
   if (showPanicPage) {
     return <PanicPage user={localUser} onBackFromPanic={handleBackFromPanic} />;
   }
@@ -814,7 +823,7 @@ export default function PainelInterface({
                 <JourneyStart onStartJourney={handleStartJourney} />
               ) : (
                 <>
-                  <div 
+                  <div
                     className="floating-avatar mb-6 cursor-pointer transition-transform hover:scale-105 active:scale-95"
                     onClick={() => setLocation('/avatares-evolutivos')}
                     data-testid="evolutionary-avatar-clickable"

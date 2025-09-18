@@ -60,6 +60,12 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
         setMessage('Login realizado com sucesso!');
         setMessageType('success');
 
+        // 🔐 Salvar token JWT
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+          console.log('🔐 Token JWT salvo com sucesso');
+        }
+
         // Salvar dados do usuário no localStorage
         const userData = {
           id: data.user.id,

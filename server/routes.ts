@@ -71,8 +71,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Email ou senha inválidos' });
       }
 
+      // Verificar JWT_SECRET antes de gerar token
+      if (!process.env.JWT_SECRET) {
+        console.error('❌ [LOGIN] JWT_SECRET não encontrado nas variáveis de ambiente');
+        return res.status(500).json({ message: 'Erro de configuração do servidor - JWT_SECRET ausente' });
+      }
+
+      console.log('🔐 [LOGIN] Gerando JWT token para usuário:', authUser.id);
+      
       // Generate secure JWT token
       const jwtToken = generateJWT(authUser.id, authUser.email, authUser.isActive);
+      
+      console.log('✅ [LOGIN] JWT token gerado com sucesso');
 
       // Atualizar último login
       await db.update(authUsers)
