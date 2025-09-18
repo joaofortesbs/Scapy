@@ -25,6 +25,7 @@ import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { getDailyPhrase } from "./gemini-service";
 import { verifyJWT, generateJWT } from "./auth-middleware";
 import { ZodError } from 'zod';
+import crypto from 'crypto';
 
 // Definir tipo global para timers em memória
 declare global {
@@ -78,10 +79,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('🔐 [LOGIN] Gerando JWT token para usuário:', authUser.id);
-      
+
       // Generate secure JWT token
       const jwtToken = generateJWT(authUser.id, authUser.email, authUser.isActive);
-      
+
       console.log('✅ [LOGIN] JWT token gerado com sucesso');
 
       // Atualizar último login
@@ -226,7 +227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/users/update-profile", verifyJWT, async (req, res) => {
     try {
       const { profileImage, fullName } = req.body;
-      
+
       // Use userId from JWT token instead of request body for security
       const userId = req.user?.id;
 
@@ -375,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         start_date: timerStartDate,
         created_at: timerStartDate
       };
-      
+
       // Sempre salvar em memória para performance
       global.activeTimers!.set(Number(userId), {
         userId: Number(userId),
@@ -419,7 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/timer/status/:userId", verifyJWT, async (req, res) => {
     try {
       const { userId } = req.params;
-      
+
       // Verify user can only access their own timer status
       if (userId !== req.user?.id?.toString()) {
         return res.status(403).json({ message: "Acesso negado - você só pode ver seu próprio timer" });
@@ -438,10 +439,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ))
         .orderBy(desc(timers.start_date))
         .limit(1);
-      
+
       let hasActiveTimer = false;
       let latestTimer: any = null;
-      
+
       if (timerRecords && timerRecords.length > 0) {
         const timerRecord = timerRecords[0];
         hasActiveTimer = true;
@@ -452,7 +453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           created_at: timerRecord.created_at.toISOString()
         };
         console.log('🎯 Timer encontrado no Neon (timers) para usuário', userId);
-        
+
         // Sincronizar com memória
         global.activeTimers!.set(Number(userId), {
           userId: Number(userId),
@@ -461,10 +462,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } else {
         console.log('Buscando timer em memória para usuário', userId);
-        
+
         // Fallback: verificar em memória
         const memoryTimer = global.activeTimers!.get(Number(userId));
-        
+
         if (memoryTimer) {
           hasActiveTimer = true;
           latestTimer = {
@@ -499,7 +500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/timer/:userId", verifyJWT, async (req, res) => {
     try {
       const { userId } = req.params;
-      
+
       // Verify user can only access their own data
       if (userId !== req.user?.id?.toString()) {
         return res.status(403).json({ message: "Acesso negado - você só pode ver seus próprios dados" });
@@ -825,7 +826,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(quizContextualizacao.userId, userId.toString()))
         .returning();
 
-      if (!resetQuiz || resetQuiz.length === 0) {
+      if (!resetQuiz || !resetQuiz.length) {
         return res.status(404).json({ message: 'Quiz não encontrado para este usuário' });
       }
 
@@ -1006,7 +1007,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ))
           .orderBy(desc(quizContextualizacao.createdAt))
           .limit(1);
-        
+
         motivation = (quizResult.length > 0) ? quizResult[0]?.motivacao || null : null;
       } catch (quizError) {
         console.log(`⚠️ Quiz não encontrado para usuário ${userId}, usando motivação padrão`);

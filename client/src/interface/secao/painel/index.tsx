@@ -492,6 +492,8 @@ function Timer({ user, onUserUpdate }: TimerProps) {
     setIsStarting(true);
 
     try {
+      console.log('🚀 [Timer] Iniciando cronômetro para usuário:', user.id);
+      
       const response = await authenticatedFetch('/api/timer/start', {
         method: 'POST',
         headers: {
@@ -503,20 +505,26 @@ function Timer({ user, onUserUpdate }: TimerProps) {
       const data = await response.json();
 
       if (response.ok) {
-        setLocalUser(data.user);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        console.log('✅ [Timer] Cronômetro iniciado com sucesso!', data);
+        
+        // Atualizar usuário com startDate
+        const updatedUser = {
+          ...user,
+          startDate: data.startDate || new Date().toISOString()
+        };
+        
+        setLocalUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
 
         if (onUserUpdate) {
-          onUserUpdate(data.user);
+          onUserUpdate(updatedUser);
         }
-
-        console.log('✅ Cronômetro iniciado com sucesso!');
       } else {
-        console.error('Erro ao iniciar cronômetro:', data.message);
+        console.error('❌ [Timer] Erro ao iniciar cronômetro:', data.message);
         alert('Erro ao iniciar cronômetro: ' + data.message);
       }
     } catch (error) {
-      console.error('Erro ao iniciar cronômetro:', error);
+      console.error('❌ [Timer] Erro de conexão:', error);
       alert('Erro de conexão. Tente novamente.');
     } finally {
       setIsStarting(false);

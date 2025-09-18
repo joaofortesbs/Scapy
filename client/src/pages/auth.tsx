@@ -63,7 +63,9 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
         // 🔐 Salvar token JWT
         if (data.token) {
           localStorage.setItem('authToken', data.token);
-          console.log('🔐 Token JWT salvo com sucesso');
+          console.log('🔐 Token JWT salvo com sucesso:', data.token.substring(0, 20) + '...');
+        } else {
+          console.warn('⚠️ Token JWT não recebido na resposta');
         }
 
         // Salvar dados do usuário no localStorage
@@ -72,7 +74,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
           email: data.user.email,
           username: data.user.username,
           full_name: data.user.full_name || data.user.fullName || data.user.username || 'Usuário',
-          startDate: data.user.startDate || new Date().toISOString(),
+          startDate: data.user.startDate || null,
           bestStreak: data.user.bestStreak || 0,
           relapseCount: data.user.relapseCount || 0,
           scapyPoints: data.user.scapyPoints || 0
@@ -80,6 +82,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
 
         console.log('💾 Salvando dados do usuário no login:', userData);
         localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('isAuthenticated', 'true');
 
         // Chamar callback de sucesso
         setTimeout(() => {
