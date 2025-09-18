@@ -322,8 +322,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user?.id;
 
       if (!userId) {
+        console.error('❌ [Timer API] Token JWT inválido ou não fornecido');
         return res.status(401).json({ message: 'Token JWT inválido ou não fornecido' });
       }
+
+      console.log(`🚀 [Timer API] Iniciando cronômetro para usuário ${userId}`);
 
       // Get current user data
       const user = await db.select()
@@ -335,38 +338,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .limit(1);
 
       if (!user || user.length === 0) {
+        console.error(`❌ [Timer API] Usuário ${userId} não encontrado`);
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
       const authUser = user[0];
+      console.log(`✅ [Timer API] Usuário encontrado: ${authUser.email}`);
+
+      // Verificar se já existe timer ativo
+      const existingTimer = await db.select()
+        .from(timers)
+        .where(and(
+          eq(timers.user_id, userId.toString()),
+          eq(timers.is_active, true)
+        ))
+        .limit(1);
+
+      if (existingTimer.length > 0) {
+        console.log(`⚠️ [Timer API] Timer já existe para usuário ${userId}`);
+        const existingTimerData = existingTimer[0];
+        
+        // Retornar timer existente
+        const userData = {
+          id: authUser.id,
+          email: authUser.email,
+          fullName: authUser.fullName,
+          createdAt: authUser.createdAt,
+          lastLogin: authUser.lastLogin,
+          startDate: existingTimerData.start_date.toISOString()
+        };
+
+        return res.json({ 
+          message: 'Cronômetro já estava ativo!',
+          timer: {
+            id: existingTimerData.id,
+            user_id: existingTimerData.user_id,
+            start_date: existingTimerData.start_date.toISOString(),
+            created_at: existingTimerData.created_at.toISOString()
+          },
+          user: userData,
+          timerStarted: true,
+          startDate: existingTimerData.start_date.toISOString(),
+          source: 'existing'
+        });
+      }
 
       // Create timer start time
       const timerStartDate = new Date().toISOString();
+      console.log(`⏰ [Timer API] Criando novo timer: ${timerStartDate}`);
 
       // Usar tabela timers dedicada para persistir timer
+      let timerRecord;
       try {
-        const timerRecord = await db.insert(timers)
+        timerRecord = await db.insert(timers)
           .values({
-            user_id: authUser.id.toString(),
+            user_id: userId.toString(),
             start_date: new Date(timerStartDate),
             is_active: true
           })
           .returning();
 
-        console.log('🎯 Timer salvo no Neon com sucesso!', timerRecord[0]);
+        console.log('🎯 [Timer API] Timer salvo no Neon com sucesso!', timerRecord[0]);
       } catch (timerError) {
-        console.error('Erro ao salvar timer no Neon:', timerError);
-        console.log('Timer salvo em memória como fallback para usuário', userId);
+        console.error('❌ [Timer API] Erro ao salvar timer no Neon:', timerError);
+        return res.status(500).json({ 
+          message: 'Erro ao salvar cronômetro no banco de dados',
+          error: timerError instanceof Error ? timerError.message : 'Erro desconhecido'
+        });
       }
 
-      let timerData = {
-        id: userId.toString(),
-        user_id: userId.toString(),
-        start_date: timerStartDate,
-        created_at: timerStartDate
-      };
-      
-      // Sempre salvar em memória para performance
+      // Salvar em memória para performance
       global.activeTimers!.set(Number(userId), {
         userId: Number(userId),
         startDate: timerStartDate,
@@ -380,28 +421,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fullName: authUser.fullName,
         createdAt: authUser.createdAt,
         lastLogin: authUser.lastLogin,
-        startDate: timerStartDate // Current time as start date
+        startDate: timerStartDate
       };
 
-      res.json({ 
+      const response = { 
         message: 'Cronômetro iniciado com sucesso!',
-        timer: timerData,
+        timer: {
+          id: timerRecord[0].id,
+          user_id: timerRecord[0].user_id,
+          start_date: timerRecord[0].start_date.toISOString(),
+          created_at: timerRecord[0].created_at.toISOString()
+        },
         user: userData,
         timerStarted: true,
         startDate: timerStartDate,
         source: 'neon',
-        // 🎯 INSTRUÇÕES PARA PERSISTÊNCIA LOCAL
         persistenceInstructions: {
           action: 'saveTimer',
           userId: userId.toString(),
           startDate: timerStartDate,
           timestamp: Date.now()
         }
-      });
+      };
+
+      console.log('✅ [Timer API] Resposta enviada:', response);
+      res.json(response);
 
     } catch (error) {
-      console.error('Erro ao iniciar cronômetro:', error);
-      res.status(500).json({ message: 'Erro interno do servidor' });
+      console.error('❌ [Timer API] Erro geral ao iniciar cronômetro:', error);
+      res.status(500).json({ 
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
     }
   });
 

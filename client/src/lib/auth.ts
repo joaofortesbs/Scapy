@@ -32,7 +32,7 @@ export class AuthService {
       if (userData) {
         return JSON.parse(userData);
       }
-      
+
       // Fallback para compatibilidade
       const fallbackUser = localStorage.getItem('user');
       return fallbackUser ? JSON.parse(fallbackUser) : null;
@@ -51,11 +51,16 @@ export class AuthService {
 
   // Fazer requisição autenticada
   static async authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+    console.log(`🌐 [AuthService] Fazendo requisição autenticada para: ${url}`);
+
     const token = this.getToken();
-    
+
     if (!token) {
-      throw new Error('Token de autenticação não encontrado');
+      console.error('❌ [AuthService] Token de acesso não encontrado');
+      throw new Error('Token de acesso não encontrado');
     }
+
+    console.log(`🔑 [AuthService] Token encontrado: ${token.substring(0, 20)}...`);
 
     const headers = {
       'Content-Type': 'application/json',
@@ -63,17 +68,47 @@ export class AuthService {
       ...options.headers,
     };
 
-    return fetch(url, {
-      ...options,
-      headers,
-      credentials: "include",
-    });
+    console.log(`📋 [AuthService] Headers da requisição:`, headers);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+      });
+
+      console.log(`📡 [AuthService] Resposta recebida - Status: ${response.status} ${response.statusText}`);
+
+      // Se receber 401, tentar renovar o token
+      if (response.status === 401) {
+        console.warn('⚠️ [AuthService] Token expirado, fazendo logout');
+        this.logout();
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ [AuthService] Erro na requisição: ${response.status} - ${errorText}`);
+        throw new Error(`Erro HTTP ${response.status}: ${errorText}`);
+      }
+
+      console.log('✅ [AuthService] Requisição bem-sucedida');
+      return response;
+
+    } catch (error) {
+      console.error('❌ [AuthService] Erro na requisição:', error);
+
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        throw new Error('Erro de conexão. Verifique sua internet.');
+      }
+
+      throw error;
+    }
   }
 
   // Configurar headers de autorização para requisições
   static getAuthHeaders(): Record<string, string> {
     const token = this.getToken();
-    
+
     if (!token) {
       throw new Error('Token de autenticação não encontrado');
     }
@@ -111,7 +146,7 @@ export class AuthService {
     } catch (error) {
       console.error('❌ [AuthService] Erro ao renovar token:', error);
     }
-    
+
     return false;
   }
 }

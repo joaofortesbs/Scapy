@@ -30,6 +30,7 @@ import EvolutionaryAvatar from "@/components/evolutionary-avatar";
 import { getCurrentAvatar, calculateProgressInDays } from "@/utils/avatar-system";
 import type { User, WeeklyProgress } from "@shared/schema";
 import { AuthService } from "@/lib/auth";
+import { TimerPersistence, dispatchTimerEvent } from "@/lib/timer-persistence";
 
 // Header Component
 interface HeaderInternalProps {
@@ -492,29 +493,79 @@ function Timer({ user, onUserUpdate }: TimerProps) {
     setIsStarting(true);
 
     try {
+      console.log(`🚀 [Timer] Iniciando cronômetro para usuário ${user.id}`);
+
+      // Fazer requisição autenticada para iniciar cronômetro
       const response = await AuthService.authenticatedFetch('/api/timer/start', {
         method: 'POST',
-        body: JSON.stringify({ userId: user.id }),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId: user.id })
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao iniciar cronômetro');
+      }
+
       const data = await response.json();
+      console.log('✅ [Timer] Resposta da API:', data);
 
-      if (response.ok) {
-        setLocalUser(data.user);
-        localStorage.setItem('user', JSON.stringify(data.user));
+      if (data.timerStarted && data.startDate) {
+        // Salvar cronômetro localmente usando TimerPersistence
+        const saved = TimerPersistence.saveTimer(user.id.toString(), data.startDate);
+        
+        if (saved) {
+          console.log('💾 [Timer] Cronômetro salvo localmente');
+        }
 
+        // Atualizar usuário local
+        const updatedUser = {
+          ...user,
+          startDate: data.startDate
+        };
+
+        setLocalUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        // Disparar eventos para sincronização
+        dispatchTimerEvent('timerStarted', {
+          userId: user.id.toString(),
+          startDate: data.startDate,
+          timestamp: Date.now()
+        });
+
+        dispatchTimerEvent('timerUpdated', {
+          userId: user.id.toString(),
+          startDate: data.startDate,
+          timestamp: Date.now()
+        });
+
+        // Notificar componente pai
         if (onUserUpdate) {
-          onUserUpdate(data.user);
+          onUserUpdate(updatedUser);
         }
 
         console.log('✅ Cronômetro iniciado com sucesso!');
       } else {
-        console.error('Erro ao iniciar cronômetro:', data.message);
-        alert('Erro ao iniciar cronômetro: ' + data.message);
+        throw new Error('Dados de resposta inválidos');
       }
     } catch (error) {
-      console.error('Erro ao iniciar cronômetro:', error);
-      alert('Erro de conexão. Tente novamente.');
+      console.error('❌ [Timer] Erro ao iniciar cronômetro:', error);
+      
+      // Mostrar erro específico baseado no tipo
+      if (error instanceof Error) {
+        if (error.message.includes('401') || error.message.includes('403')) {
+          alert('Erro de autenticação. Faça login novamente.');
+        } else if (error.message.includes('Network')) {
+          alert('Erro de conexão. Verifique sua internet e tente novamente.');
+        } else {
+          alert(`Erro: ${error.message}`);
+        }
+      } else {
+        alert('Erro inesperado. Tente novamente.');
+      }
     } finally {
       setIsStarting(false);
     }
@@ -721,18 +772,47 @@ export default function PainelInterface({
         return;
       }
 
+      console.log(`🔍 [PainelInterface] Verificando status do timer para usuário ${user.id}`);
+
       try {
+        // Primeiro, verificar dados locais
+        const localTimer = TimerPersistence.loadTimer(user.id.toString());
+        if (localTimer && localTimer.isActive) {
+          console.log(`💿 [PainelInterface] Timer local encontrado: ${localTimer.startDate}`);
+          setHasStartedJourney(true);
+          setLocalUser(prev => prev ? { ...prev, startDate: localTimer.startDate } : prev);
+        }
+
+        // Depois verificar com a API
         const response = await AuthService.authenticatedFetch(`/api/timer/status/${user.id}`);
         const data = await response.json();
+
+        console.log(`🌐 [PainelInterface] Resposta da API:`, data);
 
         if (response.ok) {
           setHasStartedJourney(data.hasActiveTimer);
           if (data.hasActiveTimer && data.startDate) {
-            setLocalUser(prev => prev ? { ...prev, startDate: new Date(data.startDate).toISOString() } : prev);
+            // Sincronizar com dados locais se diferentes
+            if (!localTimer || localTimer.startDate !== data.startDate) {
+              TimerPersistence.saveTimer(user.id.toString(), data.startDate);
+            }
+            
+            setLocalUser(prev => prev ? { 
+              ...prev, 
+              startDate: data.startDate 
+            } : prev);
           }
         }
       } catch (error) {
-        console.error('Erro ao verificar status do timer:', error);
+        console.error('❌ [PainelInterface] Erro ao verificar status do timer:', error);
+        
+        // Em caso de erro na API, usar dados locais se disponíveis
+        const localTimer = TimerPersistence.loadTimer(user.id.toString());
+        if (localTimer && localTimer.isActive) {
+          console.log(`💿 [PainelInterface] Usando timer local como fallback`);
+          setHasStartedJourney(true);
+          setLocalUser(prev => prev ? { ...prev, startDate: localTimer.startDate } : prev);
+        }
       } finally {
         setIsLoading(false);
       }
