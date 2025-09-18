@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { User, WeeklyProgress } from "@shared/schema";
 import PainelInterface from "@/interface/secao/painel";
+import StartTimerButton from "@/components/start-timer-button";
 
 interface DashboardProps {
   user?: any;
@@ -29,6 +30,9 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       weeklyProgress={weeklyProgress}
       activeSection={activeSection}
       onSectionChange={handleSectionChange}
-    />
+      
+    >
+      <StartTimerButton />
+    </PainelInterface>
   );
 }
