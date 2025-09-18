@@ -12,9 +12,24 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // Construir headers base
+  let headers: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
+  
+  // Adicionar autenticação JWT se disponível
+  try {
+    const { AuthService } = await import('@/lib/auth');
+    const token = AuthService.getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  } catch (error) {
+    // Se não conseguir carregar AuthService, continuar sem auth (para compatibilidade)
+    console.warn('⚠️ [apiRequest] Não foi possível carregar autenticação:', error);
+  }
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -23,13 +38,33 @@ export async function apiRequest(
   return res;
 }
 
+// Helper para criar headers com autenticação se disponível
+async function getRequestHeaders(): Promise<Record<string, string>> {
+  let headers: Record<string, string> = {};
+  
+  try {
+    const { AuthService } = await import('@/lib/auth');
+    const token = AuthService.getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  } catch (error) {
+    // Se não conseguir carregar AuthService, continuar sem auth
+  }
+  
+  return headers;
+}
+
 type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const headers = await getRequestHeaders();
+    
     const res = await fetch(queryKey.join("/") as string, {
+      headers,
       credentials: "include",
     });
 
