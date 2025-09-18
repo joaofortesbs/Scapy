@@ -30,7 +30,6 @@ import EvolutionaryAvatar from "@/components/evolutionary-avatar";
 import { getCurrentAvatar, calculateProgressInDays } from "@/utils/avatar-system";
 import type { User, WeeklyProgress } from "@shared/schema";
 import { AuthService } from "@/lib/auth";
-import StartTimerButton from "@/components/start-timer-button";
 
 // Header Component
 interface HeaderInternalProps {
@@ -461,7 +460,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
   );
 }
 
-// Timer Component otimizado com StartTimerButton integrado
+// Timer Component otimizado
 interface TimerProps {
   user: User | undefined;
   onUserUpdate?: (updatedUser: any) => void;
@@ -469,11 +468,9 @@ interface TimerProps {
 
 function Timer({ user, onUserUpdate }: TimerProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isStarting, setIsStarting] = useState(false);
   const [localUser, setLocalUser] = useState(user);
-  const [timerData, setTimerData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Atualizar tempo a cada segundo
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -482,7 +479,6 @@ function Timer({ user, onUserUpdate }: TimerProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Sincronizar dados do usuário
   useEffect(() => {
     setLocalUser(user);
     if (user) {
@@ -490,129 +486,39 @@ function Timer({ user, onUserUpdate }: TimerProps) {
     }
   }, [user]);
 
-  // Carregar e verificar cronômetro
-  useEffect(() => {
-    if (!user?.id) {
-      setIsLoading(false);
-      return;
-    }
+  const handleStartTimer = async () => {
+    if (!user?.id || isStarting) return;
 
-    const loadTimerData = async () => {
-      try {
-        console.log(`🔍 [Timer] Verificando cronômetro para usuário ${user.id}`);
-        
-        // 1. Carregar do TimerPersistence primeiro
-        const { TimerPersistence } = await import('@/lib/timer-persistence');
-        const localTimer = TimerPersistence.loadTimer(user.id.toString());
-        
-        if (localTimer) {
-          setTimerData(localTimer);
-          console.log(`💿 [Timer] Cronômetro local encontrado: ${localTimer.startDate}`);
-        }
+    setIsStarting(true);
 
-        // 2. Verificar status na API
-        const response = await AuthService.authenticatedFetch(`/api/timer/status/${user.id}`);
-        if (response.ok) {
-          const apiData = await response.json();
-          
-          if (apiData.hasActiveTimer && apiData.startDate) {
-            const apiTimer = {
-              userId: user.id.toString(),
-              startDate: apiData.startDate,
-              isActive: true,
-              source: 'api'
-            };
-            
-            // Se API tem dados diferentes dos locais, sincronizar
-            if (!localTimer || localTimer.startDate !== apiData.startDate) {
-              TimerPersistence.saveTimer(user.id.toString(), apiData.startDate);
-              setTimerData(apiTimer);
-              console.log(`🌐 [Timer] Cronômetro sincronizado da API: ${apiData.startDate}`);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('❌ [Timer] Erro ao carregar cronômetro:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    try {
+      const response = await AuthService.authenticatedFetch('/api/timer/start', {
+        method: 'POST',
+        body: JSON.stringify({ userId: user.id }),
+      });
 
-    loadTimerData();
-  }, [user?.id]);
+      const data = await response.json();
 
-  // Listener para eventos de cronômetro
-  useEffect(() => {
-    const handleTimerUpdate = async (event: CustomEvent) => {
-      const { userId, startDate, source } = event.detail || {};
-      
-      if (user?.id && userId === user.id.toString() && startDate) {
-        console.log(`🔄 [Timer] Cronômetro atualizado via evento (${source}): ${startDate}`);
-        
-        const newTimerData = {
-          userId: userId,
-          startDate: startDate,
-          isActive: true,
-          source: source || 'event'
-        };
-        
-        setTimerData(newTimerData);
-        
-        // Atualizar dados do usuário se callback fornecido
+      if (response.ok) {
+        setLocalUser(data.user);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
         if (onUserUpdate) {
-          const updatedUser = {
-            ...localUser,
-            startDate: startDate
-          };
-          setLocalUser(updatedUser);
-          onUserUpdate(updatedUser);
+          onUserUpdate(data.user);
         }
+
+        console.log('✅ Cronômetro iniciado com sucesso!');
+      } else {
+        console.error('Erro ao iniciar cronômetro:', data.message);
+        alert('Erro ao iniciar cronômetro: ' + data.message);
       }
-    };
-
-    window.addEventListener('timerStarted', handleTimerUpdate as EventListener);
-    window.addEventListener('timerUpdated', handleTimerUpdate as EventListener);
-    
-    return () => {
-      window.removeEventListener('timerStarted', handleTimerUpdate as EventListener);
-      window.removeEventListener('timerUpdated', handleTimerUpdate as EventListener);
-    };
-  }, [user?.id, localUser, onUserUpdate]);
-
-  // Callback para quando StartTimerButton iniciar cronômetro
-  const handleTimerStarted = (startDate: string) => {
-    console.log(`✅ [Timer] Cronômetro iniciado via StartTimerButton: ${startDate}`);
-    
-    const newTimerData = {
-      userId: user?.id?.toString() || '',
-      startDate: startDate,
-      isActive: true,
-      source: 'start-button'
-    };
-    
-    setTimerData(newTimerData);
-    
-    if (onUserUpdate) {
-      const updatedUser = {
-        ...localUser,
-        startDate: startDate
-      };
-      setLocalUser(updatedUser);
-      onUserUpdate(updatedUser);
+    } catch (error) {
+      console.error('Erro ao iniciar cronômetro:', error);
+      alert('Erro de conexão. Tente novamente.');
+    } finally {
+      setIsStarting(false);
     }
   };
-
-  // Estados de loading
-  if (isLoading) {
-    return (
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground mb-3">
-          Verificando cronômetro...
-        </p>
-        <div className="timer-display">00:00:00</div>
-      </div>
-    );
-  }
 
   if (!localUser) {
     return (
@@ -625,36 +531,27 @@ function Timer({ user, onUserUpdate }: TimerProps) {
     );
   }
 
-  // Determinar se há cronômetro ativo
-  const startDate = timerData?.startDate || localUser?.startDate;
-  const hasActiveTimer = !!(startDate && timerData?.isActive !== false);
+  const userWithTimer = localUser && localUser.startDate;
 
-  // Se não há cronômetro ativo, mostrar StartTimerButton
-  if (!hasActiveTimer && user?.id) {
+  if (!userWithTimer) {
     return (
       <div className="text-center">
         <p className="text-sm text-muted-foreground mb-3">
           Pronto para começar sua jornada livre da pornografia?
         </p>
-        <StartTimerButton 
-          userId={user.id.toString()}
-          onTimerStarted={handleTimerStarted}
-        />
+        <button
+          onClick={handleStartTimer}
+          disabled={isStarting}
+          className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-semibold text-lg disabled:opacity-50"
+          data-testid="start-timer-button"
+        >
+          {isStarting ? 'Iniciando...' : '🚀 INICIAR CRONÔMETRO'}
+        </button>
       </div>
     );
   }
 
-  if (!startDate) {
-    return (
-      <div className="text-center">
-        <p className="text-sm text-muted-foreground mb-3">
-          Faça login para iniciar seu cronômetro
-        </p>
-      </div>
-    );
-  }
-
-  // Exibir cronômetro ativo
+  const startDate = localUser.startDate || new Date().toISOString();
   const timeDiff = calculateTimeDifference(startDate, currentTime);
   const hasCompletedOneDay = timeDiff.days > 0;
 
@@ -825,61 +722,17 @@ export default function PainelInterface({
       }
 
       try {
-        console.log(`🔍 [PainelInterface] Verificando status do cronômetro para usuário ${user.id}`);
-        
-        // 1. Primeiro verificar localStorage
-        const { TimerPersistence } = await import('@/lib/timer-persistence');
-        const localTimer = TimerPersistence.loadTimer(user.id.toString());
-        
-        if (localTimer && localTimer.isActive) {
-          setHasStartedJourney(true);
-          setLocalUser(prev => prev ? { ...prev, startDate: localTimer.startDate } : prev);
-          console.log(`💿 [PainelInterface] Cronômetro local encontrado: ${localTimer.startDate}`);
-        }
-
-        // 2. Verificar com API para sincronização
         const response = await AuthService.authenticatedFetch(`/api/timer/status/${user.id}`);
-        
+        const data = await response.json();
+
         if (response.ok) {
-          const data = await response.json();
-          
+          setHasStartedJourney(data.hasActiveTimer);
           if (data.hasActiveTimer && data.startDate) {
-            setHasStartedJourney(true);
-            const startDate = new Date(data.startDate).toISOString();
-            
-            // Sincronizar se dados são diferentes
-            if (!localTimer || localTimer.startDate !== startDate) {
-              TimerPersistence.saveTimer(user.id.toString(), startDate);
-              console.log(`🌐 [PainelInterface] Cronômetro sincronizado da API: ${startDate}`);
-            }
-            
-            setLocalUser(prev => prev ? { ...prev, startDate: startDate } : prev);
-          } else if (!localTimer) {
-            // Sem cronômetro em lugar nenhum
-            setHasStartedJourney(false);
-            console.log(`📋 [PainelInterface] Nenhum cronômetro ativo encontrado`);
-          }
-        } else {
-          console.warn('⚠️ [PainelInterface] API não disponível, usando dados locais');
-          // Se API falha mas temos dados locais, usar eles
-          if (localTimer && localTimer.isActive) {
-            setHasStartedJourney(true);
+            setLocalUser(prev => prev ? { ...prev, startDate: new Date(data.startDate).toISOString() } : prev);
           }
         }
       } catch (error) {
-        console.error('❌ [PainelInterface] Erro ao verificar status do timer:', error);
-        
-        // Fallback: tentar carregar dados locais
-        try {
-          const { TimerPersistence } = await import('@/lib/timer-persistence');
-          const localTimer = TimerPersistence.loadTimer(user.id.toString());
-          if (localTimer && localTimer.isActive) {
-            setHasStartedJourney(true);
-            setLocalUser(prev => prev ? { ...prev, startDate: localTimer.startDate } : prev);
-          }
-        } catch (fallbackError) {
-          console.error('❌ [PainelInterface] Fallback também falhou:', fallbackError);
-        }
+        console.error('Erro ao verificar status do timer:', error);
       } finally {
         setIsLoading(false);
       }
@@ -925,34 +778,6 @@ export default function PainelInterface({
       setCurrentAvatar(avatar);
     }
   }, []);
-
-  // Listener para eventos globais de cronômetro
-  useEffect(() => {
-    const handleTimerEvents = (event: CustomEvent) => {
-      const { userId, startDate, source } = event.detail || {};
-      
-      if (user?.id && userId === user.id.toString() && startDate) {
-        console.log(`🔄 [PainelInterface] Cronômetro atualizado via evento (${source}): ${startDate}`);
-        
-        setHasStartedJourney(true);
-        setLocalUser(prev => prev ? { ...prev, startDate: startDate } : prev);
-        
-        // Atualizar avatar
-        const days = calculateProgressInDays(startDate);
-        setDaysProgress(days);
-        const avatar = getCurrentAvatar(days);
-        setCurrentAvatar(avatar);
-      }
-    };
-
-    window.addEventListener('timerStarted', handleTimerEvents as EventListener);
-    window.addEventListener('timerUpdated', handleTimerEvents as EventListener);
-    
-    return () => {
-      window.removeEventListener('timerStarted', handleTimerEvents as EventListener);
-      window.removeEventListener('timerUpdated', handleTimerEvents as EventListener);
-    };
-  }, [user?.id]);
 
   const handlePanicClick = useCallback(() => {
     setShowPanicPage(true);
