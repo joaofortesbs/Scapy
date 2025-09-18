@@ -29,6 +29,7 @@ import PanicPage from "@/pages/panic-page";
 import EvolutionaryAvatar from "@/components/evolutionary-avatar";
 import { getCurrentAvatar, calculateProgressInDays } from "@/utils/avatar-system";
 import type { User, WeeklyProgress } from "@shared/schema";
+import { AuthService } from "@/lib/auth";
 
 // Header Component
 interface HeaderInternalProps {
@@ -491,11 +492,8 @@ function Timer({ user, onUserUpdate }: TimerProps) {
     setIsStarting(true);
 
     try {
-      const response = await fetch('/api/timer/start', {
+      const response = await AuthService.authenticatedFetch('/api/timer/start', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ userId: user.id }),
       });
 
@@ -724,13 +722,13 @@ export default function PainelInterface({
       }
 
       try {
-        const response = await fetch(`/api/timer/status/${user.id}`);
+        const response = await AuthService.authenticatedFetch(`/api/timer/status/${user.id}`);
         const data = await response.json();
 
         if (response.ok) {
           setHasStartedJourney(data.hasActiveTimer);
           if (data.hasActiveTimer && data.startDate) {
-            setLocalUser(prev => prev ? { ...prev, startDate: data.startDate } : prev);
+            setLocalUser(prev => prev ? { ...prev, startDate: new Date(data.startDate).toISOString() } : prev);
           }
         }
       } catch (error) {
@@ -820,7 +818,7 @@ export default function PainelInterface({
                     data-testid="evolutionary-avatar-clickable"
                   >
                     <EvolutionaryAvatar
-                      startDate={localUser?.startDate}
+                      startDate={localUser?.startDate ? new Date(localUser.startDate).toISOString() : undefined}
                       size="large"
                       showTitle={false}
                       showProgress={false}
