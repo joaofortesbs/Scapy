@@ -66,6 +66,7 @@ export class AuthService {
     return fetch(url, {
       ...options,
       headers,
+      credentials: "include",
     });
   }
 
