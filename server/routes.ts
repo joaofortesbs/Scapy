@@ -15,7 +15,9 @@ import {
   loginSchema,
   registerSchema,
   moodSelections,
-  timers
+  timers,
+  userGoals, // Import userGoals
+  weeklyProgress // Import weeklyProgress
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -1279,6 +1281,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao limpar dados do dia" });
     }
   });
+
+  // Endpoint para verificar saúde do banco de dados
+  app.get("/api/database/health", async (req, res) => {
+    try {
+      console.log('🔍 [HEALTH] Verificando saúde do banco de dados...');
+
+      // Teste de conexão simples
+      const testQuery = await db.select().from(authUsers).limit(1);
+
+      // Verificar tabelas principais
+      const tables = ['auth_users', 'timers', 'user_goals', 'weekly_progress'];
+      const healthStatus = {
+        database: 'connected',
+        environment: process.env.NODE_ENV || 'development',
+        timestamp: new Date().toISOString(),
+        tables: {} as Record<string, string>
+      };
+
+      // Testar cada tabela
+      for (const tableName of tables) {
+        try {
+          if (tableName === 'auth_users') {
+            const count = await db.select().from(authUsers).limit(1);
+            healthStatus.tables[tableName] = 'ok';
+          } else if (tableName === 'timers') {
+            const count = await db.select().from(timers).limit(1);
+            healthStatus.tables[tableName] = 'ok';
+          } else if (tableName === 'user_goals') {
+            const count = await db.select().from(userGoals).limit(1);
+            healthStatus.tables[tableName] = 'ok';
+          } else if (tableName === 'weekly_progress') {
+            const count = await db.select().from(weeklyProgress).limit(1);
+            healthStatus.tables[tableName] = 'ok';
+          }
+        } catch (tableError) {
+          console.error(`❌ [HEALTH] Erro na tabela ${tableName}:`, tableError);
+          healthStatus.tables[tableName] = 'error';
+        }
+      }
+
+      console.log('✅ [HEALTH] Verificação completa:', healthStatus);
+      return res.json(healthStatus);
+
+    } catch (error) {
+      console.error('❌ [HEALTH] Erro na verificação do banco:', error);
+      return res.status(500).json({
+        database: 'error',
+        environment: process.env.NODE_ENV || 'development',
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
 
   const httpServer = createServer(app);
   return httpServer;
