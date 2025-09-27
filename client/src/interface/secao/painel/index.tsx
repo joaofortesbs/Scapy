@@ -29,6 +29,7 @@ import PanicPage from "@/pages/panic-page";
 import EvolutionaryAvatar from "@/components/evolutionary-avatar";
 import { getCurrentAvatar, calculateProgressInDays } from "@/utils/avatar-system";
 import type { User, WeeklyProgress } from "@shared/schema";
+import { authenticatedFetch, isAuthenticated } from '@/lib/auth-utils';
 
 // Header Component
 interface HeaderInternalProps {
@@ -202,7 +203,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
 
     try {
       console.log(`🔍 [WeeklyTracker] Carregando humor semanal para usuário ${user.id}`);
-      
+
       // Carregar dados locais primeiro
       const localMood = OptimizedMoodStorage.loadWeeklyMood(user.id.toString());
       if (localMood) {
@@ -214,15 +215,15 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
       const todayKey = new Date().toISOString().split('T')[0];
       const todayMoodKey = `scapy_daily_mood_${user.id}_${todayKey}`;
       const todayMoodData = localStorage.getItem(todayMoodKey);
-      
+
       if (todayMoodData) {
         try {
           const moodData = JSON.parse(todayMoodData);
           const today = new Date();
           const dayOfWeek = today.getDay();
-          
+
           console.log(`🎯 [WeeklyTracker] Humor de hoje encontrado: ${moodData.mood} para o dia ${dayOfWeek}`);
-          
+
           // Atualizar humor semanal com o humor de hoje
           setWeeklyMood(prevMood => {
             const startOfWeek = new Date(today);
@@ -264,16 +265,16 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
                 mergedMoodByDay[index] = mood;
               }
             });
-            
+
             const mergedMood = {
               ...apiMood,
               moodByDay: mergedMoodByDay
             };
-            
+
             OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), mergedMood);
             return mergedMood;
           }
-          
+
           // Se não temos dados locais, usar da API
           OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
           return apiMood;
@@ -337,7 +338,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
 
     // Adicionar mais listeners para capturar todas as atualizações
     const events = ['moodUpdated', 'weeklyMoodUpdated', 'dailyMoodUpdated', 'aiMoodSelected'];
-    
+
     events.forEach(eventName => {
       window.addEventListener(eventName, handleMoodUpdate as EventListener);
     });
@@ -401,7 +402,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
           break;
       }
     }
-    
+
     // Depois verificar se está concluído (para sobrescrever se necessário)
     if (isCompleted) {
       classes.push('completed');
@@ -420,7 +421,7 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
     if (dayMood) {
       const moodLabels = {
         'medo': 'Medo',
-        'estavel': 'Estável', 
+        'estavel': 'Estável',
         'feliz': 'Feliz'
       };
       const normalizedMood = dayMood.toLowerCase()
@@ -491,7 +492,9 @@ function Timer({ user, onUserUpdate }: TimerProps) {
     setIsStarting(true);
 
     try {
-      const response = await fetch('/api/timer/start', {
+      console.log('🚀 [Timer] Iniciando cronômetro para usuário:', user.id);
+      
+      const response = await authenticatedFetch('/api/timer/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -502,20 +505,26 @@ function Timer({ user, onUserUpdate }: TimerProps) {
       const data = await response.json();
 
       if (response.ok) {
-        setLocalUser(data.user);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        console.log('✅ [Timer] Cronômetro iniciado com sucesso!', data);
+        
+        // Atualizar usuário com startDate
+        const updatedUser = {
+          ...user,
+          startDate: data.startDate || new Date().toISOString()
+        };
+        
+        setLocalUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
 
         if (onUserUpdate) {
-          onUserUpdate(data.user);
+          onUserUpdate(updatedUser);
         }
-
-        console.log('✅ Cronômetro iniciado com sucesso!');
       } else {
-        console.error('Erro ao iniciar cronômetro:', data.message);
+        console.error('❌ [Timer] Erro ao iniciar cronômetro:', data.message);
         alert('Erro ao iniciar cronômetro: ' + data.message);
       }
     } catch (error) {
-      console.error('Erro ao iniciar cronômetro:', error);
+      console.error('❌ [Timer] Erro de conexão:', error);
       alert('Erro de conexão. Tente novamente.');
     } finally {
       setIsStarting(false);
@@ -724,7 +733,7 @@ export default function PainelInterface({
       }
 
       try {
-        const response = await fetch(`/api/timer/status/${user.id}`);
+        const response = await authenticatedFetch(`/api/timer/status/${user.id}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -789,6 +798,14 @@ export default function PainelInterface({
     setShowPanicPage(false);
   }, []);
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      setLocation('/login');
+    }
+  }, [setLocation]);
+
+
   if (showPanicPage) {
     return <PanicPage user={localUser} onBackFromPanic={handleBackFromPanic} />;
   }
@@ -814,7 +831,7 @@ export default function PainelInterface({
                 <JourneyStart onStartJourney={handleStartJourney} />
               ) : (
                 <>
-                  <div 
+                  <div
                     className="floating-avatar mb-6 cursor-pointer transition-transform hover:scale-105 active:scale-95"
                     onClick={() => setLocation('/avatares-evolutivos')}
                     data-testid="evolutionary-avatar-clickable"

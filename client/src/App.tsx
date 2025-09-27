@@ -96,7 +96,15 @@ function AppRouter() {
 
   // Se não estiver autenticado, mostrar APENAS página de login
   if (!isAuthenticated) {
-    return <AuthPage onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <Router>
+        <Switch>
+          <Route path="/login" component={() => <AuthPage onLoginSuccess={handleLoginSuccess} />} />
+          <Route path="/" component={() => <AuthPage onLoginSuccess={handleLoginSuccess} />} />
+          <Route component={() => <AuthPage onLoginSuccess={handleLoginSuccess} />} />
+        </Switch>
+      </Router>
+    );
   }
 
   // Se estiver autenticado mas precisa fazer o quiz
@@ -135,6 +143,7 @@ function AppRouter() {
   return (
     <Router>
       <Switch>
+        <Route path="/login" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
         <Route path="/" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
         <Route path="/dashboard" component={() => <Dashboard user={user} onLogout={handleLogout} />} />
         <Route path="/panic" component={() => <PanicPage user={user} />} />

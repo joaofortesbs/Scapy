@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { User } from "@shared/schema";
 import { formatTimer, calculateTimeDifference } from "@/lib/timer-utils";
 import { TimerPersistence, type TimerData } from "@/lib/timer-persistence";
+import { authenticatedFetch } from '@/lib/auth-utils';
 
 interface TimerProps {
   user: User | null;
@@ -33,13 +34,13 @@ export default function Timer({ user }: TimerProps) {
     const loadTimerData = async () => {
       try {
         console.log(`🔍 [Timer] Carregando cronômetro para usuário ${user.id}`);
-        
+
         // 1. PRIMEIRO: Carregar do localStorage (fonte primária)
         const localTimer = TimerPersistence.loadTimer(user.id.toString());
         if (localTimer) {
           setTimerData(localTimer);
           console.log(`💿 [Timer] Cronômetro carregado do localStorage: ${localTimer.startDate}`);
-          
+
           // Atualizar dados do usuário para sincronização
           const updatedUser = {
             ...user,
@@ -55,7 +56,7 @@ export default function Timer({ user }: TimerProps) {
             if (syncedTimer && (!localTimer || syncedTimer.startDate !== localTimer.startDate)) {
               setTimerData(syncedTimer);
               console.log(`🌐 [Timer] Cronômetro atualizado da API: ${syncedTimer.startDate}`);
-              
+
               // Atualizar localStorage com dados da API se diferentes
               const updatedUser = {
                 ...user,
@@ -82,7 +83,7 @@ export default function Timer({ user }: TimerProps) {
   useEffect(() => {
     const handleTimerUpdate = (event: CustomEvent) => {
       const { userId, startDate } = event.detail || {};
-      
+
       if (user?.id && userId === user.id.toString() && startDate) {
         console.log(`🔄 [Timer] Cronômetro atualizado via evento: ${startDate}`);
         const newTimer = TimerPersistence.loadTimer(user.id.toString());
@@ -94,7 +95,7 @@ export default function Timer({ user }: TimerProps) {
 
     window.addEventListener('timerUpdated', handleTimerUpdate as EventListener);
     window.addEventListener('timerStarted', handleTimerUpdate as EventListener);
-    
+
     return () => {
       window.removeEventListener('timerUpdated', handleTimerUpdate as EventListener);
       window.removeEventListener('timerStarted', handleTimerUpdate as EventListener);

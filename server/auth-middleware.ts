@@ -25,15 +25,18 @@ export async function verifyJWT(req: AuthenticatedRequest, res: Response, next: 
   try {
     const authHeader = req.headers.authorization;
 
+    console.log('🔐 [JWT] Verificando token para:', req.method, req.path);
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'Token não fornecido' });
+      console.log('❌ [JWT] Header Authorization não encontrado ou inválido');
+      return res.status(401).json({ message: 'Token de acesso requerido' });
     }
 
     const token = authHeader.substring(7);
     const jwtSecret = process.env.JWT_SECRET;
 
     if (!jwtSecret) {
-      console.error('JWT_SECRET não configurado');
+      console.error('❌ [JWT] JWT_SECRET não configurado');
       return res.status(500).json({ message: 'Erro de configuração do servidor' });
     }
 
@@ -71,7 +74,7 @@ export async function verifyJWT(req: AuthenticatedRequest, res: Response, next: 
     if (error instanceof jwt.JsonWebTokenError) {
       return res.status(401).json({ message: 'Token inválido' });
     }
-    
+
     console.error('Erro na verificação do JWT:', error);
     return res.status(500).json({ message: 'Erro interno do servidor' });
   }
@@ -79,8 +82,11 @@ export async function verifyJWT(req: AuthenticatedRequest, res: Response, next: 
 
 export function generateJWT(userId: number, email: string, isActive: boolean): string {
   const jwtSecret = process.env.JWT_SECRET;
-  
+
+  console.log('🔐 [JWT] Verificando JWT_SECRET:', jwtSecret ? 'presente' : 'ausente');
+
   if (!jwtSecret) {
+    console.error('❌ [JWT] JWT_SECRET não encontrado nas variáveis de ambiente');
     throw new Error('JWT_SECRET não configurado');
   }
 
