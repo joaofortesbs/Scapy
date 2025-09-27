@@ -718,6 +718,7 @@ export default function PainelInterface({
   const [localUser, setLocalUser] = useState(user);
   const [isLoading, setIsLoading] = useState(true);
   const [showPanicPage, setShowPanicPage] = useState(false);
+  const [hasSeenInitialImage, setHasSeenInitialImage] = useState(false);
   const [, setLocation] = useLocation();
 
   // Avatar state otimizado
@@ -733,6 +734,13 @@ export default function PainelInterface({
       }
 
       try {
+        // Verificar se o usuário já viu a imagem inicial
+        const imageSeenKey = `scapy_initial_image_seen_${user.id}`;
+        const hasSeenImage = localStorage.getItem(imageSeenKey) === 'true';
+        setHasSeenInitialImage(hasSeenImage);
+
+        console.log(`🖼️ [PainelInterface] Usuário ${user.id} ${hasSeenImage ? 'já viu' : 'ainda não viu'} a imagem inicial`);
+
         const response = await authenticatedFetch(`/api/timer/status/${user.id}`);
         const data = await response.json();
 
@@ -775,6 +783,24 @@ export default function PainelInterface({
   }, [localUser?.startDate]);
 
   const handleStartJourney = () => {
+    if (user?.id) {
+      // Marcar que o usuário viu e clicou na imagem inicial
+      const imageSeenKey = `scapy_initial_image_seen_${user.id}`;
+      localStorage.setItem(imageSeenKey, 'true');
+      setHasSeenInitialImage(true);
+      
+      console.log(`🖼️ [PainelInterface] Imagem inicial marcada como vista para usuário ${user.id}`);
+      
+      // Disparar evento customizado para sincronização
+      const imageSeenEvent = new CustomEvent('initialImageSeen', {
+        detail: {
+          userId: user.id,
+          timestamp: new Date().toISOString()
+        }
+      });
+      window.dispatchEvent(imageSeenEvent);
+    }
+    
     setHasStartedJourney(true);
   };
 
@@ -827,9 +853,9 @@ export default function PainelInterface({
                     Verificando status do cronômetro...
                   </p>
                 </div>
-              ) : !hasStartedJourney ? (
+              ) : !hasStartedJourney && !hasSeenInitialImage ? (
                 <JourneyStart onStartJourney={handleStartJourney} />
-              ) : (
+              ) : hasStartedJourney ? (
                 <>
                   <div
                     className="floating-avatar mb-6 cursor-pointer transition-transform hover:scale-105 active:scale-95"
@@ -847,6 +873,18 @@ export default function PainelInterface({
 
                   <Timer user={localUser} onUserUpdate={handleUserUpdate} />
                 </>
+              ) : (
+                // Caso o usuário já tenha visto a imagem mas ainda não iniciou o cronômetro
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-4">🚀</div>
+                  <h2 className="text-2xl font-bold text-primary mb-4">
+                    Pronto para começar?
+                  </h2>
+                  <p className="text-muted-foreground mb-6">
+                    Inicie seu cronômetro e comece sua jornada de transformação
+                  </p>
+                  <Timer user={localUser} onUserUpdate={handleUserUpdate} />
+                </div>
               )}
             </section>
           </div>
