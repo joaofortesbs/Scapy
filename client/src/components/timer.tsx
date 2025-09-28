@@ -23,7 +23,7 @@ export default function Timer({ user }: TimerProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Carregar e sincronizar cronômetro quando usuário muda
+  // Carregar e sincronizar cronômetro quando usuário muda - OTIMIZADO
   useEffect(() => {
     if (!user?.id) {
       setTimerData(null);
@@ -33,43 +33,62 @@ export default function Timer({ user }: TimerProps) {
 
     const loadTimerData = async () => {
       try {
-        console.log(`🔍 [Timer] Carregando cronômetro para usuário ${user.id}`);
+        console.log(`⚡ [Timer] Carregamento otimizado para usuário ${user.id}`);
 
-        // 1. PRIMEIRO: Carregar do localStorage (fonte primária)
-        const localTimer = TimerPersistence.loadTimer(user.id.toString());
-        if (localTimer) {
-          setTimerData(localTimer);
-          console.log(`💿 [Timer] Cronômetro carregado do localStorage: ${localTimer.startDate}`);
-
-          // Atualizar dados do usuário para sincronização
-          const updatedUser = {
-            ...user,
-            startDate: localTimer.startDate
+        // 1. CARREGAMENTO INSTANTÂNEO: Verificar dados do usuário primeiro
+        if (user.startDate) {
+          const immediateTimer = {
+            startDate: user.startDate,
+            userId: user.id.toString()
           };
-          localStorage.setItem('user', JSON.stringify(updatedUser));
+          setTimerData(immediateTimer);
+          setIsLoading(false);
+          console.log(`⚡ [Timer] Timer carregado instantaneamente do user props`);
         }
 
-        // 2. SEGUNDO: Sincronizar com API em background (não bloquear UI)
+        // 2. FALLBACK: Carregar do localStorage se não tem no user
+        if (!user.startDate) {
+          const localTimer = TimerPersistence.loadTimer(user.id.toString());
+          if (localTimer) {
+            setTimerData(localTimer);
+            setIsLoading(false);
+            console.log(`💿 [Timer] Timer carregado do localStorage`);
+
+            // Atualizar dados do usuário para sincronização
+            const updatedUser = {
+              ...user,
+              startDate: localTimer.startDate
+            };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          } else {
+            setIsLoading(false);
+          }
+        }
+
+        // 3. SINCRONIZAÇÃO EM BACKGROUND: Não bloqueia UI
         setTimeout(async () => {
           try {
             const syncedTimer = await TimerPersistence.syncWithAPI(user.id.toString());
-            if (syncedTimer && (!localTimer || syncedTimer.startDate !== localTimer.startDate)) {
-              setTimerData(syncedTimer);
-              console.log(`🌐 [Timer] Cronômetro atualizado da API: ${syncedTimer.startDate}`);
+            if (syncedTimer) {
+              const currentStartDate = timerData?.startDate || user.startDate;
+              
+              // Só atualizar se realmente mudou
+              if (syncedTimer.startDate !== currentStartDate) {
+                setTimerData(syncedTimer);
+                console.log(`🌐 [Timer] Timer sincronizado com API`);
 
-              // Atualizar localStorage com dados da API se diferentes
-              const updatedUser = {
-                ...user,
-                startDate: syncedTimer.startDate
-              };
-              localStorage.setItem('user', JSON.stringify(updatedUser));
+                const updatedUser = {
+                  ...user,
+                  startDate: syncedTimer.startDate
+                };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+              }
             }
           } catch (syncError) {
-            console.warn('⚠️ [Timer] Erro na sincronização (não crítico):', syncError);
+            console.warn('⚠️ [Timer] Sincronização em background falhou (não crítico):', syncError);
           }
-        }, 100);
+        }, 200);
 
-        setIsLoading(false);
       } catch (error) {
         console.error('❌ [Timer] Erro ao carregar cronômetro:', error);
         setIsLoading(false);
@@ -77,7 +96,7 @@ export default function Timer({ user }: TimerProps) {
     };
 
     loadTimerData();
-  }, [user?.id]);
+  }, [user?.id, user?.startDate]);
 
   // Escutar eventos de atualização de cronômetro
   useEffect(() => {

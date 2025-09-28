@@ -31,6 +31,50 @@ import { getCurrentAvatar, calculateProgressInDays } from "@/utils/avatar-system
 import type { User, WeeklyProgress } from "@shared/schema";
 import { authenticatedFetch, isAuthenticated } from '@/lib/auth-utils';
 
+// Cache inteligente para otimização de performance
+class PainelCache {
+  private static cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+  private static readonly DEFAULT_TTL = 30000; // 30 segundos
+
+  static set(key: string, data: any, ttl: number = this.DEFAULT_TTL): void {
+    this.cache.set(key, {
+      data: JSON.parse(JSON.stringify(data)),
+      timestamp: Date.now(),
+      ttl
+    });
+  }
+
+  static get(key: string): any | null {
+    const cached = this.cache.get(key);
+    if (!cached) return null;
+
+    const isExpired = Date.now() - cached.timestamp > cached.ttl;
+    if (isExpired) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return JSON.parse(JSON.stringify(cached.data));
+  }
+
+  static has(key: string): boolean {
+    return this.get(key) !== null;
+  }
+
+  static clear(pattern?: string): void {
+    if (!pattern) {
+      this.cache.clear();
+      return;
+    }
+
+    for (const key of this.cache.keys()) {
+      if (key.includes(pattern)) {
+        this.cache.delete(key);
+      }
+    }
+  }
+}
+
 // Header Component
 interface HeaderInternalProps {
   user?: User;
@@ -194,92 +238,86 @@ function WeeklyTracker({ weeklyProgress, user }: WeeklyTrackerProps) {
   const weekDays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
   const dayNames = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 
-  // Carregar humor semanal otimizado
+  // Carregar humor semanal otimizado com cache
   const loadWeeklyMood = useCallback(async () => {
     if (!user?.id) {
       setIsLoading(false);
       return;
     }
 
-    try {
-      console.log(`🔍 [WeeklyTracker] Carregando humor semanal para usuário ${user.id}`);
+    const cacheKey = `weekly_mood_${user.id}`;
 
-      // Carregar dados locais primeiro
-      const localMood = OptimizedMoodStorage.loadWeeklyMood(user.id.toString());
-      if (localMood) {
-        console.log(`💿 [WeeklyTracker] Humor local carregado:`, localMood);
-        setWeeklyMood(localMood);
+    try {
+      // 1. Verificar cache primeiro para carregamento instantâneo
+      const cachedMood = PainelCache.get(cacheKey);
+      if (cachedMood) {
+        console.log(`⚡ [WeeklyTracker] Dados do cache carregados instantaneamente`);
+        setWeeklyMood(cachedMood);
+        setIsLoading(false);
+        return;
       }
 
-      // Verificar humor de hoje no AIAssistant
+      // 2. Carregar dados locais primeiro (rápido)
+      const localMood = OptimizedMoodStorage.loadWeeklyMood(user.id.toString());
+      if (localMood) {
+        console.log(`💿 [WeeklyTracker] Humor local carregado`);
+        setWeeklyMood(localMood);
+        PainelCache.set(cacheKey, localMood, 60000); // Cache por 1 minuto
+        setIsLoading(false);
+      }
+
+      // 3. Verificar humor de hoje no AIAssistant (sem API)
       const todayKey = new Date().toISOString().split('T')[0];
       const todayMoodKey = `scapy_daily_mood_${user.id}_${todayKey}`;
       const todayMoodData = localStorage.getItem(todayMoodKey);
 
-      if (todayMoodData) {
+      if (todayMoodData && localMood) {
         try {
           const moodData = JSON.parse(todayMoodData);
           const today = new Date();
           const dayOfWeek = today.getDay();
 
-          console.log(`🎯 [WeeklyTracker] Humor de hoje encontrado: ${moodData.mood} para o dia ${dayOfWeek}`);
-
           // Atualizar humor semanal com o humor de hoje
-          setWeeklyMood(prevMood => {
-            const startOfWeek = new Date(today);
-            startOfWeek.setDate(today.getDate() - today.getDay());
-            startOfWeek.setHours(0, 0, 0, 0);
+          const newMoodByDay = [...localMood.moodByDay];
+          newMoodByDay[dayOfWeek] = moodData.mood;
 
-            const newMoodByDay = [...(prevMood?.moodByDay || new Array(7).fill(null))];
-            newMoodByDay[dayOfWeek] = moodData.mood;
+          const updatedMood: WeeklyMood = {
+            ...localMood,
+            moodByDay: newMoodByDay
+          };
 
-            const updatedMood: WeeklyMood = {
-              userId: user.id.toString(),
-              weekStart: startOfWeek.toISOString(),
-              weekEnd: new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString(),
-              moodByDay: newMoodByDay
-            };
-
-            OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), updatedMood);
-            return updatedMood;
-          });
+          setWeeklyMood(updatedMood);
+          OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), updatedMood);
+          PainelCache.set(cacheKey, updatedMood, 60000);
         } catch (parseError) {
           console.error('❌ [WeeklyTracker] Erro ao parsear humor de hoje:', parseError);
         }
       }
 
-      // Buscar da API
-      const response = await apiRequest('GET', `/api/weekly-mood/${user.id}`);
-      const apiMood = await response.json() as WeeklyMood;
+      // 4. Sincronização com API em background (não bloquear UI)
+      setTimeout(async () => {
+        try {
+          const response = await apiRequest('GET', `/api/weekly-mood/${user.id}`);
+          const apiMood = await response.json() as WeeklyMood;
 
-      console.log(`🌐 [WeeklyTracker] Humor da API:`, apiMood);
+          if (apiMood.moodByDay.some(mood => mood !== null)) {
+            setWeeklyMood(prev => {
+              const mergedMood = prev ? {
+                ...apiMood,
+                moodByDay: apiMood.moodByDay.map((mood, index) => 
+                  mood || prev.moodByDay[index] || null
+                )
+              } : apiMood;
 
-      // Merge inteligente - priorizar dados locais se mais completos
-      if (apiMood.moodByDay.some(mood => mood !== null)) {
-        setWeeklyMood(prev => {
-          // Se temos dados locais, fazer merge inteligente
-          if (prev && prev.moodByDay.some(mood => mood !== null)) {
-            const mergedMoodByDay = [...apiMood.moodByDay];
-            prev.moodByDay.forEach((mood, index) => {
-              if (mood && !mergedMoodByDay[index]) {
-                mergedMoodByDay[index] = mood;
-              }
+              OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), mergedMood);
+              PainelCache.set(cacheKey, mergedMood, 60000);
+              return mergedMood;
             });
-
-            const mergedMood = {
-              ...apiMood,
-              moodByDay: mergedMoodByDay
-            };
-
-            OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), mergedMood);
-            return mergedMood;
           }
-
-          // Se não temos dados locais, usar da API
-          OptimizedMoodStorage.saveWeeklyMood(user.id.toString(), apiMood);
-          return apiMood;
-        });
-      }
+        } catch (error) {
+          console.warn('⚠️ [WeeklyTracker] Erro na sincronização background:', error);
+        }
+      }, 100);
 
     } catch (error) {
       console.error('❌ [WeeklyTracker] Erro ao carregar humor:', error);
@@ -493,7 +531,25 @@ function Timer({ user, onUserUpdate }: TimerProps) {
 
     try {
       console.log('🚀 [Timer] Iniciando cronômetro para usuário:', user.id);
+
+      // Otimização: Atualizar UI instantaneamente
+      const immediateStartDate = new Date().toISOString();
+      const optimisticUser = {
+        ...user,
+        startDate: immediateStartDate
+      };
       
+      setLocalUser(optimisticUser);
+      localStorage.setItem('user', JSON.stringify(optimisticUser));
+      
+      if (onUserUpdate) {
+        onUserUpdate(optimisticUser);
+      }
+
+      // Limpar cache para forçar atualização
+      PainelCache.clear(`user_${user.id}`);
+      
+      // API call em background para sincronização
       const response = await authenticatedFetch('/api/timer/start', {
         method: 'POST',
         headers: {
@@ -505,27 +561,33 @@ function Timer({ user, onUserUpdate }: TimerProps) {
       const data = await response.json();
 
       if (response.ok) {
-        console.log('✅ [Timer] Cronômetro iniciado com sucesso!', data);
+        console.log('✅ [Timer] Cronômetro sincronizado com sucesso!', data);
         
-        // Atualizar usuário com startDate
-        const updatedUser = {
-          ...user,
-          startDate: data.startDate || new Date().toISOString()
-        };
-        
-        setLocalUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        // Atualizar com data real da API se diferente
+        if (data.startDate && data.startDate !== immediateStartDate) {
+          const syncedUser = {
+            ...user,
+            startDate: data.startDate
+          };
+          
+          setLocalUser(syncedUser);
+          localStorage.setItem('user', JSON.stringify(syncedUser));
 
-        if (onUserUpdate) {
-          onUserUpdate(updatedUser);
+          if (onUserUpdate) {
+            onUserUpdate(syncedUser);
+          }
         }
       } else {
-        console.error('❌ [Timer] Erro ao iniciar cronômetro:', data.message);
-        alert('Erro ao iniciar cronômetro: ' + data.message);
+        console.error('❌ [Timer] Erro ao sincronizar cronômetro:', data.message);
+        // Reverter otimização em caso de erro
+        setLocalUser(user);
+        localStorage.setItem('user', JSON.stringify(user));
       }
     } catch (error) {
       console.error('❌ [Timer] Erro de conexão:', error);
-      alert('Erro de conexão. Tente novamente.');
+      // Reverter otimização em caso de erro
+      setLocalUser(user);
+      localStorage.setItem('user', JSON.stringify(user));
     } finally {
       setIsStarting(false);
     }
@@ -725,7 +787,7 @@ export default function PainelInterface({
   const [daysProgress, setDaysProgress] = useState(0);
   const [currentAvatar, setCurrentAvatar] = useState(getCurrentAvatar(0));
 
-  // Check timer status otimizado
+  // Check timer status otimizado com cache
   useEffect(() => {
     const checkTimerStatus = async () => {
       if (!user?.id) {
@@ -733,27 +795,87 @@ export default function PainelInterface({
         return;
       }
 
+      const cacheKey = `timer_status_${user.id}`;
+
       try {
-        // Verificar se o usuário já viu a imagem inicial
+        // 1. Carregamento instantâneo do cache
+        const cachedStatus = PainelCache.get(cacheKey);
+        if (cachedStatus) {
+          console.log(`⚡ [PainelInterface] Status do cache carregado instantaneamente`);
+          setHasStartedJourney(cachedStatus.hasActiveTimer);
+          if (cachedStatus.hasActiveTimer && cachedStatus.startDate) {
+            setLocalUser(prev => prev ? { ...prev, startDate: cachedStatus.startDate } : prev);
+          }
+          setIsLoading(false);
+        }
+
+        // 2. Verificação local imediata da imagem
         const imageSeenKey = `scapy_initial_image_seen_${user.id}`;
         const hasSeenImage = localStorage.getItem(imageSeenKey) === 'true';
         setHasSeenInitialImage(hasSeenImage);
 
-        console.log(`🖼️ [PainelInterface] Usuário ${user.id} ${hasSeenImage ? 'já viu' : 'ainda não viu'} a imagem inicial`);
-
-        const response = await authenticatedFetch(`/api/timer/status/${user.id}`);
-        const data = await response.json();
-
-        if (response.ok) {
-          setHasStartedJourney(data.hasActiveTimer);
-          if (data.hasActiveTimer && data.startDate) {
-            setLocalUser(prev => prev ? { ...prev, startDate: data.startDate } : prev);
+        // 3. Verificação local do usuário primeiro
+        const storedUser = localStorage.getItem('user');
+        if (storedUser && !cachedStatus) {
+          try {
+            const userData = JSON.parse(storedUser);
+            if (userData.startDate) {
+              console.log(`💿 [PainelInterface] Usuário local tem timer ativo`);
+              setHasStartedJourney(true);
+              setLocalUser(userData);
+              setIsLoading(false);
+              
+              // Cache temporário
+              PainelCache.set(cacheKey, { 
+                hasActiveTimer: true, 
+                startDate: userData.startDate 
+              }, 30000);
+            }
+          } catch (parseError) {
+            console.error('❌ Erro ao parsear usuário local:', parseError);
           }
         }
+
+        // 4. Sincronização com API em background
+        setTimeout(async () => {
+          try {
+            const response = await authenticatedFetch(`/api/timer/status/${user.id}`);
+            const data = await response.json();
+
+            if (response.ok) {
+              // Cache para próximas visitas
+              PainelCache.set(cacheKey, {
+                hasActiveTimer: data.hasActiveTimer,
+                startDate: data.startDate
+              }, 30000);
+
+              // Atualizar estado apenas se diferente
+              if (data.hasActiveTimer !== hasStartedJourney) {
+                setHasStartedJourney(data.hasActiveTimer);
+              }
+              
+              if (data.hasActiveTimer && data.startDate) {
+                setLocalUser(prev => {
+                  if (prev?.startDate !== data.startDate) {
+                    const updatedUser = { ...prev, startDate: data.startDate };
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    return updatedUser;
+                  }
+                  return prev;
+                });
+              }
+            }
+          } catch (error) {
+            console.warn('⚠️ [PainelInterface] Erro na sincronização background:', error);
+          }
+        }, 50);
+
       } catch (error) {
-        console.error('Erro ao verificar status do timer:', error);
+        console.error('❌ [PainelInterface] Erro ao verificar status do timer:', error);
       } finally {
-        setIsLoading(false);
+        if (!PainelCache.has(cacheKey)) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -765,22 +887,39 @@ export default function PainelInterface({
     setLocalUser(user);
   }, [user]);
 
-  // Update avatar progress otimizado
+  // Update avatar progress otimizado com cache
   useEffect(() => {
     const updateProgress = () => {
       if (localUser?.startDate) {
+        const cacheKey = `avatar_progress_${localUser.id}_${localUser.startDate}`;
+        
+        // Verificar cache primeiro
+        const cachedProgress = PainelCache.get(cacheKey);
+        if (cachedProgress) {
+          setDaysProgress(cachedProgress.days);
+          setCurrentAvatar(cachedProgress.avatar);
+          return;
+        }
+
+        // Calcular e cachear
         const days = calculateProgressInDays(localUser.startDate);
-        setDaysProgress(days);
         const avatar = getCurrentAvatar(days);
+        
+        setDaysProgress(days);
         setCurrentAvatar(avatar);
+        
+        // Cache por 5 minutos
+        PainelCache.set(cacheKey, { days, avatar }, 300000);
       }
     };
 
     updateProgress();
-    const interval = setInterval(updateProgress, 60000); // A cada minuto
+    
+    // Atualizar menos frequentemente para performance
+    const interval = setInterval(updateProgress, 300000); // A cada 5 minutos
 
     return () => clearInterval(interval);
-  }, [localUser?.startDate]);
+  }, [localUser?.startDate, localUser?.id]);
 
   const handleStartJourney = () => {
     if (user?.id) {
