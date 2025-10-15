@@ -6,11 +6,6 @@ import * as schema from "@shared/schema";
 // Configuração unificada para desenvolvimento e produção
 neonConfig.webSocketConstructor = ws;
 
-// Configurações otimizadas para sincronização completa
-neonConfig.connectionTimeoutMillis = 30000;
-neonConfig.queryTimeoutMillis = 60000;
-neonConfig.idleTimeoutMillis = 600000;
-
 if (!process.env.DATABASE_URL) {
   throw new Error(
     "DATABASE_URL must be set. Did you forget to provision a database?",
