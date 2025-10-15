@@ -105,12 +105,10 @@ function Header({ user }: HeaderInternalProps) {
       <div className="flex items-center space-x-3">
         <button
           onClick={() => setLocation('/ranking')}
-          className="gradient-border w-12 h-12 hover:scale-105 transition-transform cursor-pointer"
+          className="hover:scale-110 transition-transform cursor-pointer"
           data-testid="ranking-button"
         >
-          <div className="gradient-border-inner flex items-center justify-center">
-            <Trophy className="w-6 h-6 text-primary" />
-          </div>
+          <Trophy className="w-7 h-7 text-primary" strokeWidth={2.5} />
         </button>
 
         <button
