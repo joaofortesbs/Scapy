@@ -550,12 +550,11 @@ function Timer({ user, onUserUpdate }: TimerProps) {
       PainelCache.clear(`user_${user.id}`);
       
       // API call em background para sincronização
-      const response = await authenticatedFetch('/api/timer/start', {
+      const response = await authenticatedFetch(`/api/usuarios/${user.id}/timer/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId: user.id }),
       });
 
       const data = await response.json();
@@ -564,10 +563,10 @@ function Timer({ user, onUserUpdate }: TimerProps) {
         console.log('✅ [Timer] Cronômetro sincronizado com sucesso!', data);
         
         // Atualizar com data real da API se diferente
-        if (data.startDate && data.startDate !== immediateStartDate) {
+        if (data.timerStartDate && data.timerStartDate !== immediateStartDate) {
           const syncedUser = {
             ...user,
-            startDate: data.startDate
+            startDate: data.timerStartDate
           };
           
           setLocalUser(syncedUser);
