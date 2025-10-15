@@ -46,7 +46,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
     }
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/usuarios/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,12 +72,13 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
         const userData = {
           id: data.user.id,
           email: data.user.email,
-          username: data.user.username,
-          full_name: data.user.full_name || data.user.fullName || data.user.username || 'Usuário',
-          startDate: data.user.startDate || null,
-          bestStreak: data.user.bestStreak || 0,
-          relapseCount: data.user.relapseCount || 0,
-          scapyPoints: data.user.scapyPoints || 0
+          username: data.user.email,
+          full_name: data.user.fullName || 'Usuário',
+          startDate: data.user.timerStartDate || null,
+          bestStreak: 0,
+          relapseCount: 0,
+          scapyPoints: 0,
+          quizCompleted: data.user.quizCompleted || false
         };
 
         console.log('💾 Salvando dados do usuário no login:', userData);
@@ -130,7 +131,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
     }
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch('/api/usuarios/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -148,21 +149,29 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
         setMessage('Conta criada com sucesso! Redirecionando...');
         setMessageType('success');
 
+        // 🔐 Salvar token JWT
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+          console.log('🔐 Token JWT salvo com sucesso:', data.token.substring(0, 20) + '...');
+        }
+
         try {
           // Salvar dados do usuário no localStorage
           const userData = {
             id: data.user.id,
             email: data.user.email,
-            username: data.user.username,
-            full_name: data.user.full_name || data.user.fullName || registerData.fullName || data.user.username || 'Usuário',
-            startDate: new Date().toISOString(),
+            username: data.user.email,
+            full_name: data.user.fullName || registerData.fullName || 'Usuário',
+            startDate: null,
             bestStreak: 0,
             relapseCount: 0,
-            scapyPoints: 0
+            scapyPoints: 0,
+            quizCompleted: false
           };
 
           console.log('📝 Salvando dados do usuário no registro:', userData);
           localStorage.setItem('user', JSON.stringify(userData));
+          localStorage.setItem('isAuthenticated', 'true');
 
           // Redirecionar para o quiz de personalização (novo usuário)
           setTimeout(() => {
