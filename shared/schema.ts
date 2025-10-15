@@ -254,3 +254,76 @@ export type TaskProgress = typeof taskProgress.$inferSelect;
 export type InsertTaskProgress = z.infer<typeof insertTaskProgressSchema>;
 export type UserCustomGoal = typeof userCustomGoals.$inferSelect;
 export type InsertUserCustomGoal = z.infer<typeof insertUserCustomGoalSchema>;
+
+// ========================================
+// 🎯 NOVA TABELA CONSOLIDADA DE USUÁRIOS
+// ========================================
+// Tabela principal que consolida TODOS os dados do usuário:
+// - Dados de cadastro (id, nome, email)
+// - Dados do quiz de personalização (gênero, frequência, motivação, gatilhos, religião)
+// - Dados do cronômetro (timer_start_date)
+export const usuarios = pgTable("usuarios", {
+  // Dados básicos de cadastro
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  nomeCompleto: text("nome_completo").notNull(),
+  email: text("email").unique().notNull(),
+  passwordHash: text("password_hash").notNull(),
+  
+  // Dados do Quiz de Personalização
+  genero: varchar("genero", { length: 50 }), // Homem, Mulher, Outro
+  frequencia: varchar("frequencia", { length: 100 }), // Frequência de consumo
+  motivacao: text("motivacao"), // Motivação principal para parar
+  gatilhos: text("gatilhos"), // Gatilhos/situações comuns
+  religiao: varchar("religiao", { length: 100 }), // Cristão, Muçumano, Espírita, Umbanda, Outra, Não tenho
+  
+  // Status do Quiz
+  quizCompleted: boolean("quiz_completed").default(false).notNull(),
+  
+  // Dados do Cronômetro
+  timerStartDate: timestamp("timer_start_date"), // Data/hora que iniciou o cronômetro
+  timerIsActive: boolean("timer_is_active").default(false).notNull(),
+  
+  // Controle de conta
+  isActive: boolean("is_active").default(true).notNull(),
+  lastLogin: timestamp("last_login"),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Schema de inserção para novos usuários (cadastro)
+export const insertUsuarioSchema = createInsertSchema(usuarios).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  quizCompleted: true,
+  timerIsActive: true,
+  isActive: true,
+}).extend({
+  email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
+  passwordHash: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
+  nomeCompleto: z.string().min(1, 'Nome completo é obrigatório').max(255, 'Nome muito longo')
+});
+
+// Schema para atualização do quiz
+export const updateUsuarioQuizSchema = z.object({
+  genero: z.string().optional(),
+  frequencia: z.string().optional(),
+  motivacao: z.string().optional(),
+  gatilhos: z.string().optional(),
+  religiao: z.string().optional(),
+  quizCompleted: z.boolean().optional(),
+});
+
+// Schema para atualização do cronômetro
+export const updateUsuarioTimerSchema = z.object({
+  timerStartDate: z.union([z.string(), z.date()]).optional(),
+  timerIsActive: z.boolean().optional(),
+});
+
+// Tipos TypeScript
+export type Usuario = typeof usuarios.$inferSelect;
+export type InsertUsuario = z.infer<typeof insertUsuarioSchema>;
+export type UpdateUsuarioQuiz = z.infer<typeof updateUsuarioQuizSchema>;
+export type UpdateUsuarioTimer = z.infer<typeof updateUsuarioTimerSchema>;
