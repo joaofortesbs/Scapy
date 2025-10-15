@@ -108,7 +108,7 @@ function Header({ user }: HeaderInternalProps) {
           className="hover:scale-110 transition-transform cursor-pointer"
           data-testid="ranking-button"
         >
-          <Trophy className="w-7 h-7 text-primary" strokeWidth={2.5} />
+          <Trophy className="w-9 h-9 text-primary" strokeWidth={2.5} />
         </button>
 
         <button
@@ -116,7 +116,7 @@ function Header({ user }: HeaderInternalProps) {
           className="hover:scale-110 transition-transform cursor-pointer"
           data-testid="avatares-evolutivos-button"
         >
-          <Target className="w-7 h-7 text-primary" strokeWidth={2.5} />
+          <Target className="w-9 h-9 text-primary" strokeWidth={2.5} />
         </button>
 
         <button
