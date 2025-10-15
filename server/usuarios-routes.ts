@@ -403,55 +403,5 @@ export function registerUsuariosRoutes(app: Express) {
     }
   });
 
-  // ========================================
-  // 📊 OBTER DADOS COMPLETOS DO USUÁRIO
-  // ========================================
-  app.get("/api/usuarios/:userId", async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
-
-      const user = await db.select()
-        .from(usuarios)
-        .where(eq(usuarios.id, userId))
-        .limit(1);
-
-      if (!user || user.length === 0) {
-        return res.status(404).json({ 
-          message: 'Usuário não encontrado' 
-        });
-      }
-
-      const usuario = user[0];
-
-      // Retornar todos os dados (exceto senha)
-      res.json({
-        id: usuario.id,
-        email: usuario.email,
-        fullName: usuario.nomeCompleto,
-        // Dados do quiz
-        genero: usuario.genero,
-        frequencia: usuario.frequencia,
-        motivacao: usuario.motivacao,
-        gatilhos: usuario.gatilhos,
-        religiao: usuario.religiao,
-        quizCompleted: usuario.quizCompleted,
-        // Dados do cronômetro
-        timerStartDate: usuario.timerStartDate,
-        timerIsActive: usuario.timerIsActive,
-        // Metadados
-        isActive: usuario.isActive,
-        lastLogin: usuario.lastLogin,
-        createdAt: usuario.createdAt,
-        updatedAt: usuario.updatedAt
-      });
-
-    } catch (error) {
-      console.error('❌ [USUARIOS] Erro ao buscar usuário:', error);
-      res.status(500).json({ 
-        message: 'Erro ao buscar dados do usuário' 
-      });
-    }
-  });
-
   console.log('✅ Rotas da tabela USUARIOS registradas com sucesso!');
 }
