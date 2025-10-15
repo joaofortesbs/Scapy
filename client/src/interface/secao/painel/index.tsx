@@ -6,6 +6,7 @@ import {
   BarChart3,
   Users,
   Target,
+  Trophy,
   Plus
 } from "lucide-react";
 import { useLocation } from "wouter";
@@ -103,13 +104,19 @@ function Header({ user }: HeaderInternalProps) {
 
       <div className="flex items-center space-x-3">
         <button
-          onClick={() => setLocation('/avatares-evolutivos')}
-          className="gradient-border w-12 h-12 hover:scale-105 transition-transform cursor-pointer"
-          data-testid="avatares-evolutivos-button"
+          onClick={() => setLocation('/ranking')}
+          className="hover:scale-110 transition-transform cursor-pointer"
+          data-testid="ranking-button"
         >
-          <div className="gradient-border-inner flex items-center justify-center">
-            <Target className="w-6 h-6 text-primary" />
-          </div>
+          <Trophy className="w-9 h-9 text-primary" strokeWidth={2.5} />
+        </button>
+
+        <button
+          onClick={() => setLocation('/melhor-versao')}
+          className="hover:scale-110 transition-transform cursor-pointer"
+          data-testid="melhor-versao-button"
+        >
+          <Target className="w-9 h-9 text-primary" strokeWidth={2.5} />
         </button>
 
         <button

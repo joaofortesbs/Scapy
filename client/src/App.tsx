@@ -11,6 +11,7 @@ import QuizPersonalizacao from "@/pages/quiz-personalizacao";
 import MelhorVersao from "@/pages/melhor-versao";
 import PanicPage from "@/pages/panic-page";
 import AvatareEsEvolutivos from "@/pages/avatares-evolutivos";
+import Ranking from "@/pages/ranking";
 import { useState, useEffect } from "react";
 import { initializeStorageCleanup } from "@/utils/localStorage-sync";
 
@@ -159,6 +160,7 @@ function AppRouter() {
         <Route path="/quiz-personalizacao" component={() => <QuizPersonalizacao user={user} onCompleteQuiz={handleCompleteQuiz} />} />
         <Route path="/melhor-versao" component={() => <MelhorVersao />} />
         <Route path="/avatares-evolutivos" component={() => <AvatareEsEvolutivos />} />
+        <Route path="/ranking" component={() => <Ranking />} />
         <Route component={NotFound} />
       </Switch>
     </Router>
