@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import type { Request, Response, NextFunction } from 'express';
 import { db } from './db';
-import { authUsers } from '@shared/schema';
+import { usuarios } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 
 interface JWTPayload {
@@ -45,10 +45,10 @@ export async function verifyJWT(req: AuthenticatedRequest, res: Response, next: 
 
     // Validate user still exists and is active
     const user = await db.select()
-      .from(authUsers)
+      .from(usuarios)
       .where(and(
-        eq(authUsers.id, parseInt(decoded.sub)),
-        eq(authUsers.isActive, true)
+        eq(usuarios.id, parseInt(decoded.sub)),
+        eq(usuarios.isActive, true)
       ))
       .limit(1);
 
@@ -56,14 +56,14 @@ export async function verifyJWT(req: AuthenticatedRequest, res: Response, next: 
       return res.status(401).json({ message: 'Usuário não encontrado ou inativo' });
     }
 
-    const authUser = user[0];
+    const usuario = user[0];
 
     // Add user to request object
     req.user = {
-      id: authUser.id,
-      email: authUser.email,
-      fullName: authUser.fullName,
-      isActive: authUser.isActive
+      id: usuario.id,
+      email: usuario.email,
+      fullName: usuario.nomeCompleto,
+      isActive: usuario.isActive
     };
 
     next();
