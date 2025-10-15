@@ -112,9 +112,9 @@ function Header({ user }: HeaderInternalProps) {
         </button>
 
         <button
-          onClick={() => setLocation('/avatares-evolutivos')}
+          onClick={() => setLocation('/melhor-versao')}
           className="hover:scale-110 transition-transform cursor-pointer"
-          data-testid="avatares-evolutivos-button"
+          data-testid="melhor-versao-button"
         >
           <Target className="w-9 h-9 text-primary" strokeWidth={2.5} />
         </button>
