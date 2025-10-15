@@ -102,29 +102,6 @@ export default function AnaliseEvolucaoMental() {
           </CardContent>
         </Card>
       </Link>
-
-      {/* Checklist com itens condicionais clicáveis */}
-      {(!hasQuadroDosSonhos || !hasObjetivos) && (
-        <div className="mt-4 space-y-3">
-          {!hasQuadroDosSonhos && (
-            <Link href="/melhor-versao">
-              <div className="flex items-center space-x-3 text-xs text-muted-foreground cursor-pointer hover:text-primary transition-colors">
-                <Plus className="w-4 h-4 text-primary" />
-                <span>Monte seu quadro dos sonhos</span>
-              </div>
-            </Link>
-          )}
-
-          {!hasObjetivos && (
-            <Link href="/melhor-versao">
-              <div className="flex items-center space-x-3 text-xs text-muted-foreground cursor-pointer hover:text-primary transition-colors">
-                <Plus className="w-4 h-4 text-primary" />
-                <span>Defina seus objetivos</span>
-              </div>
-            </Link>
-          )}
-        </div>
-      )}
     </section>
   );
 }
