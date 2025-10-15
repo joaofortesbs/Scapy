@@ -13,17 +13,6 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const authUsers = pgTable("auth_users", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  email: text("email").unique().notNull(),
-  passwordHash: text("password_hash").notNull(),
-  fullName: text("full_name").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  isActive: boolean("is_active").default(true).notNull(),
-  lastLogin: timestamp("last_login"),
-});
-
 export const weeklyProgress = pgTable("weekly_progress", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
@@ -42,24 +31,10 @@ export const userGoals = pgTable("user_goals", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const timers = pgTable("timers", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  user_id: varchar("user_id").notNull(),
-  start_date: timestamp("start_date").notNull(),
-  is_active: boolean("is_active").default(true).notNull(),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-});
-
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   startDate: true,
   createdAt: true,
-});
-
-export const insertAuthUserSchema = createInsertSchema(authUsers).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
 });
 
 // Auth validation schemas
@@ -83,46 +58,12 @@ export const insertUserGoalsSchema = createInsertSchema(userGoals).omit({
   createdAt: true,
 });
 
-export const quizContextualizacao = pgTable("quiz_contextualizacao", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(),
-  userFullName: text("user_full_name").notNull(),
-  genero: varchar("genero", { length: 50 }),
-  frequencia: varchar("frequencia", { length: 100 }),
-  idade: varchar("idade", { length: 50 }),
-  motivacao: text("motivacao"),
-  gatilhos: text("gatilhos"),
-  religiao: varchar("religiao", { length: 100 }),
-  completed: boolean("completed").default(false).notNull(),
-  currentStep: integer("current_step").default(1).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const insertQuizContextualizacaoSchema = createInsertSchema(quizContextualizacao).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type QuizContextualizacao = typeof quizContextualizacao.$inferSelect;
-export type InsertQuizContextualizacao = z.infer<typeof insertQuizContextualizacaoSchema>;
-
-export const insertTimerSchema = createInsertSchema(timers).omit({
-  id: true,
-  created_at: true,
-});
-
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type AuthUser = typeof authUsers.$inferSelect;
-export type InsertAuthUser = z.infer<typeof insertAuthUserSchema>;
 export type WeeklyProgress = typeof weeklyProgress.$inferSelect;
 export type InsertWeeklyProgress = z.infer<typeof insertWeeklyProgressSchema>;
 export type UserGoals = typeof userGoals.$inferSelect;
 export type InsertUserGoals = z.infer<typeof insertUserGoalsSchema>;
-export type Timer = typeof timers.$inferSelect;
-export type InsertTimer = z.infer<typeof insertTimerSchema>;
 
 // Tabela para armazenar seleções de humor/estado do usuário no AI Assistant
 export const moodSelections = pgTable("mood_selections", {
