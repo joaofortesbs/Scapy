@@ -144,7 +144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .values({
           email: email.toLowerCase().trim(),
           passwordHash: passwordHash,
-          fullName: fullName.trim(),
+          nomeCompleto: fullName.trim(),
           isActive: true
         })
         .returning();
@@ -161,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: {
           id: createdUser.id,
           email: createdUser.email,
-          fullName: createdUser.fullName,
+          fullName: createdUser.nomeCompleto,
           createdAt: createdUser.createdAt
         }
       });
@@ -192,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: {
           id: user.id,
           email: user.email,
-          fullName: user.nomeCompleto
+          fullName: user.fullName
         }
       });
 
@@ -227,12 +227,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/users/update-profile", verifyJWT, async (req, res) => {
     try {
-      const { profileImage, fullName } = req.body;
+      const { fullName } = req.body;
 
       // Use userId from JWT token instead of request body for security
       const userId = req.user?.id;
 
-      console.log('🔍 DEBUG - Update Profile Request:', { userId, profileImage: profileImage ? 'presente' : 'ausente', fullName });
+      console.log('🔍 DEBUG - Update Profile Request:', { userId, fullName });
 
       if (!userId) {
         return res.status(401).json({ message: 'Token JWT inválido ou não fornecido' });
@@ -252,27 +252,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔍 DEBUG - Resultado da verificação:', userCheck);
 
       if (userCheck.length === 0) {
-        console.log('❌ DEBUG - Usuário não encontrado na tabela auth_users');
+        console.log('❌ DEBUG - Usuário não encontrado');
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
       console.log('✅ DEBUG - Usuário encontrado:', userCheck[0]);
 
-      const updateData: any = {};
-      if (profileImage) {
-        const objectStorageService = new ObjectStorageService();
-        updateData.profileImage = objectStorageService.normalizeProfileImagePath(profileImage);
-      }
-      if (fullName) updateData.fullName = fullName;
-
-      if (Object.keys(updateData).length === 0) {
+      if (!fullName) {
         return res.status(400).json({ message: 'Nenhum dado para atualizar' });
       }
 
       // Build the update data object for Drizzle
-      const drizzleUpdateData: any = {};
-      if (updateData.profileImage) drizzleUpdateData.profileImage = updateData.profileImage;
-      if (updateData.fullName) drizzleUpdateData.fullName = updateData.fullName;
+      const drizzleUpdateData: any = {
+        nomeCompleto: fullName
+      };
 
       console.log('🔍 DEBUG - Drizzle update data:', drizzleUpdateData);
 
@@ -282,8 +275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning({
           id: usuarios.id,
           email: usuarios.email,
-          fullName: usuarios.nomeCompleto,
-          profileImage: usuarios.profileImage
+          fullName: usuarios.nomeCompleto
         });
 
       console.log('🔍 DEBUG - Resultado do update:', result);
@@ -298,8 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: {
           id: updatedUser.id,
           email: updatedUser.email,
-          fullName: updatedUser.fullName,
-          profileImage: updatedUser.profileImage
+          fullName: updatedUser.fullName
         }
       });
 
