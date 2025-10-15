@@ -180,6 +180,58 @@ export function registerUsuariosRoutes(app: Express) {
   });
 
   // ========================================
+  // 📖 BUSCAR DADOS DO USUÁRIO
+  // ========================================
+  app.get("/api/usuarios/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+
+      // Buscar usuário
+      const user = await db.select()
+        .from(usuarios)
+        .where(and(
+          eq(usuarios.id, userId),
+          eq(usuarios.isActive, true)
+        ))
+        .limit(1);
+
+      if (!user || user.length === 0) {
+        return res.status(404).json({ 
+          message: 'Usuário não encontrado' 
+        });
+      }
+
+      const usuario = user[0];
+
+      console.log('✅ [USUARIOS] Dados buscados:', userId);
+
+      // Retornar dados completos do usuário
+      res.json({
+        user: {
+          id: usuario.id,
+          email: usuario.email,
+          fullName: usuario.nomeCompleto,
+          quizCompleted: usuario.quizCompleted,
+          timerStartDate: usuario.timerStartDate,
+          timerIsActive: usuario.timerIsActive,
+          // Dados do quiz
+          genero: usuario.genero,
+          frequencia: usuario.frequencia,
+          motivacao: usuario.motivacao,
+          gatilhos: usuario.gatilhos,
+          religiao: usuario.religiao
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ [USUARIOS] Erro ao buscar usuário:', error);
+      res.status(500).json({ 
+        message: 'Erro ao buscar dados do usuário' 
+      });
+    }
+  });
+
+  // ========================================
   // 📝 ATUALIZAR DADOS DO QUIZ
   // ========================================
   app.put("/api/usuarios/:userId/quiz", async (req, res) => {

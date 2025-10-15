@@ -64,14 +64,23 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
     const fetchQuizData = async () => {
       if (!currentUser?.id) return;
       try {
-        // Use server API instead of direct Supabase query
-        const response = await fetch(`/api/quiz/${currentUser.id}`);
+        // Buscar dados completos do usuário da nova rota consolidada
+        const response = await fetch(`/api/usuarios/${currentUser.id}`);
 
         if (response.ok) {
           const result = await response.json();
-          setQuizData(result.quiz);
+          // Extrair dados do quiz da resposta
+          const quiz = {
+            genero: result.user.genero,
+            frequencia: result.user.frequencia,
+            motivacao: result.user.motivacao,
+            gatilhos: result.user.gatilhos,
+            religiao: result.user.religiao
+          };
+          setQuizData(quiz);
+          console.log('✅ Dados do quiz carregados:', quiz);
         } else if (response.status === 404) {
-          // Quiz not found - user hasn't completed quiz yet
+          // Usuário não encontrado
           setQuizData(null);
         } else {
           console.error('Error fetching quiz data:', response.statusText);
