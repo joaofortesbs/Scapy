@@ -818,16 +818,19 @@ export default function PainelInterface({
         if (storedUser && !cachedStatus) {
           try {
             const userData = JSON.parse(storedUser);
-            if (userData.startDate) {
-              console.log(`💿 [PainelInterface] Usuário local tem timer ativo`);
+            // Aceitar tanto timerStartDate (novo) quanto startDate (antigo) para compatibilidade
+            const timerDate = userData.timerStartDate || userData.startDate;
+            if (timerDate) {
+              console.log(`💿 [PainelInterface] Usuário local tem timer ativo:`, timerDate);
               setHasStartedJourney(true);
-              setLocalUser(userData);
+              // Normalizar para usar startDate internamente no componente
+              setLocalUser({ ...userData, startDate: timerDate });
               setIsLoading(false);
               
               // Cache temporário
               PainelCache.set(cacheKey, { 
                 hasActiveTimer: true, 
-                startDate: userData.startDate 
+                startDate: timerDate 
               }, 30000);
             }
           } catch (parseError) {

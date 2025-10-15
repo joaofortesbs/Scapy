@@ -74,11 +74,18 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
           email: data.user.email,
           username: data.user.email,
           full_name: data.user.fullName || 'Usuário',
-          startDate: data.user.timerStartDate || null,
+          timerStartDate: data.user.timerStartDate || null,
+          timerIsActive: data.user.timerIsActive || false,
           bestStreak: 0,
           relapseCount: 0,
           scapyPoints: 0,
-          quizCompleted: data.user.quizCompleted || false
+          quizCompleted: data.user.quizCompleted || false,
+          // Dados do quiz de personalização
+          genero: data.user.genero || null,
+          frequencia: data.user.frequencia || null,
+          motivacao: data.user.motivacao || null,
+          gatilhos: data.user.gatilhos || null,
+          religiao: data.user.religiao || null
         };
 
         console.log('💾 Salvando dados do usuário no login:', userData);
