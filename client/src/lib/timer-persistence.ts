@@ -190,51 +190,18 @@ export class TimerPersistence {
    */
   static async syncWithAPI(userId: string): Promise<TimerData | null> {
     try {
-      const response = await fetch(`/api/timer/status/${userId}`);
-      if (!response.ok) {
-        console.warn('⚠️ [TimerPersistence] API não disponível, usando localStorage');
-        return this.loadTimer(userId);
-      }
-
-      const apiData = await response.json();
+      // Carregar dados locais (fonte primária)
+      const localTimer = this.loadTimer(userId);
       
-      if (apiData.hasActiveTimer && apiData.startDate) {
-        const apiTimer: TimerData = {
-          userId: userId.toString(),
-          startDate: apiData.startDate,
-          createdAt: apiData.startDate,
-          isActive: true,
-          timestamp: Date.now(),
-          version: this.CURRENT_VERSION,
-          source: 'api-sync'
-        };
-
-        // Comparar com dados locais
-        const localTimer = this.loadTimer(userId);
-        
-        if (!localTimer || new Date(apiTimer.startDate).getTime() !== new Date(localTimer.startDate).getTime()) {
-          // API tem dados diferentes, sincronizar
-          this.saveTimer(userId, apiTimer.startDate);
-          console.log(`🌐 [TimerPersistence] Cronômetro sincronizado da API para ${userId}`);
-          return apiTimer;
-        } else {
-          // Dados locais estão corretos
-          console.log(`✅ [TimerPersistence] Dados locais já sincronizados para ${userId}`);
-          return localTimer;
-        }
-      } else {
-        // API não tem cronômetro ativo, verificar se temos local
-        const localTimer = this.loadTimer(userId);
-        if (localTimer) {
-          console.log(`📍 [TimerPersistence] Usando cronômetro local (API sem dados) para ${userId}`);
-          return localTimer;
-        }
+      if (localTimer) {
+        console.log(`✅ [TimerPersistence] Timer carregado do localStorage para ${userId}`);
+        return localTimer;
       }
 
+      console.log(`📋 [TimerPersistence] Nenhum timer local encontrado para ${userId}`);
       return null;
     } catch (error) {
       console.error('❌ [TimerPersistence] Erro na sincronização:', error);
-      // Fallback para dados locais
       return this.loadTimer(userId);
     }
   }

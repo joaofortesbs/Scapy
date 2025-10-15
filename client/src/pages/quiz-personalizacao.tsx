@@ -27,95 +27,67 @@ export default function QuizPersonalizacao({ user, onCompleteQuiz }: QuizPersona
   // Inicializar quiz no carregamento
   useEffect(() => {
     if (user && !isInitialized) {
-      initializeQuiz();
+      setIsInitialized(true);
     }
   }, [user, isInitialized]);
 
-  const initializeQuiz = async () => {
+  const saveQuizData = async () => {
+    if (!user || !user.id) {
+      console.error('❌ Erro: ID do usuário não encontrado');
+      return;
+    }
+
     try {
-      const response = await fetch('/api/quiz/initialize', {
-        method: 'POST',
+      console.log('📝 Salvando dados do quiz para usuário:', user.id);
+      console.log('📋 Dados do quiz:', quizData);
+
+      const response = await fetch(`/api/usuarios/${user.id}/quiz`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user.id,
-          userFullName: user.full_name || user.fullName || user.username || 'Usuário'
+          genero: quizData.gender,
+          frequencia: quizData.frequency,
+          motivacao: quizData.motivation,
+          gatilhos: quizData.triggers,
+          religiao: quizData.religion,
+          quizCompleted: true
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        // Se o quiz já existe, carregar os dados salvos
-        if (data.quiz) {
-          setQuizData({
-            gender: data.quiz.genero || '',
-            frequency: data.quiz.frequencia || '',
-            motivation: data.quiz.motivacao || '',
-            triggers: data.quiz.gatilhos || '',
-            religion: data.quiz.religiao || ''
-          });
-        }
-        setIsInitialized(true);
+        console.log('✅ Quiz salvo com sucesso:', data);
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Erro ao salvar quiz:', errorData);
       }
     } catch (error) {
-      console.error('Erro ao inicializar quiz:', error);
-      setIsInitialized(true); // Continuar mesmo com erro
+      console.error('❌ Erro de conexão ao salvar quiz:', error);
     }
   };
 
-  const saveQuizStep = async (stepName: string, stepValue: string) => {
-    try {
-      await fetch('/api/quiz/save-step', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          stepName,
-          stepValue
-        }),
-      });
-    } catch (error) {
-      console.error('Erro ao salvar etapa do quiz:', error);
-    }
-  };
-
-  const completeQuiz = async () => {
-    try {
-      await fetch('/api/quiz/complete', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id
-        }),
-      });
-    } catch (error) {
-      console.error('Erro ao completar quiz:', error);
-    }
-  };
-
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (currentStep < 7) {
       setCurrentStep(currentStep + 1);
     } else {
+      // Salvar quiz completo no banco antes de redirecionar
+      await saveQuizData();
+      
+      // Atualizar localStorage
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      userData.quizCompleted = true;
+      localStorage.setItem('user', JSON.stringify(userData));
+      
       // Completar quiz e redirecionar para o painel principal
-      completeQuiz();
       onCompleteQuiz();
       setLocation('/dashboard');
     }
   };
 
-  const handleOptionSelect = async (field: keyof typeof quizData, value: string) => {
+  const handleOptionSelect = (field: keyof typeof quizData, value: string) => {
     setQuizData(prev => ({ ...prev, [field]: value }));
-    
-    // Salvar no banco de dados em tempo real
-    if (isInitialized) {
-      await saveQuizStep(field, value);
-    }
   };
 
   const getProgressPercentage = () => {
