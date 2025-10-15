@@ -3,21 +3,20 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
   insertWeeklyProgressSchema, 
-  insertUserGoalsSchema, 
-  quizContextualizacao, 
-  insertQuizContextualizacaoSchema,
+  insertUserGoalsSchema,
   insertMoodSelectionSchema,
   insertUserObjectiveSchema,
   insertDailyTaskSchema,
   insertUserCustomGoalSchema,
-  authUsers,
-  insertAuthUserSchema,
   loginSchema,
   registerSchema,
   moodSelections,
-  timers,
-  userGoals, // Import userGoals
-  weeklyProgress // Import weeklyProgress
+  userGoals,
+  weeklyProgress,
+  usuarios,
+  insertUsuarioSchema,
+  updateUsuarioQuizSchema,
+  updateUsuarioTimerSchema
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -54,10 +53,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Buscar usuário pelo email
       const user = await db.select()
-        .from(authUsers)
+        .from(usuarios)
         .where(and(
-          eq(authUsers.email, email.toLowerCase().trim()),
-          eq(authUsers.isActive, true)
+          eq(usuarios.email, email.toLowerCase().trim()),
+          eq(usuarios.isActive, true)
         ))
         .limit(1);
 
@@ -88,15 +87,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('✅ [LOGIN] JWT token gerado com sucesso');
 
       // Atualizar último login
-      await db.update(authUsers)
+      await db.update(usuarios)
         .set({ lastLogin: new Date() })
-        .where(eq(authUsers.id, authUser.id));
+        .where(eq(usuarios.id, authUser.id));
 
       // Retornar dados do usuário (sem a senha)
       const userData = {
         id: authUser.id,
         email: authUser.email,
-        fullName: authUser.fullName,
+        fullName: authUser.nomeCompleto,
         createdAt: authUser.createdAt,
         lastLogin: new Date().toISOString()
       };
@@ -128,8 +127,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Verificar se o email já existe
       const existingUser = await db.select()
-        .from(authUsers)
-        .where(eq(authUsers.email, email.toLowerCase().trim()))
+        .from(usuarios)
+        .where(eq(usuarios.email, email.toLowerCase().trim()))
         .limit(1);
 
       if (existingUser.length > 0) {
@@ -141,7 +140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Criar usuário
-      const newUser = await db.insert(authUsers)
+      const newUser = await db.insert(usuarios)
         .values({
           email: email.toLowerCase().trim(),
           passwordHash: passwordHash,
@@ -193,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: {
           id: user.id,
           email: user.email,
-          fullName: user.fullName
+          fullName: user.nomeCompleto
         }
       });
 
@@ -243,11 +242,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔍 DEBUG - Verificando usuário:', userId);
 
       const userCheck = await db.select({
-        id: authUsers.id,
-        email: authUsers.email
+        id: usuarios.id,
+        email: usuarios.email
       })
-        .from(authUsers)
-        .where(eq(authUsers.id, parseInt(userId)))
+        .from(usuarios)
+        .where(eq(usuarios.id, parseInt(userId)))
         .limit(1);
 
       console.log('🔍 DEBUG - Resultado da verificação:', userCheck);
@@ -277,14 +276,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('🔍 DEBUG - Drizzle update data:', drizzleUpdateData);
 
-      const result = await db.update(authUsers)
+      const result = await db.update(usuarios)
         .set(drizzleUpdateData)
-        .where(eq(authUsers.id, parseInt(userId)))
+        .where(eq(usuarios.id, parseInt(userId)))
         .returning({
-          id: authUsers.id,
-          email: authUsers.email,
-          fullName: authUsers.fullName,
-          profileImage: authUsers.profileImage
+          id: usuarios.id,
+          email: usuarios.email,
+          fullName: usuarios.nomeCompleto,
+          profileImage: usuarios.profileImage
         });
 
       console.log('🔍 DEBUG - Resultado do update:', result);
@@ -340,10 +339,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get current user data
       const user = await db.select()
-        .from(authUsers)
+        .from(usuarios)
         .where(and(
-          eq(authUsers.id, parseInt(userId)),
-          eq(authUsers.isActive, true)
+          eq(usuarios.id, parseInt(userId)),
+          eq(usuarios.isActive, true)
         ))
         .limit(1);
 
@@ -390,7 +389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = {
         id: authUser.id,
         email: authUser.email,
-        fullName: authUser.fullName,
+        fullName: authUser.nomeCompleto,
         createdAt: authUser.createdAt,
         lastLogin: authUser.lastLogin,
         startDate: timerStartDate // Current time as start date
@@ -432,54 +431,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User ID is required" });
       }
 
-      // Buscar timer do usuário no Neon (tabela timers dedicada)
-      const timerRecords = await db.select()
-        .from(timers)
+      // Buscar timer do usuário na tabela usuarios
+      const userRecords = await db.select()
+        .from(usuarios)
         .where(and(
-          eq(timers.user_id, userId.toString()),
-          eq(timers.is_active, true)
+          eq(usuarios.id, parseInt(userId)),
+          eq(usuarios.isActive, true)
         ))
-        .orderBy(desc(timers.start_date))
         .limit(1);
 
       let hasActiveTimer = false;
       let latestTimer: any = null;
 
-      if (timerRecords && timerRecords.length > 0) {
-        const timerRecord = timerRecords[0];
-        hasActiveTimer = true;
-        latestTimer = {
-          id: timerRecord.id,
-          user_id: timerRecord.user_id, 
-          start_date: timerRecord.start_date.toISOString(),
-          created_at: timerRecord.created_at.toISOString()
-        };
-        console.log('🎯 Timer encontrado no Neon (timers) para usuário', userId);
-
-        // Sincronizar com memória
-        global.activeTimers!.set(Number(userId), {
-          userId: Number(userId),
-          startDate: timerRecord.start_date.toISOString(),
-          createdAt: timerRecord.created_at.toISOString()
-        });
-      } else {
-        console.log('Buscando timer em memória para usuário', userId);
-
-        // Fallback: verificar em memória
-        const memoryTimer = global.activeTimers!.get(Number(userId));
-
-        if (memoryTimer) {
+      if (userRecords && userRecords.length > 0) {
+        const usuario = userRecords[0];
+        
+        if (usuario.timerIsActive && usuario.timerStartDate) {
           hasActiveTimer = true;
           latestTimer = {
-            id: userId.toString(),
-            user_id: userId.toString(), 
-            start_date: memoryTimer.startDate,
-            created_at: memoryTimer.createdAt
+            id: usuario.id.toString(),
+            user_id: usuario.id.toString(), 
+            start_date: usuario.timerStartDate.toISOString(),
+            created_at: usuario.createdAt.toISOString()
           };
-          console.log('Timer encontrado em memória para usuário', userId);
+          console.log('🎯 Timer encontrado na tabela usuarios para usuário', userId);
+
+          // Sincronizar com memória
+          global.activeTimers!.set(Number(userId), {
+            userId: Number(userId),
+            startDate: usuario.timerStartDate.toISOString(),
+            createdAt: usuario.createdAt.toISOString()
+          });
         } else {
           console.log('Nenhum timer ativo para usuário', userId);
         }
+      } else {
+        console.log('Usuário não encontrado:', userId);
       }
 
       // Set cache headers to ensure fresh data
@@ -509,16 +496,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await db.select({
-        id: authUsers.id,
-        email: authUsers.email,
-        fullName: authUsers.fullName,
-        createdAt: authUsers.createdAt,
-        lastLogin: authUsers.lastLogin
+        id: usuarios.id,
+        email: usuarios.email,
+        fullName: usuarios.nomeCompleto,
+        createdAt: usuarios.createdAt,
+        lastLogin: usuarios.lastLogin
       })
-        .from(authUsers)
+        .from(usuarios)
         .where(and(
-          eq(authUsers.id, parseInt(userId)),
-          eq(authUsers.isActive, true)
+          eq(usuarios.id, parseInt(userId)),
+          eq(usuarios.isActive, true)
         ))
         .limit(1);
 
@@ -531,7 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = {
         id: authUser.id,
         email: authUser.email,
-        fullName: authUser.fullName,
+        fullName: authUser.nomeCompleto,
         createdAt: authUser.createdAt,
         lastLogin: authUser.lastLogin,
         startDate: authUser.createdAt // Use created_at as startDate
@@ -1288,7 +1275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔍 [HEALTH] Verificando saúde do banco de dados...');
 
       // Teste de conexão simples
-      const testQuery = await db.select().from(authUsers).limit(1);
+      const testQuery = await db.select().from(usuarios).limit(1);
 
       // Verificar tabelas principais
       const tables = ['auth_users', 'timers', 'user_goals', 'weekly_progress'];
@@ -1303,7 +1290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const tableName of tables) {
         try {
           if (tableName === 'auth_users') {
-            const count = await db.select().from(authUsers).limit(1);
+            const count = await db.select().from(usuarios).limit(1);
             healthStatus.tables[tableName] = 'ok';
           } else if (tableName === 'timers') {
             const count = await db.select().from(timers).limit(1);
