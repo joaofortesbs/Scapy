@@ -18,10 +18,20 @@ interface User {
   profileImage?: string;
 }
 
+interface RankedUser {
+  id: number;
+  name: string;
+  email: string;
+  days: number;
+  avatar: string;
+}
+
 export default function Ranking() {
   const [, setLocation] = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [progressInDays, setProgressInDays] = useState(0);
+  const [rankingData, setRankingData] = useState<RankedUser[]>([]);
+  const [isLoadingRanking, setIsLoadingRanking] = useState(true);
   const { imageUrl } = useProfileImage(user);
 
   useEffect(() => {
@@ -42,6 +52,28 @@ export default function Ranking() {
       setProgressInDays(days);
     }
   }, [user]);
+
+  // Buscar ranking de usuários do backend
+  useEffect(() => {
+    const fetchRanking = async () => {
+      try {
+        setIsLoadingRanking(true);
+        const response = await fetch('/api/usuarios/ranking');
+        const data = await response.json();
+        
+        if (data.ranking) {
+          setRankingData(data.ranking);
+          console.log('✅ Ranking carregado:', data.ranking.length, 'usuários');
+        }
+      } catch (error) {
+        console.error('❌ Erro ao buscar ranking:', error);
+      } finally {
+        setIsLoadingRanking(false);
+      }
+    };
+
+    fetchRanking();
+  }, []);
 
   const handleBackToDashboard = () => {
     setLocation('/dashboard');
@@ -87,66 +119,124 @@ export default function Ranking() {
           <div className="w-full max-w-2xl mx-auto space-y-4">
             {/* Título com degradê */}
             <div className="text-center">
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-blue-400 to-primary bg-clip-text text-transparent animate-gradient">
+              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-white bg-clip-text text-transparent">
                 Seu momento atual
               </h1>
             </div>
 
-            {/* Card de Progresso Sofisticado */}
-            <div className="relative group">
-              {/* Brilho externo animado */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-cyan-400 to-primary rounded-2xl opacity-30 group-hover:opacity-50 blur-lg transition-all duration-500 animate-pulse"></div>
-              
-              <Card className="relative backdrop-blur-xl bg-gradient-to-br from-background/10 via-background/5 to-background/10 border border-primary/30 rounded-2xl shadow-[0_0_50px_rgba(0,246,255,0.15)] overflow-hidden hover:shadow-[0_0_80px_rgba(0,246,255,0.25)] transition-all duration-500">
-                {/* Gradiente sutil de fundo */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-cyan-500/5 pointer-events-none"></div>
-                
-                {/* Linha de brilho superior */}
-                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent opacity-60"></div>
-                
-                <CardContent className="relative p-6">
-                  <div className="flex items-center gap-5">
-                    {/* Imagem de Perfil com efeito de brilho */}
-                    <div className="flex-shrink-0 relative">
-                      <div className="absolute -inset-1 bg-gradient-to-br from-primary to-cyan-400 rounded-full opacity-40 blur-md group-hover:opacity-60 transition-opacity duration-300"></div>
-                      <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-primary/40 shadow-[0_0_20px_rgba(0,246,255,0.3)] ring-1 ring-primary/20">
-                        <img
-                          src={imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.fullName || user?.full_name || 'user')}&backgroundColor=000515`}
-                          alt="Perfil"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Container da Barra de Progresso com Números */}
-                    <div className="flex-1 flex items-center gap-4">
-                      {/* Número de dias atual */}
-                      <div className="flex-shrink-0">
-                        <span className="text-xl font-bold bg-gradient-to-br from-primary to-cyan-300 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(0,246,255,0.5)]">
-                          {progressInDays}
-                        </span>
-                      </div>
-
-                      {/* Barra de Progresso com efeitos */}
-                      <div className="flex-1 relative">
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-cyan-400/20 rounded-full blur-sm"></div>
-                        <Progress 
-                          value={progressPercentage} 
-                          className="relative h-3.5 bg-gradient-to-br from-secondary/40 to-secondary/20 border border-primary/30 shadow-inner"
-                        />
-                      </div>
-
-                      {/* Número de dias do próximo avatar */}
-                      <div className="flex-shrink-0">
-                        <span className="text-xl font-bold bg-gradient-to-br from-primary/60 to-cyan-300/60 bg-clip-text text-transparent">
-                          {nextAvatarDays}
-                        </span>
-                      </div>
+            {/* Card de Progresso Simplificado - Estilo Evolução Mental */}
+            <Card className="border-border rounded-full evolucao-mental-card-natural-3d" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
+              <CardContent className="p-3">
+                <div className="flex items-center gap-3">
+                  {/* Imagem de Perfil Circular */}
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/30">
+                      <img
+                        src={imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.fullName || user?.full_name || 'user')}&backgroundColor=000515`}
+                        alt="Perfil"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+
+                  {/* Container da Barra de Progresso com Números */}
+                  <div className="flex-1 flex items-center gap-2">
+                    {/* Número de dias atual */}
+                    <div className="flex-shrink-0">
+                      <span className="text-sm font-medium text-primary">
+                        {progressInDays}
+                      </span>
+                    </div>
+
+                    {/* Barra de Progresso */}
+                    <div className="flex-1">
+                      <Progress 
+                        value={progressPercentage} 
+                        className="h-2 bg-secondary/30 border border-border"
+                      />
+                    </div>
+
+                    {/* Número de dias do próximo avatar */}
+                    <div className="flex-shrink-0">
+                      <span className="text-sm font-medium text-primary">
+                        {nextAvatarDays}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Card de Ranking */}
+            <Card className="border-border rounded-3xl evolucao-mental-card-natural-3d mt-6" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
+              <CardContent className="p-6">
+                <h2 className="text-2xl font-bold text-primary mb-6 text-center">Ranking Regional</h2>
+                
+                {isLoadingRanking ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">Carregando ranking...</p>
+                  </div>
+                ) : rankingData.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">Nenhum usuário no ranking ainda.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {rankingData.map((rankedUser, index) => (
+                      <Card 
+                        key={rankedUser.id} 
+                        className="border-border rounded-full evolucao-mental-card-natural-3d" 
+                        style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-3">
+                            {/* Posição no Ranking com # */}
+                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                              <span className="text-sm font-bold text-primary">
+                                #{index + 1}
+                              </span>
+                            </div>
+
+                            {/* Imagem de Perfil */}
+                            <div className="flex-shrink-0">
+                              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/30">
+                                <img
+                                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(rankedUser.avatar)}&backgroundColor=000515`}
+                                  alt={rankedUser.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Nome do Usuário */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">
+                                {rankedUser.name}
+                              </p>
+                            </div>
+
+                            {/* Barra de Progresso sem números */}
+                            <div className="flex-1">
+                              <Progress 
+                                value={Math.min(100, (rankedUser.days / 365) * 100)} 
+                                className="h-2 bg-secondary/30 border border-border"
+                              />
+                            </div>
+
+                            {/* Dias totais */}
+                            <div className="flex-shrink-0">
+                              <span className="text-sm font-bold text-primary">
+                                {rankedUser.days}d
+                              </span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

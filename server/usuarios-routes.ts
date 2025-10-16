@@ -180,6 +180,60 @@ export function registerUsuariosRoutes(app: Express) {
   });
 
   // ========================================
+  // 🏆 BUSCAR RANKING DE USUÁRIOS (PRECISA VIR ANTES DO :userId)
+  // ========================================
+  app.get("/api/usuarios/ranking", async (req, res) => {
+    try {
+      // Buscar TODOS os usuários ativos (com ou sem timer)
+      const allUsers = await db.select({
+        id: usuarios.id,
+        nomeCompleto: usuarios.nomeCompleto,
+        email: usuarios.email,
+        timerStartDate: usuarios.timerStartDate,
+        timerIsActive: usuarios.timerIsActive,
+      })
+        .from(usuarios)
+        .where(eq(usuarios.isActive, true));
+
+      // Calcular dias de progresso para cada usuário
+      const ranking = allUsers
+        .map(user => {
+          let diffDays = 0;
+          
+          // Se tem timer ativo, calcular dias
+          if (user.timerStartDate) {
+            const startDate = new Date(user.timerStartDate);
+            const now = new Date();
+            const diffTime = Math.abs(now.getTime() - startDate.getTime());
+            diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+          }
+
+          return {
+            id: user.id,
+            name: user.nomeCompleto,
+            email: user.email,
+            days: diffDays,
+            avatar: user.email.split('@')[0] // Usar parte do email como seed do avatar
+          };
+        })
+        .sort((a, b) => b.days - a.days); // Ordenar por dias (decrescente)
+
+      console.log(`✅ [USUARIOS] Ranking gerado com ${ranking.length} usuários (total de usuários ativos)`);
+
+      res.json({
+        ranking: ranking,
+        total: ranking.length
+      });
+
+    } catch (error) {
+      console.error('❌ [USUARIOS] Erro ao buscar ranking:', error);
+      res.status(500).json({ 
+        message: 'Erro ao buscar ranking de usuários' 
+      });
+    }
+  });
+
+  // ========================================
   // 📖 BUSCAR DADOS DO USUÁRIO
   // ========================================
   app.get("/api/usuarios/:userId", async (req, res) => {
