@@ -24,6 +24,7 @@ interface RankedUser {
   email: string;
   days: number;
   avatar: string;
+  imagemAvatar?: string;
 }
 
 export default function Ranking() {
@@ -201,7 +202,7 @@ export default function Ranking() {
                             <div className="flex-shrink-0">
                               <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/30">
                                 <img
-                                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(rankedUser.avatar)}&backgroundColor=000515`}
+                                  src={rankedUser.imagemAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(rankedUser.avatar)}&backgroundColor=000515`}
                                   alt={rankedUser.name}
                                   className="w-full h-full object-cover"
                                 />
