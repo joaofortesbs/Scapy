@@ -95,28 +95,6 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
     fetchQuizData();
   }, [currentUser?.id]);
 
-  // Função para obter URL de upload do Object Storage
-  const handleGetUploadParameters = async () => {
-    const token = localStorage.getItem('token');
-    
-    const response = await fetch('/api/objects/upload', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao obter URL de upload');
-    }
-
-    const { uploadURL } = await response.json();
-    return {
-      method: 'PUT' as const,
-      url: uploadURL,
-    };
-  };
 
   const handleUploadComplete = async (result: any) => {
     if (!currentUser?.id) return;
@@ -126,18 +104,19 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
 
       console.log('🎯 Salvando imagem no banco Neon externo...');
 
-      // Pegar a URL da imagem que foi feita upload no Object Storage
-      const imageURL = result.successful?.[0]?.uploadURL;
+      // O ObjectUploader retorna { uploadURL, base64 }
+      // Vamos usar o base64 diretamente como imagem
+      const imageBase64 = result.base64;
       
-      if (!imageURL) {
-        console.error('❌ URL da imagem não encontrada');
+      if (!imageBase64) {
+        console.error('❌ Imagem Base64 não encontrada');
         setUploading(false);
         return;
       }
 
-      console.log('📸 URL da imagem:', imageURL);
+      console.log('📸 Imagem convertida para Base64 com sucesso');
 
-      // Salvar URL da imagem no banco Neon através da API
+      // Salvar imagem Base64 no banco Neon através da API
       const token = localStorage.getItem('token');
       
       const response = await fetch(`/api/usuarios/${currentUser.id}/avatar`, {
@@ -147,7 +126,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          imagemAvatar: imageURL
+          imagemAvatar: imageBase64
         }),
       });
 
@@ -367,7 +346,6 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   {/* Botão para alterar foto */}
                   <ObjectUploader
                     maxFileSize={5 * 1024 * 1024} // 5MB
-                    onGetUploadParameters={handleGetUploadParameters}
                     onComplete={handleUploadComplete}
                     buttonClassName="absolute bottom-2 right-2 w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:bg-primary/90 transition-colors shadow-lg disabled:opacity-50"
                   >
