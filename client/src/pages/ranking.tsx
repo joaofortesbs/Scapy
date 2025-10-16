@@ -70,25 +70,27 @@ export default function Ranking() {
       <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
       
       <div className="relative z-10">
-        {/* Header com botão voltar e título */}
-        <div className="flex items-center justify-center pt-6 px-6 relative">
+        {/* Botão de voltar */}
+        <div className="absolute top-6 left-6 z-20">
           <Button
             variant="ghost"
             onClick={handleBackToDashboard}
-            className="absolute left-6 text-foreground hover:text-primary transition-all duration-300 p-3 rounded-full hover:bg-primary/10"
+            className="text-foreground hover:text-primary transition-all duration-300 p-3 rounded-full hover:bg-primary/10"
             data-testid="back-button"
           >
             <ArrowLeft className="w-6 h-6" />
           </Button>
-          
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-blue-400 to-primary bg-clip-text text-transparent animate-gradient">
-            Seu momento atual
-          </h1>
         </div>
 
         {/* Conteúdo principal */}
-        <div className="px-6 pt-6">
+        <div className="px-6 pt-20">
           <div className="w-full max-w-2xl mx-auto space-y-4">
+            {/* Título com degradê */}
+            <div className="text-center">
+              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-white bg-clip-text text-transparent">
+                Seu momento atual
+              </h1>
+            </div>
 
             {/* Card de Progresso Simplificado - Estilo Evolução Mental */}
             <Card className="border-border rounded-full evolucao-mental-card-natural-3d" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
