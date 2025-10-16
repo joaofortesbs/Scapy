@@ -83,17 +83,17 @@ export default function Ranking() {
         </div>
 
         {/* Conteúdo principal */}
-        <div className="flex flex-col items-center justify-center min-h-screen px-6 pt-24">
-          <div className="w-full max-w-2xl space-y-6">
+        <div className="px-6 pt-20">
+          <div className="w-full max-w-2xl mx-auto space-y-4">
             {/* Título com degradê */}
-            <div className="text-center mb-8">
+            <div className="text-center">
               <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-blue-400 to-primary bg-clip-text text-transparent animate-gradient">
                 Seu momento atual
               </h1>
             </div>
 
-            {/* Card de Progresso Simplificado */}
-            <Card className="backdrop-blur-sm bg-background/5 border-primary/20 rounded-3xl shadow-2xl overflow-hidden">
+            {/* Card de Progresso Simplificado - Retangular */}
+            <Card className="backdrop-blur-sm bg-background/5 border-primary/20 rounded-lg shadow-2xl overflow-hidden">
               <CardContent className="p-4">
                 <div className="flex items-center gap-4">
                   {/* Imagem de Perfil Circular */}
