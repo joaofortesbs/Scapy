@@ -92,8 +92,8 @@ export default function Ranking() {
               </h1>
             </div>
 
-            {/* Card de Progresso Simplificado - Retangular */}
-            <Card className="backdrop-blur-sm bg-background/5 border-primary/20 rounded-lg shadow-2xl overflow-hidden">
+            {/* Card de Progresso Simplificado - Completamente Arredondado */}
+            <Card className="backdrop-blur-sm bg-background/5 border-primary/20 rounded-full shadow-2xl overflow-hidden">
               <CardContent className="p-4">
                 <div className="flex items-center gap-4">
                   {/* Imagem de Perfil Circular */}
