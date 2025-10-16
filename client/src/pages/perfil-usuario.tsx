@@ -139,9 +139,16 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
       console.log('✅ Imagem salva no banco Neon:', data);
 
       // Atualizar dados do usuário localmente
-      const updatedUser = { ...currentUser, imagemAvatar: data.imagemAvatar };
+      const updatedUser = { 
+        ...currentUser, 
+        imagemAvatar: data.imagemAvatar,
+        profileImage: data.imagemAvatar // Manter ambos os campos sincronizados
+      };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setCurrentUser(updatedUser);
+
+      // Salvar também no sistema robusto do hook
+      saveImageToLocalStorage(data.imagemAvatar);
 
       // Atualizar estado local imediatamente
       if (onUserUpdate) {

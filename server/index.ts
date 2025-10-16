@@ -10,8 +10,9 @@ import { scheduleDailyCleanup } from "./routes";
 dotenv.config();
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Aumentar limite para aceitar imagens Base64 (até 10MB)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: false }));
 
 app.use((req, res, next) => {
   const start = Date.now();

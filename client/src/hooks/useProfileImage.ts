@@ -74,6 +74,7 @@ export function useProfileImage(user: User | undefined | null) {
       if (savedUser) {
         const userData = JSON.parse(savedUser);
         userData.profileImage = base64Data;
+        userData.imagemAvatar = base64Data; // Salvar também em imagemAvatar para consistência
         userData.lastImageUpdate = new Date().toISOString();
         localStorage.setItem('user', JSON.stringify(userData));
       }
