@@ -1,11 +1,11 @@
 
 import fetch from 'node-fetch';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyCTF7NXClZBjV5M2JheaL0_SQ8brDrZg';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
 
-if (!GEMINI_API_KEY) {
-  console.warn("⚠️  GEMINI_API_KEY not found. Daily phrase generation will use fallback phrases only.");
+if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyCTF7NXClZBjV5M2JheaL0_SQ8brDrZg') {
+  console.log("🔑 Usando GEMINI_API_KEY configurada diretamente no código");
 }
 
 export interface DailyPhrase {
@@ -23,6 +23,8 @@ export async function generateDailyPhrase(): Promise<string> {
     if (!GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY not available');
     }
+    
+    console.log(`🔑 [DailyPhrase] Usando API Key: ${GEMINI_API_KEY.substring(0, 15)}...`);
     
     const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: 'POST',
@@ -43,7 +45,9 @@ export async function generateDailyPhrase(): Promise<string> {
     });
 
     if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      console.error(`❌ [DailyPhrase] Erro ${response.status}:`, errorData);
+      throw new Error(`Gemini API error: ${response.status} - ${JSON.stringify(errorData)}`);
     }
 
     const data = await response.json() as any;
@@ -53,9 +57,10 @@ export async function generateDailyPhrase(): Promise<string> {
       throw new Error('No text generated from Gemini API');
     }
 
+    console.log(`✅ [DailyPhrase] Frase gerada com sucesso pela IA`);
     return generatedText.trim();
   } catch (error) {
-    console.error('Error generating phrase with Gemini:', error);
+    console.error('❌ [DailyPhrase] Error generating phrase with Gemini:', error);
     // Fallback phrases in case of API failure
     const fallbackPhrases = [
       "Sua força interior é maior que qualquer obstáculo. Continue firme em sua jornada!",

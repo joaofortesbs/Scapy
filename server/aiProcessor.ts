@@ -7,12 +7,15 @@ import type {
   InsertDailyTask 
 } from "@shared/schema";
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY environment variable is required");
+// Usar a chave da API diretamente ou do ambiente
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyCTF7NXClZBjV5M2JheaL0_SQ8brDrZg';
+
+if (!GEMINI_API_KEY) {
+  console.warn("⚠️ GEMINI_API_KEY não configurada, usando fallback");
 }
 
 const ai = new GoogleGenAI({ 
-  apiKey: process.env.GEMINI_API_KEY
+  apiKey: GEMINI_API_KEY
 });
 
 interface UserProfileData {
@@ -43,8 +46,10 @@ export class AIProcessor {
    * Gera sugestões de atividades personalizadas com base no perfil do usuário
    */
   async generatePersonalizedSuggestions(userProfile: UserProfileData): Promise<AISuggestionResponse> {
+    const GEMINI_KEY = process.env.GEMINI_API_KEY || 'AIzaSyCTF7NXClZBjV5M2JheaL0_SQ8brDrZg';
+    
     // Verificar se a chave da API está configurada
-    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.trim() === '') {
+    if (!GEMINI_KEY || GEMINI_KEY.trim() === '') {
       console.warn(`⚠️ GEMINI_API_KEY não configurada, usando sugestões padrão`);
       return this.getFallbackSuggestions(userProfile.mood);
     }
@@ -53,10 +58,11 @@ export class AIProcessor {
       const systemPrompt = this.buildSystemPrompt();
       const userPrompt = this.buildUserPrompt(userProfile);
 
-      console.log(`🤖 Gerando sugestões para usuário com humor: ${userProfile.mood}`);
+      console.log(`🤖 Gerando sugestões com Gemini AI para humor: ${userProfile.mood}`);
+      console.log(`🔑 API Key presente: ${GEMINI_KEY.substring(0, 10)}...`);
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-2.0-flash-exp",
         config: {
           systemInstruction: systemPrompt,
           responseMimeType: "application/json",
@@ -94,17 +100,28 @@ export class AIProcessor {
       });
 
       const rawJson = response.text;
-      console.log(`🎯 Resposta bruta da IA: ${rawJson?.substring(0, 200)}...`);
+      console.log(`🎯 Resposta bruta da IA (primeiros 200 chars): ${rawJson?.substring(0, 200)}...`);
 
       if (rawJson) {
-        const data: AISuggestionResponse = JSON.parse(rawJson);
-        console.log(`✅ Sugestões geradas: ${data.activities.length} atividades`);
-        return data;
+        try {
+          const data: AISuggestionResponse = JSON.parse(rawJson);
+          console.log(`✅ [GEMINI SUCCESS] Sugestões geradas pela IA: ${data.activities.length} atividades`);
+          console.log(`📝 [GEMINI] Mensagem: ${data.message}`);
+          return data;
+        } catch (parseError) {
+          console.error(`❌ Erro ao parsear resposta da IA:`, parseError);
+          console.log(`📄 Resposta completa que falhou:`, rawJson);
+          throw parseError;
+        }
       } else {
         throw new Error("Resposta vazia da IA");
       }
     } catch (error) {
       console.error(`❌ Erro ao gerar sugestões com Gemini API:`, error);
+      if (error instanceof Error) {
+        console.error(`❌ Detalhes do erro: ${error.message}`);
+        console.error(`❌ Stack trace:`, error.stack);
+      }
       console.log(`🔄 Usando sugestões padrão como fallback`);
       return this.getFallbackSuggestions(userProfile.mood);
     }
