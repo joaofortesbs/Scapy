@@ -96,28 +96,50 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
   }, [currentUser?.id]);
 
 
-  const handleUploadComplete = async (result: any) => {
+  // Função para obter URL de upload do Object Storage
+  const handleGetUploadParameters = async () => {
+    const token = localStorage.getItem('authToken');
+    
+    const response = await fetch('/api/objects/upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Erro ao obter URL de upload');
+    }
+
+    const { uploadURL } = await response.json();
+    return {
+      method: 'PUT' as const,
+      url: uploadURL,
+    };
+  };
+
+  const handleUploadComplete = async (result: { uploadURL: string }) => {
     if (!currentUser?.id) return;
 
     try {
       setUploading(true);
 
-      console.log('🎯 Salvando imagem no banco Neon externo...');
+      console.log('🎯 Salvando URL da imagem no banco Neon externo...');
 
-      // O ObjectUploader retorna { uploadURL, base64 }
-      // Vamos usar o base64 diretamente como imagem
-      const imageBase64 = result.base64;
+      // O ObjectUploader retorna { uploadURL } com a URL pública da imagem
+      const imageURL = result.uploadURL;
       
-      if (!imageBase64) {
-        console.error('❌ Imagem Base64 não encontrada');
+      if (!imageURL) {
+        console.error('❌ URL da imagem não encontrada');
         setUploading(false);
         return;
       }
 
-      console.log('📸 Imagem convertida para Base64 com sucesso');
+      console.log('📸 URL da imagem:', imageURL);
 
-      // Salvar imagem Base64 no banco Neon através da API
-      const token = localStorage.getItem('token');
+      // Salvar URL da imagem no banco Neon através da API
+      const token = localStorage.getItem('authToken');
       
       const response = await fetch(`/api/usuarios/${currentUser.id}/avatar`, {
         method: 'PUT',
@@ -126,7 +148,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          imagemAvatar: imageBase64
+          imagemAvatar: imageURL
         }),
       });
 
@@ -147,7 +169,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
         onUserUpdate(updatedUser);
       }
 
-      console.log('✅ Imagem salva com sucesso no localStorage!');
+      console.log('✅ URL da imagem salva com sucesso!');
       alert('✅ Foto de perfil atualizada com sucesso!');
 
     } catch (error) {
@@ -346,6 +368,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   {/* Botão para alterar foto */}
                   <ObjectUploader
                     maxFileSize={5 * 1024 * 1024} // 5MB
+                    onGetUploadParameters={handleGetUploadParameters}
                     onComplete={handleUploadComplete}
                     buttonClassName="absolute bottom-2 right-2 w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:bg-primary/90 transition-colors shadow-lg disabled:opacity-50"
                   >
