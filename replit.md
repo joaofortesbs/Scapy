@@ -24,9 +24,12 @@ Preferred communication style: Simple, everyday language.
 - **Session Management**: Express session handling with PostgreSQL session store support
 
 ## Database Schema
-- **Users Table**: Stores user credentials and start dates for tracking
-- **Weekly Progress Table**: Tracks daily completion status and streak information
-- **User Goals Table**: Manages user-defined goals and targets
+- **Users Table (usuarios)**: Consolidated table storing all user data including:
+  - User credentials (email, password_hash)
+  - Profile information (nomeCompleto, imagemAvatar)
+  - Quiz context (genero, frequencia, motivacao, gatilhos, religiao, quiz_completed)
+  - Timer data (timer_start_date, timer_is_active)
+  - Account status (is_active, last_login, created_at, updated_at)
 - **Schema Validation**: Zod schemas for runtime type checking and validation
 
 ## Component Structure
@@ -41,6 +44,12 @@ Preferred communication style: Simple, everyday language.
 - **Weekly Progress Tracking**: Visual circular indicators for each day of the week
 - **Streak Tracking**: Current and best streak counters
 - **Goal Management**: Framework for setting and tracking personal goals
+- **Profile Image System**: 
+  - Upload profile images to Replit Object Storage
+  - Images stored with presigned URLs and ACL policies
+  - Secure image management with JWT authentication
+  - Profile images displayed in header, profile page, and ranking cards
+  - Fallback to DiceBear avatars when no image is set
 - **Mobile Optimization**: Touch-friendly interface designed for mobile devices
 
 # External Dependencies
