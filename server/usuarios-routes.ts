@@ -6,7 +6,8 @@ import {
   usuarios, 
   insertUsuarioSchema, 
   updateUsuarioQuizSchema,
-  updateUsuarioTimerSchema
+  updateUsuarioTimerSchema,
+  updateUsuarioAvatarSchema
 } from "@shared/schema";
 import { generateJWT } from "./auth-middleware";
 import { ZodError } from 'zod';
@@ -191,6 +192,7 @@ export function registerUsuariosRoutes(app: Express) {
         email: usuarios.email,
         timerStartDate: usuarios.timerStartDate,
         timerIsActive: usuarios.timerIsActive,
+        imagemAvatar: usuarios.imagemAvatar,
       })
         .from(usuarios)
         .where(eq(usuarios.isActive, true));
@@ -213,7 +215,8 @@ export function registerUsuariosRoutes(app: Express) {
             name: user.nomeCompleto,
             email: user.email,
             days: diffDays,
-            avatar: user.email.split('@')[0] // Usar parte do email como seed do avatar
+            avatar: user.email.split('@')[0], // Usar parte do email como seed do avatar
+            imagemAvatar: user.imagemAvatar // URL da imagem de perfil
           };
         })
         .sort((a, b) => b.days - a.days); // Ordenar por dias (decrescente)
@@ -265,6 +268,7 @@ export function registerUsuariosRoutes(app: Express) {
           id: usuario.id,
           email: usuario.email,
           fullName: usuario.nomeCompleto,
+          imagemAvatar: usuario.imagemAvatar,
           quizCompleted: usuario.quizCompleted,
           timerStartDate: usuario.timerStartDate,
           timerIsActive: usuario.timerIsActive,
@@ -325,6 +329,59 @@ export function registerUsuariosRoutes(app: Express) {
       console.error('❌ [USUARIOS] Erro ao atualizar quiz:', error);
       res.status(500).json({ 
         message: 'Erro ao salvar dados do quiz' 
+      });
+    }
+  });
+
+  // ========================================
+  // 🖼️ ATUALIZAR IMAGEM DE PERFIL (PROTEGIDA)
+  // ========================================
+  app.put("/api/usuarios/:userId/avatar", verifyJWT, async (req: any, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const tokenUserId = req.user?.id;
+
+      // Verificar se o usuário está tentando alterar a própria imagem
+      if (tokenUserId !== userId) {
+        return res.status(403).json({ 
+          message: 'Você só pode alterar sua própria imagem de perfil' 
+        });
+      }
+
+      const avatarData = updateUsuarioAvatarSchema.parse(req.body);
+
+      // Atualizar imagem de perfil
+      const updated = await db.update(usuarios)
+        .set({
+          imagemAvatar: avatarData.imagemAvatar,
+          updatedAt: new Date()
+        })
+        .where(eq(usuarios.id, userId))
+        .returning();
+
+      if (!updated || updated.length === 0) {
+        return res.status(404).json({ 
+          message: 'Usuário não encontrado' 
+        });
+      }
+
+      console.log('✅ [USUARIOS] Imagem de perfil atualizada para usuário:', userId);
+
+      res.json({
+        message: 'Imagem de perfil atualizada com sucesso!',
+        imagemAvatar: updated[0].imagemAvatar
+      });
+
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ 
+          message: 'URL de imagem inválida',
+          errors: error.errors 
+        });
+      }
+      console.error('❌ [USUARIOS] Erro ao atualizar imagem de perfil:', error);
+      res.status(500).json({ 
+        message: 'Erro ao atualizar imagem de perfil' 
       });
     }
   });

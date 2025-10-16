@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, integer, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -205,10 +205,13 @@ export type InsertUserCustomGoal = z.infer<typeof insertUserCustomGoalSchema>;
 // - Dados do cronômetro (timer_start_date)
 export const usuarios = pgTable("usuarios", {
   // Dados básicos de cadastro
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  id: serial("id").primaryKey(),
   nomeCompleto: text("nome_completo").notNull(),
   email: text("email").unique().notNull(),
   passwordHash: text("password_hash").notNull(),
+  
+  // Imagem de perfil
+  imagemAvatar: text("imagem_avatar"), // URL da imagem de perfil do usuário
   
   // Dados do Quiz de Personalização
   genero: varchar("genero", { length: 50 }), // Homem, Mulher, Outro
@@ -263,8 +266,14 @@ export const updateUsuarioTimerSchema = z.object({
   timerIsActive: z.boolean().optional(),
 });
 
+// Schema para atualização da imagem de perfil
+export const updateUsuarioAvatarSchema = z.object({
+  imagemAvatar: z.string().url('URL inválida').optional(),
+});
+
 // Tipos TypeScript
 export type Usuario = typeof usuarios.$inferSelect;
 export type InsertUsuario = z.infer<typeof insertUsuarioSchema>;
 export type UpdateUsuarioQuiz = z.infer<typeof updateUsuarioQuizSchema>;
 export type UpdateUsuarioTimer = z.infer<typeof updateUsuarioTimerSchema>;
+export type UpdateUsuarioAvatar = z.infer<typeof updateUsuarioAvatarSchema>;

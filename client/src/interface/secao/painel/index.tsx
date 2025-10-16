@@ -126,7 +126,7 @@ function Header({ user }: HeaderInternalProps) {
         >
           <div className="gradient-border-inner flex items-center justify-center">
             <img
-              src={user?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'user'}&backgroundColor=000515`}
+              src={user?.imagemAvatar || user?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || user?.email || 'user'}&backgroundColor=000515`}
               alt="Profile Picture"
               className="w-10 h-10 rounded-full object-cover"
               data-testid="profile-image"

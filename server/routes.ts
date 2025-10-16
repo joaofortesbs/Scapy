@@ -225,6 +225,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get upload URL for object storage (protected)
+  app.post("/api/objects/upload", verifyJWT, async (req: any, res) => {
+    try {
+      // Verificar autenticação
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Autenticação necessária' });
+      }
+
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      
+      console.log('✅ [UPLOAD] URL de upload gerada para usuário:', userId);
+      
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error('Erro ao obter URL de upload:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
   app.patch("/api/users/update-profile", verifyJWT, async (req, res) => {
     try {
       const { fullName } = req.body;
