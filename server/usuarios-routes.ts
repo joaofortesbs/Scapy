@@ -9,7 +9,7 @@ import {
   updateUsuarioTimerSchema,
   updateUsuarioAvatarSchema
 } from "@shared/schema";
-import { generateJWT } from "./auth-middleware";
+import { generateJWT, verifyJWT } from "./auth-middleware";
 import { ZodError } from 'zod';
 
 /**
