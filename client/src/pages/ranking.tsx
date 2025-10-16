@@ -92,80 +92,41 @@ export default function Ranking() {
               </h1>
             </div>
 
-            {/* Card de Progresso Ultra Moderno */}
-            <Card className="relative backdrop-blur-xl bg-gradient-to-br from-background/5 via-primary/3 to-background/5 border-0 rounded-full shadow-2xl overflow-hidden group transition-all duration-700 hover:scale-[1.02]">
-              {/* Camadas de fundo animadas */}
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-cyan-500/5 to-primary/5 animate-pulse" />
-              <div className="absolute inset-0 bg-gradient-to-l from-transparent via-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-shimmer" />
-              
-              {/* Borda externa brilhante */}
-              <div className="absolute inset-[-2px] rounded-full bg-gradient-to-r from-primary/40 via-cyan-400/40 to-primary/40 opacity-60 blur-md" />
-              <div className="absolute inset-[-1px] rounded-full bg-gradient-to-r from-primary/60 via-cyan-500/60 to-primary/60 opacity-40 blur-sm group-hover:opacity-70 transition-opacity duration-500" />
-              
-              {/* Partículas flutuantes */}
-              <div className="absolute inset-0 overflow-hidden rounded-full">
-                <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-primary/30 rounded-full blur-sm animate-float-slow" />
-                <div className="absolute top-1/2 right-1/3 w-1.5 h-1.5 bg-cyan-400/30 rounded-full blur-sm animate-float-medium" />
-                <div className="absolute bottom-1/3 left-1/2 w-2.5 h-2.5 bg-primary/20 rounded-full blur-sm animate-float-fast" />
-              </div>
-              
-              <CardContent className="relative p-5 bg-gradient-to-br from-background/40 via-background/30 to-background/40 backdrop-blur-sm rounded-full">
-                <div className="flex items-center gap-5">
-                  {/* Imagem de Perfil Ultra Moderna */}
-                  <div className="flex-shrink-0 relative group/avatar">
-                    {/* Anel externo rotativo */}
-                    <div className="absolute inset-[-8px] rounded-full bg-gradient-to-tr from-primary via-cyan-400 to-primary opacity-60 blur-lg animate-spin-slow" />
-                    <div className="absolute inset-[-4px] rounded-full bg-gradient-to-br from-primary/50 via-transparent to-cyan-400/50 animate-reverse-spin" />
-                    
-                    {/* Container da imagem */}
-                    <div className="relative w-20 h-20 rounded-full overflow-hidden border-[3px] border-primary/50 shadow-2xl shadow-primary/40 ring-4 ring-primary/20 ring-offset-4 ring-offset-background/30 transition-all duration-500 group-hover/avatar:scale-110 group-hover/avatar:ring-primary/40">
+            {/* Card de Progresso Simplificado - Completamente Arredondado */}
+            <Card className="backdrop-blur-sm bg-background/5 border-primary/20 rounded-full shadow-2xl overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  {/* Imagem de Perfil Circular */}
+                  <div className="flex-shrink-0">
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-primary/30 shadow-lg">
                       <img
                         src={imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.fullName || user?.full_name || 'user')}&backgroundColor=000515`}
                         alt="Perfil"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110"
+                        className="w-full h-full object-cover"
                       />
-                      {/* Overlay de brilho */}
-                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-primary/20 to-transparent opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-500" />
                     </div>
-                    
-                    {/* Efeito de pulso */}
-                    <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping opacity-0 group-hover/avatar:opacity-30" />
                   </div>
 
-                  {/* Container da Barra de Progresso Ultra Moderna */}
-                  <div className="flex-1 flex items-center gap-4">
-                    {/* Número de dias atual com design futurista */}
-                    <div className="flex-shrink-0 relative group/number">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-cyan-400/40 blur-xl rounded-full scale-150 opacity-60 group-hover/number:opacity-100 transition-opacity duration-300" />
-                      <div className="absolute inset-0 bg-primary/30 blur-md rounded-full animate-pulse" />
-                      <span className="relative text-2xl font-black bg-gradient-to-br from-primary via-cyan-300 to-primary bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(0,246,255,0.5)] transition-all duration-300 group-hover/number:scale-110 inline-block">
+                  {/* Container da Barra de Progresso com Números */}
+                  <div className="flex-1 flex items-center gap-3">
+                    {/* Número de dias atual */}
+                    <div className="flex-shrink-0">
+                      <span className="text-lg font-bold text-primary">
                         {progressInDays}
                       </span>
                     </div>
 
-                    {/* Barra de Progresso Futurista */}
-                    <div className="flex-1 relative h-4 group/progress">
-                      {/* Trilho da barra */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-secondary/10 via-secondary/20 to-secondary/10 rounded-full border border-primary/20 shadow-inner" />
-                      
-                      {/* Glow externo */}
-                      <div className="absolute inset-[-2px] bg-gradient-to-r from-primary/20 via-cyan-400/30 to-primary/20 rounded-full blur-md opacity-60 group-hover/progress:opacity-100 transition-opacity duration-500" />
-                      
-                      {/* Barra de progresso */}
-                      <div className="relative h-full rounded-full overflow-hidden">
-                        <Progress 
-                          value={progressPercentage} 
-                          className="h-full bg-transparent [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:via-cyan-400 [&>div]:to-primary [&>div]:shadow-[0_0_20px_rgba(0,246,255,0.6)] [&>div]:animate-shimmer-progress"
-                        />
-                        {/* Efeito de scanning */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-scan opacity-40" />
-                      </div>
+                    {/* Barra de Progresso */}
+                    <div className="flex-1">
+                      <Progress 
+                        value={progressPercentage} 
+                        className="h-3 bg-secondary/30 border border-primary/20"
+                      />
                     </div>
 
-                    {/* Número do próximo avatar futurista */}
-                    <div className="flex-shrink-0 relative group/next">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-cyan-400/20 blur-lg rounded-full scale-150 opacity-40 group-hover/next:opacity-70 transition-opacity duration-300" />
-                      <span className="relative text-2xl font-black bg-gradient-to-br from-primary/70 via-cyan-300/60 to-primary/50 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(0,246,255,0.3)] transition-all duration-300 group-hover/next:scale-110 inline-block">
+                    {/* Número de dias do próximo avatar */}
+                    <div className="flex-shrink-0">
+                      <span className="text-lg font-bold text-primary/60">
                         {nextAvatarDays}
                       </span>
                     </div>
