@@ -134,6 +134,74 @@ export default function Ranking() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Card de Ranking */}
+            <Card className="border-border rounded-3xl evolucao-mental-card-natural-3d mt-6" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
+              <CardContent className="p-6">
+                <h2 className="text-2xl font-bold text-primary mb-6 text-center">Ranking</h2>
+                
+                <div className="space-y-3">
+                  {/* Mock de usuários ranqueados - será substituído por dados reais do backend */}
+                  {[
+                    { id: 1, name: 'João Silva', days: 365, avatar: 'joao' },
+                    { id: 2, name: 'Maria Santos', days: 280, avatar: 'maria' },
+                    { id: 3, name: 'Pedro Costa', days: 215, avatar: 'pedro' },
+                    { id: 4, name: 'Ana Oliveira', days: 180, avatar: 'ana' },
+                    { id: 5, name: 'Carlos Souza', days: 150, avatar: 'carlos' },
+                  ].map((rankedUser, index) => (
+                    <Card 
+                      key={rankedUser.id} 
+                      className="border-border rounded-full evolucao-mental-card-natural-3d" 
+                      style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center gap-3">
+                          {/* Posição no Ranking */}
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                            <span className="text-sm font-bold text-primary">
+                              {index + 1}
+                            </span>
+                          </div>
+
+                          {/* Imagem de Perfil */}
+                          <div className="flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/30">
+                              <img
+                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(rankedUser.avatar)}&backgroundColor=000515`}
+                                alt={rankedUser.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Nome do Usuário */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {rankedUser.name}
+                            </p>
+                          </div>
+
+                          {/* Barra de Progresso sem números */}
+                          <div className="flex-1">
+                            <Progress 
+                              value={Math.min(100, (rankedUser.days / 365) * 100)} 
+                              className="h-2 bg-secondary/30 border border-border"
+                            />
+                          </div>
+
+                          {/* Dias totais */}
+                          <div className="flex-shrink-0">
+                            <span className="text-sm font-bold text-primary">
+                              {rankedUser.days}d
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
