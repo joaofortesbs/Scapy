@@ -96,49 +96,26 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
   }, [currentUser?.id]);
 
 
-  // Função para obter URL de upload do Object Storage
-  const handleGetUploadParameters = async () => {
-    const token = localStorage.getItem('authToken');
-    
-    const response = await fetch('/api/objects/upload', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao obter URL de upload');
-    }
-
-    const { uploadURL } = await response.json();
-    return {
-      method: 'PUT' as const,
-      url: uploadURL,
-    };
-  };
-
   const handleUploadComplete = async (result: { uploadURL: string }) => {
     if (!currentUser?.id) return;
 
     try {
       setUploading(true);
 
-      console.log('🎯 Salvando URL da imagem no banco Neon externo...');
+      console.log('🎯 Salvando Data URL da imagem no banco Neon...');
 
-      // O ObjectUploader retorna { uploadURL } com a URL pública da imagem
-      const imageURL = result.uploadURL;
+      // O ObjectUploader retorna { uploadURL } com o Data URL (Base64) da imagem
+      const imageDataURL = result.uploadURL;
       
-      if (!imageURL) {
-        console.error('❌ URL da imagem não encontrada');
+      if (!imageDataURL) {
+        console.error('❌ Data URL da imagem não encontrado');
         setUploading(false);
         return;
       }
 
-      console.log('📸 URL da imagem:', imageURL);
+      console.log('📸 Data URL recebido, salvando no banco...');
 
-      // Salvar URL da imagem no banco Neon através da API
+      // Salvar Data URL da imagem no banco Neon através da API
       const token = localStorage.getItem('authToken');
       
       const response = await fetch(`/api/usuarios/${currentUser.id}/avatar`, {
@@ -148,12 +125,14 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          imagemAvatar: imageURL
+          imagemAvatar: imageDataURL
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao salvar imagem de perfil');
+        const errorData = await response.json();
+        console.error('❌ Erro do servidor:', errorData);
+        throw new Error(errorData.message || 'Erro ao salvar imagem de perfil');
       }
 
       const data = await response.json();
@@ -169,7 +148,7 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
         onUserUpdate(updatedUser);
       }
 
-      console.log('✅ URL da imagem salva com sucesso!');
+      console.log('✅ Imagem de perfil atualizada com sucesso!');
       alert('✅ Foto de perfil atualizada com sucesso!');
 
     } catch (error) {
@@ -368,7 +347,6 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
                   {/* Botão para alterar foto */}
                   <ObjectUploader
                     maxFileSize={5 * 1024 * 1024} // 5MB
-                    onGetUploadParameters={handleGetUploadParameters}
                     onComplete={handleUploadComplete}
                     buttonClassName="absolute bottom-2 right-2 w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:bg-primary/90 transition-colors shadow-lg disabled:opacity-50"
                   >

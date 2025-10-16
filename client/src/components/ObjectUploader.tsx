@@ -4,10 +4,6 @@ import { Button } from "@/components/ui/button";
 
 interface ObjectUploaderProps {
   maxFileSize?: number;
-  onGetUploadParameters: () => Promise<{
-    method: "PUT";
-    url: string;
-  }>;
   onComplete?: (result: { uploadURL: string }) => void;
   buttonClassName?: string;
   children: ReactNode;
@@ -16,12 +12,11 @@ interface ObjectUploaderProps {
 }
 
 /**
- * A file upload component that uploads files directly to object storage
- * using presigned URLs.
+ * Componente de upload de imagem que converte para Base64 (Data URL)
+ * Funciona completamente offline sem necessidade de Object Storage
  */
 export function ObjectUploader({
   maxFileSize = 5 * 1024 * 1024, // 5MB default
-  onGetUploadParameters,
   onComplete,
   buttonClassName,
   children,
@@ -29,6 +24,15 @@ export function ObjectUploader({
   accept = "image/*"
 }: ObjectUploaderProps) {
   const [uploading, setUploading] = useState(false);
+
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -50,40 +54,22 @@ export function ObjectUploader({
     setUploading(true);
 
     try {
-      console.log('📤 Obtendo URL de upload...');
+      console.log('🔄 Convertendo imagem para Data URL (Base64)...');
       
-      // Get presigned URL from backend
-      const { url: uploadURL } = await onGetUploadParameters();
+      // Convert to Base64 Data URL
+      const dataURL = await convertToBase64(file);
       
-      console.log('✅ URL de upload obtida');
-      console.log('📤 Fazendo upload da imagem...');
+      console.log('✅ Imagem convertida com sucesso!');
+      console.log('📏 Tamanho do Data URL:', dataURL.length, 'caracteres');
 
-      // Upload file directly to object storage
-      const uploadResponse = await fetch(uploadURL, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': file.type,
-        },
-        body: file,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error('Erro ao fazer upload da imagem');
-      }
-
-      // Extract the public URL from the presigned URL (remove query parameters)
-      const publicURL = uploadURL.split('?')[0];
-      
-      console.log('✅ Upload concluído! URL pública:', publicURL);
-
-      // Call completion callback with the public URL
+      // Call completion callback with the Data URL
       if (onComplete) {
-        onComplete({ uploadURL: publicURL });
+        onComplete({ uploadURL: dataURL });
       }
 
     } catch (error) {
-      console.error('Erro ao fazer upload:', error);
-      alert('Erro ao fazer upload da imagem. Tente novamente.');
+      console.error('Erro ao converter imagem:', error);
+      alert('Erro ao processar imagem. Tente novamente.');
     } finally {
       setUploading(false);
       // Clear the input so the same file can be uploaded again if needed
@@ -112,7 +98,7 @@ export function ObjectUploader({
       {uploading ? (
         <div className="flex items-center gap-2">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-          <span>Enviando...</span>
+          <span>Processando...</span>
         </div>
       ) : (
         children
