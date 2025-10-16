@@ -43,6 +43,12 @@ export class AIProcessor {
    * Gera sugestões de atividades personalizadas com base no perfil do usuário
    */
   async generatePersonalizedSuggestions(userProfile: UserProfileData): Promise<AISuggestionResponse> {
+    // Verificar se a chave da API está configurada
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.trim() === '') {
+      console.warn(`⚠️ GEMINI_API_KEY não configurada, usando sugestões padrão`);
+      return this.getFallbackSuggestions(userProfile.mood);
+    }
+
     try {
       const systemPrompt = this.buildSystemPrompt();
       const userPrompt = this.buildUserPrompt(userProfile);
@@ -98,7 +104,8 @@ export class AIProcessor {
         throw new Error("Resposta vazia da IA");
       }
     } catch (error) {
-      console.error(`❌ Erro ao gerar sugestões:`, error);
+      console.error(`❌ Erro ao gerar sugestões com Gemini API:`, error);
+      console.log(`🔄 Usando sugestões padrão como fallback`);
       return this.getFallbackSuggestions(userProfile.mood);
     }
   }
@@ -212,41 +219,144 @@ Forneça sugestões variadas, práticas e motivadoras.`;
    * Retorna sugestões padrão em caso de erro
    */
   private getFallbackSuggestions(mood: string): AISuggestionResponse {
-    const baseSuggestions: ActivitySuggestion[] = [
-      {
-        titulo: "Exercício de respiração profunda",
-        descricao: "Pratique 10 minutos de respiração consciente para acalmar a mente",
-        categoria: "meditacao",
-        prioridade: 4 as 1 | 2 | 3 | 4 | 5,
-        duracaoEstimada: "10 minutos"
-      },
-      {
-        titulo: "Caminhada ao ar livre",
-        descricao: "Faça uma caminhada de 20-30 minutos para oxigenar o corpo e clarear a mente",
-        categoria: "exercicio",
-        prioridade: 3 as 1 | 2 | 3 | 4 | 5,
-        duracaoEstimada: "30 minutos"
-      },
-      {
-        titulo: "Leitura de desenvolvimento pessoal",
-        descricao: "Leia um capítulo de um livro motivacional ou de autoajuda",
-        categoria: "hobby",
-        prioridade: 2 as 1 | 2 | 3 | 4 | 5,
-        duracaoEstimada: "20 minutos"
-      }
-    ];
+    const moodNormalized = mood.toLowerCase();
+    
+    let suggestions: ActivitySuggestion[] = [];
+    let message = "";
+    let reasoning = "";
 
-    // Ajustar prioridades baseado no humor
-    if (mood === 'medo') {
-      baseSuggestions.forEach(suggestion => {
-        suggestion.prioridade = Math.min(5, suggestion.prioridade + 1) as 1 | 2 | 3 | 4 | 5;
-      });
+    if (moodNormalized === 'medo') {
+      suggestions = [
+        {
+          titulo: "Respiração 4-7-8 para controle da ansiedade",
+          descricao: "Inspire por 4 segundos, segure por 7, expire por 8. Repita 5 vezes para acalmar o sistema nervoso",
+          categoria: "meditacao",
+          prioridade: 5 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "10 minutos"
+        },
+        {
+          titulo: "Exercício físico intenso",
+          descricao: "Faça 20 minutos de exercício intenso (corrida, burpees, polichinelos) para liberar endorfina",
+          categoria: "exercicio",
+          prioridade: 5 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "20 minutos"
+        },
+        {
+          titulo: "Ligue para um amigo ou familiar",
+          descricao: "Conecte-se com alguém de confiança para conversar e se distrair",
+          categoria: "social",
+          prioridade: 4 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "15 minutos"
+        },
+        {
+          titulo: "Banho gelado de 2 minutos",
+          descricao: "Tome um banho frio para resetar o sistema nervoso e aumentar a força de vontade",
+          categoria: "autocuidado",
+          prioridade: 4 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "5 minutos"
+        }
+      ];
+      message = "Você está passando por um momento difícil, mas tem força para superar! Estas atividades vão ajudar agora.";
+      reasoning = "Em momentos de vulnerabilidade, priorize atividades que ocupem a mente e fortaleçam seu controle.";
+    } else if (moodNormalized === 'estavel') {
+      suggestions = [
+        {
+          titulo: "Meditação guiada de 15 minutos",
+          descricao: "Use um app como Headspace ou Calm para uma sessão de mindfulness",
+          categoria: "meditacao",
+          prioridade: 3 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "15 minutos"
+        },
+        {
+          titulo: "Organizar ambiente de trabalho",
+          descricao: "Limpe e organize sua mesa ou espaço de estudo para aumentar a produtividade",
+          categoria: "produtividade",
+          prioridade: 3 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "30 minutos"
+        },
+        {
+          titulo: "Ler 20 páginas de um livro",
+          descricao: "Escolha um livro de ficção ou não-ficção que te interesse e dedique tempo à leitura",
+          categoria: "hobby",
+          prioridade: 2 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "30 minutos"
+        },
+        {
+          titulo: "Preparar uma refeição saudável",
+          descricao: "Cozinhe algo nutritivo e saboroso, focando no processo de preparação",
+          categoria: "autocuidado",
+          prioridade: 3 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "45 minutos"
+        }
+      ];
+      message = "Você está equilibrado hoje! Aproveite para fortalecer hábitos saudáveis e crescer.";
+      reasoning = "Estado neutro é ideal para manutenção de rotinas e pequenos avanços progressivos.";
+    } else if (moodNormalized === 'feliz') {
+      suggestions = [
+        {
+          titulo: "Definir meta desafiadora para a semana",
+          descricao: "Aproveite sua energia positiva para estabelecer um objetivo ambicioso e criar plano de ação",
+          categoria: "produtividade",
+          prioridade: 3 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "30 minutos"
+        },
+        {
+          titulo: "Atividade social ou voluntariado",
+          descricao: "Compartilhe sua energia positiva ajudando outros ou interagindo com amigos",
+          categoria: "social",
+          prioridade: 2 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "1-2 horas"
+        },
+        {
+          titulo: "Aprender algo novo",
+          descricao: "Comece um curso online, aprenda uma habilidade ou explore um hobby novo",
+          categoria: "hobby",
+          prioridade: 2 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "1 hora"
+        },
+        {
+          titulo: "Exercício ao ar livre",
+          descricao: "Pratique um esporte, trilha ou atividade física que você goste em ambiente aberto",
+          categoria: "exercicio",
+          prioridade: 3 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "45 minutos"
+        }
+      ];
+      message = "Que ótimo estar se sentindo bem! Use essa energia para avançar em seus objetivos.";
+      reasoning = "Momentos positivos são ideais para desafios maiores e construção de momentum.";
+    } else {
+      // Default fallback
+      suggestions = [
+        {
+          titulo: "Exercício de respiração profunda",
+          descricao: "Pratique 10 minutos de respiração consciente para acalmar a mente",
+          categoria: "meditacao",
+          prioridade: 3 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "10 minutos"
+        },
+        {
+          titulo: "Caminhada ao ar livre",
+          descricao: "Faça uma caminhada de 20-30 minutos para oxigenar o corpo e clarear a mente",
+          categoria: "exercicio",
+          prioridade: 3 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "30 minutos"
+        },
+        {
+          titulo: "Leitura de desenvolvimento pessoal",
+          descricao: "Leia um capítulo de um livro motivacional ou de autoajuda",
+          categoria: "hobby",
+          prioridade: 2 as 1 | 2 | 3 | 4 | 5,
+          duracaoEstimada: "20 minutos"
+        }
+      ];
+      message = "Estas são algumas atividades que podem te ajudar hoje. Lembre-se: cada passo conta na sua jornada!";
+      reasoning = "Sugestões padrão fornecidas, mas ainda assim relevantes para sua recuperação.";
     }
 
     return {
-      activities: baseSuggestions,
-      message: "Estas são algumas atividades que podem te ajudar hoje. Lembre-se: cada passo conta na sua jornada!",
-      reasoning: "Sugestões padrão fornecidas devido a erro no processamento da IA, mas ainda assim relevantes para sua recuperação."
+      activities: suggestions,
+      message: message,
+      reasoning: reasoning
     };
   }
 

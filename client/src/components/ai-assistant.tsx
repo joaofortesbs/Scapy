@@ -440,7 +440,7 @@ export default function AIAssistant(): JSX.Element {
       // 2. Gerar sugestões personalizadas
       toast({
         title: "Analisando seu perfil...",
-        description: "Nossa IA está criando atividades personalizadas para você!",
+        description: "Criando atividades personalizadas para você!",
       });
 
       const suggestionResponse = await apiRequest('POST', '/api/generate-suggestions', {
@@ -456,9 +456,13 @@ export default function AIAssistant(): JSX.Element {
       setTodayMood(normalizedMood);
       console.log(`🎯 Estado todayMood atualizado para: ${normalizedMood}`);
       
+      // Verificar se usou fallback ou IA
+      const usedFallback = suggestionData.aiResponse?.reasoning?.includes('padrão') || 
+                           suggestionData.aiResponse?.reasoning?.includes('fallback');
+      
       toast({
-        title: "Sugestões criadas!",
-        description: `${suggestionData.tasks.length} atividades personalizadas foram adicionadas às suas metas do dia!`,
+        title: usedFallback ? "Atividades criadas!" : "IA gerou suas atividades!",
+        description: `${suggestionData.tasks.length} atividades ${usedFallback ? 'personalizadas' : 'criadas pela IA'} foram adicionadas!`,
       });
 
       // 4. Salvar humor imediatamente no localStorage ULTRA-PERSISTENTE
