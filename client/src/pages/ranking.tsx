@@ -92,13 +92,13 @@ export default function Ranking() {
               </h1>
             </div>
 
-            {/* Card de Progresso Simplificado - Completamente Arredondado */}
-            <Card className="backdrop-blur-sm bg-background/5 border-primary/20 rounded-full shadow-2xl overflow-hidden">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
+            {/* Card de Progresso Simplificado - Estilo Evolução Mental */}
+            <Card className="border-border rounded-full evolucao-mental-card-natural-3d" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
+              <CardContent className="p-3">
+                <div className="flex items-center gap-3">
                   {/* Imagem de Perfil Circular */}
                   <div className="flex-shrink-0">
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-primary/30 shadow-lg">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/30">
                       <img
                         src={imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.fullName || user?.full_name || 'user')}&backgroundColor=000515`}
                         alt="Perfil"
@@ -108,10 +108,10 @@ export default function Ranking() {
                   </div>
 
                   {/* Container da Barra de Progresso com Números */}
-                  <div className="flex-1 flex items-center gap-3">
+                  <div className="flex-1 flex items-center gap-2">
                     {/* Número de dias atual */}
                     <div className="flex-shrink-0">
-                      <span className="text-lg font-bold text-primary">
+                      <span className="text-sm font-medium text-primary">
                         {progressInDays}
                       </span>
                     </div>
@@ -120,13 +120,13 @@ export default function Ranking() {
                     <div className="flex-1">
                       <Progress 
                         value={progressPercentage} 
-                        className="h-3 bg-secondary/30 border border-primary/20"
+                        className="h-2 bg-secondary/30 border border-border"
                       />
                     </div>
 
                     {/* Número de dias do próximo avatar */}
                     <div className="flex-shrink-0">
-                      <span className="text-lg font-bold text-primary/60">
+                      <span className="text-sm font-medium text-primary">
                         {nextAvatarDays}
                       </span>
                     </div>
