@@ -92,61 +92,48 @@ export default function Ranking() {
               </h1>
             </div>
 
-            {/* Card de Progresso Sofisticado */}
-            <div className="relative group">
-              {/* Brilho externo animado */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-cyan-400 to-primary rounded-2xl opacity-30 group-hover:opacity-50 blur-lg transition-all duration-500 animate-pulse"></div>
-              
-              <Card className="relative backdrop-blur-xl bg-gradient-to-br from-background/10 via-background/5 to-background/10 border border-primary/30 rounded-2xl shadow-[0_0_50px_rgba(0,246,255,0.15)] overflow-hidden hover:shadow-[0_0_80px_rgba(0,246,255,0.25)] transition-all duration-500">
-                {/* Gradiente sutil de fundo */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-cyan-500/5 pointer-events-none"></div>
-                
-                {/* Linha de brilho superior */}
-                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent opacity-60"></div>
-                
-                <CardContent className="relative p-6">
-                  <div className="flex items-center gap-5">
-                    {/* Imagem de Perfil com efeito de brilho */}
-                    <div className="flex-shrink-0 relative">
-                      <div className="absolute -inset-1 bg-gradient-to-br from-primary to-cyan-400 rounded-full opacity-40 blur-md group-hover:opacity-60 transition-opacity duration-300"></div>
-                      <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-primary/40 shadow-[0_0_20px_rgba(0,246,255,0.3)] ring-1 ring-primary/20">
-                        <img
-                          src={imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.fullName || user?.full_name || 'user')}&backgroundColor=000515`}
-                          alt="Perfil"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Container da Barra de Progresso com Números */}
-                    <div className="flex-1 flex items-center gap-4">
-                      {/* Número de dias atual */}
-                      <div className="flex-shrink-0">
-                        <span className="text-xl font-bold bg-gradient-to-br from-primary to-cyan-300 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(0,246,255,0.5)]">
-                          {progressInDays}
-                        </span>
-                      </div>
-
-                      {/* Barra de Progresso com efeitos */}
-                      <div className="flex-1 relative">
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-cyan-400/20 rounded-full blur-sm"></div>
-                        <Progress 
-                          value={progressPercentage} 
-                          className="relative h-3.5 bg-gradient-to-br from-secondary/40 to-secondary/20 border border-primary/30 shadow-inner"
-                        />
-                      </div>
-
-                      {/* Número de dias do próximo avatar */}
-                      <div className="flex-shrink-0">
-                        <span className="text-xl font-bold bg-gradient-to-br from-primary/60 to-cyan-300/60 bg-clip-text text-transparent">
-                          {nextAvatarDays}
-                        </span>
-                      </div>
+            {/* Card de Progresso Simplificado - Retangular */}
+            <Card className="backdrop-blur-sm bg-background/5 border-primary/20 rounded-lg shadow-2xl overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  {/* Imagem de Perfil Circular */}
+                  <div className="flex-shrink-0">
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-primary/30 shadow-lg">
+                      <img
+                        src={imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.fullName || user?.full_name || 'user')}&backgroundColor=000515`}
+                        alt="Perfil"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+
+                  {/* Container da Barra de Progresso com Números */}
+                  <div className="flex-1 flex items-center gap-3">
+                    {/* Número de dias atual */}
+                    <div className="flex-shrink-0">
+                      <span className="text-lg font-bold text-primary">
+                        {progressInDays}
+                      </span>
+                    </div>
+
+                    {/* Barra de Progresso */}
+                    <div className="flex-1">
+                      <Progress 
+                        value={progressPercentage} 
+                        className="h-3 bg-secondary/30 border border-primary/20"
+                      />
+                    </div>
+
+                    {/* Número de dias do próximo avatar */}
+                    <div className="flex-shrink-0">
+                      <span className="text-lg font-bold text-primary/60">
+                        {nextAvatarDays}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
