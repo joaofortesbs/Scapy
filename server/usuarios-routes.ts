@@ -408,8 +408,8 @@ export function registerUsuariosRoutes(app: Express) {
   // ========================================
   app.get("/api/usuarios/ranking", async (req, res) => {
     try {
-      // Buscar todos os usuários ativos com cronômetro iniciado
-      const usersWithTimer = await db.select({
+      // Buscar TODOS os usuários ativos (com ou sem timer)
+      const allUsers = await db.select({
         id: usuarios.id,
         nomeCompleto: usuarios.nomeCompleto,
         email: usuarios.email,
@@ -417,20 +417,20 @@ export function registerUsuariosRoutes(app: Express) {
         timerIsActive: usuarios.timerIsActive,
       })
         .from(usuarios)
-        .where(and(
-          eq(usuarios.isActive, true),
-          eq(usuarios.timerIsActive, true)
-        ));
+        .where(eq(usuarios.isActive, true));
 
       // Calcular dias de progresso para cada usuário
-      const ranking = usersWithTimer
+      const ranking = allUsers
         .map(user => {
-          if (!user.timerStartDate) return null;
+          let diffDays = 0;
           
-          const startDate = new Date(user.timerStartDate);
-          const now = new Date();
-          const diffTime = Math.abs(now.getTime() - startDate.getTime());
-          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+          // Se tem timer ativo, calcular dias
+          if (user.timerStartDate) {
+            const startDate = new Date(user.timerStartDate);
+            const now = new Date();
+            const diffTime = Math.abs(now.getTime() - startDate.getTime());
+            diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+          }
 
           return {
             id: user.id,
@@ -440,10 +440,9 @@ export function registerUsuariosRoutes(app: Express) {
             avatar: user.email.split('@')[0] // Usar parte do email como seed do avatar
           };
         })
-        .filter(user => user !== null)
-        .sort((a, b) => b!.days - a!.days); // Ordenar por dias (decrescente)
+        .sort((a, b) => b.days - a.days); // Ordenar por dias (decrescente)
 
-      console.log(`✅ [USUARIOS] Ranking gerado com ${ranking.length} usuários`);
+      console.log(`✅ [USUARIOS] Ranking gerado com ${ranking.length} usuários (total de usuários ativos)`);
 
       res.json({
         ranking: ranking,
