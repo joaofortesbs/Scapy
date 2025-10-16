@@ -70,27 +70,25 @@ export default function Ranking() {
       <ParticlesBackground isDarkTheme={true} className="fixed inset-0 z-0" />
       
       <div className="relative z-10">
-        {/* Botão de voltar */}
-        <div className="absolute top-6 left-6 z-20">
+        {/* Header com botão voltar e título */}
+        <div className="flex items-center justify-center pt-6 px-6 relative">
           <Button
             variant="ghost"
             onClick={handleBackToDashboard}
-            className="text-foreground hover:text-primary transition-all duration-300 p-3 rounded-full hover:bg-primary/10"
+            className="absolute left-6 text-foreground hover:text-primary transition-all duration-300 p-3 rounded-full hover:bg-primary/10"
             data-testid="back-button"
           >
             <ArrowLeft className="w-6 h-6" />
           </Button>
+          
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-blue-400 to-primary bg-clip-text text-transparent animate-gradient">
+            Seu momento atual
+          </h1>
         </div>
 
         {/* Conteúdo principal */}
-        <div className="px-6 pt-20">
+        <div className="px-6 pt-6">
           <div className="w-full max-w-2xl mx-auto space-y-4">
-            {/* Título com degradê */}
-            <div className="text-center">
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-blue-400 to-primary bg-clip-text text-transparent animate-gradient">
-                Seu momento atual
-              </h1>
-            </div>
 
             {/* Card de Progresso Simplificado - Estilo Evolução Mental */}
             <Card className="border-border rounded-full evolucao-mental-card-natural-3d" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
@@ -138,7 +136,7 @@ export default function Ranking() {
             {/* Card de Ranking */}
             <Card className="border-border rounded-3xl evolucao-mental-card-natural-3d mt-6" style={{ backgroundColor: 'rgba(0, 5, 21, 0.73)' }}>
               <CardContent className="p-6">
-                <h2 className="text-2xl font-bold text-primary mb-6 text-center">Ranking</h2>
+                <h2 className="text-2xl font-bold text-primary mb-6 text-center">Ranking Regional</h2>
                 
                 <div className="space-y-3">
                   {/* Mock de usuários ranqueados - será substituído por dados reais do backend */}
@@ -156,10 +154,10 @@ export default function Ranking() {
                     >
                       <CardContent className="p-3">
                         <div className="flex items-center gap-3">
-                          {/* Posição no Ranking */}
+                          {/* Posição no Ranking com # */}
                           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                             <span className="text-sm font-bold text-primary">
-                              {index + 1}
+                              #{index + 1}
                             </span>
                           </div>
 
