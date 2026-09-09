@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import ParticlesBackground from '@/components/particles-background';
+import { AuthError, loginAccount, registerAccount } from '@/lib/local-auth';
 
 interface AuthPageProps {
   onLoginSuccess: (user: any, isNewUser?: boolean) => void;
@@ -38,71 +39,13 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
     setLoading(true);
     setMessage('');
 
-    if (!loginData.email || !loginData.password) {
-      setMessage('Por favor, preencha todos os campos');
-      setMessageType('error');
-      setLoading(false);
-      return;
-    }
-
     try {
-      const response = await fetch('/api/usuarios/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(loginData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage('Login realizado com sucesso!');
-        setMessageType('success');
-
-        // 🔐 Salvar token JWT
-        if (data.token) {
-          localStorage.setItem('authToken', data.token);
-          console.log('🔐 Token JWT salvo com sucesso:', data.token.substring(0, 20) + '...');
-        } else {
-          console.warn('⚠️ Token JWT não recebido na resposta');
-        }
-
-        // Salvar dados do usuário no localStorage
-        const userData = {
-          id: data.user.id,
-          email: data.user.email,
-          username: data.user.email,
-          full_name: data.user.fullName || 'Usuário',
-          timerStartDate: data.user.timerStartDate || null,
-          timerIsActive: data.user.timerIsActive || false,
-          bestStreak: 0,
-          relapseCount: 0,
-          scapyPoints: 0,
-          quizCompleted: data.user.quizCompleted || false,
-          // Dados do quiz de personalização
-          genero: data.user.genero || null,
-          frequencia: data.user.frequencia || null,
-          motivacao: data.user.motivacao || null,
-          gatilhos: data.user.gatilhos || null,
-          religiao: data.user.religiao || null
-        };
-
-        console.log('💾 Salvando dados do usuário no login:', userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('isAuthenticated', 'true');
-
-        // Chamar callback de sucesso
-        setTimeout(() => {
-          onLoginSuccess(data.user);
-        }, 1000);
-      } else {
-        setMessage(data.message || 'Erro ao fazer login');
-        setMessageType('error');
-      }
+      const result = await loginAccount(loginData.email, loginData.password);
+      setMessage(result.warning || 'Login realizado com sucesso!');
+      setMessageType('success');
+      onLoginSuccess(result.user, result.isNewUser);
     } catch (error) {
-      console.error('Erro no login:', error);
-      setMessage('Erro de conexão. Tente novamente.');
+      setMessage(error instanceof AuthError ? error.message : 'Não foi possível concluir o login. Tente novamente.');
       setMessageType('error');
     } finally {
       setLoading(false);
@@ -115,14 +58,6 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
     setLoading(true);
     setMessage('');
 
-    // Validações
-    if (!registerData.email || !registerData.password || !registerData.fullName) {
-      setMessage('Por favor, preencha todos os campos');
-      setMessageType('error');
-      setLoading(false);
-      return;
-    }
-
     if (registerData.password !== registerData.confirmPassword) {
       setMessage('As senhas não coincidem');
       setMessageType('error');
@@ -130,80 +65,17 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
       return;
     }
 
-    if (registerData.password.length < 6) {
-      setMessage('A senha deve ter pelo menos 6 caracteres');
-      setMessageType('error');
-      setLoading(false);
-      return;
-    }
-
     try {
-      const response = await fetch('/api/usuarios/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: registerData.email,
-          password: registerData.password,
-          fullName: registerData.fullName
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage('Conta criada com sucesso! Redirecionando...');
-        setMessageType('success');
-
-        // 🔐 Salvar token JWT
-        if (data.token) {
-          localStorage.setItem('authToken', data.token);
-          console.log('🔐 Token JWT salvo com sucesso:', data.token.substring(0, 20) + '...');
-        }
-
-        try {
-          // Salvar dados do usuário no localStorage
-          const userData = {
-            id: data.user.id,
-            email: data.user.email,
-            username: data.user.email,
-            full_name: data.user.fullName || registerData.fullName || 'Usuário',
-            startDate: null,
-            bestStreak: 0,
-            relapseCount: 0,
-            scapyPoints: 0,
-            quizCompleted: false
-          };
-
-          console.log('📝 Salvando dados do usuário no registro:', userData);
-          localStorage.setItem('user', JSON.stringify(userData));
-          localStorage.setItem('isAuthenticated', 'true');
-
-          // Redirecionar para o quiz de personalização (novo usuário)
-          setTimeout(() => {
-            try {
-              onLoginSuccess(data.user, true); // true indica que é um novo usuário
-            } catch (domError) {
-              console.error('Erro de DOM durante redirecionamento:', domError);
-              // Fallback: tentar novamente após um delay
-              setTimeout(() => {
-                window.location.reload();
-              }, 500);
-            }
-          }, 1500);
-        } catch (storageError) {
-          console.error('Erro ao salvar no localStorage:', storageError);
-          // Mesmo assim, tentar redirecionar
-          onLoginSuccess(data.user, true);
-        }
-      } else {
-        setMessage(data.message || 'Erro ao criar conta');
-        setMessageType('error');
-      }
+      const result = await registerAccount(
+        registerData.email,
+        registerData.password,
+        registerData.fullName,
+      );
+      setMessage(result.warning || 'Conta criada com sucesso!');
+      setMessageType('success');
+      onLoginSuccess(result.user, result.isNewUser);
     } catch (error) {
-      console.error('Erro no cadastro:', error);
-      setMessage('Erro de conexão. Tente novamente.');
+      setMessage(error instanceof AuthError ? error.message : 'Não foi possível criar a conta. Tente novamente.');
       setMessageType('error');
     } finally {
       setLoading(false);
@@ -256,6 +128,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="seu@email.com"
                   value={loginData.email}
                   onChange={(e) => setLoginData({...loginData, email: e.target.value})}
@@ -273,6 +146,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
                     placeholder="Sua senha"
                     value={loginData.password}
                     onChange={(e) => setLoginData({...loginData, password: e.target.value})}
@@ -314,6 +188,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                 <Input
                   id="fullName"
                   type="text"
+                  autoComplete="name"
                   placeholder="Seu nome completo"
                   value={registerData.fullName}
                   onChange={(e) => setRegisterData({...registerData, fullName: e.target.value})}
@@ -330,6 +205,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                 <Input
                   id="registerEmail"
                   type="email"
+                  autoComplete="email"
                   placeholder="seu@email.com"
                   value={registerData.email}
                   onChange={(e) => setRegisterData({...registerData, email: e.target.value})}
@@ -347,6 +223,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                   <Input
                     id="registerPassword"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
                     placeholder="Mínimo 6 caracteres"
                     value={registerData.password}
                     onChange={(e) => setRegisterData({...registerData, password: e.target.value})}
@@ -372,6 +249,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                 <Input
                   id="confirmPassword"
                   type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
                   placeholder="Confirme sua senha"
                   value={registerData.confirmPassword}
                   onChange={(e) => setRegisterData({...registerData, confirmPassword: e.target.value})}

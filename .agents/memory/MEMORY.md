@@ -1,0 +1,1 @@
+- [Limites da autenticação local](local-first-auth.md) — contas locais são específicas do navegador; tokens remotos ficam somente na sessão ativa e nunca há JWT falso.

@@ -14,6 +14,12 @@ import AvatareEsEvolutivos from "@/pages/avatares-evolutivos";
 import Ranking from "@/pages/ranking";
 import { useState, useEffect } from "react";
 import { initializeStorageCleanup } from "@/utils/localStorage-sync";
+import {
+  completeQuiz,
+  getStoredSession,
+  logoutLocalSession,
+  updateAuthenticatedUser,
+} from "@/lib/local-auth";
 
 function AppRouter() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -25,31 +31,11 @@ function AppRouter() {
   useEffect(() => {
     // Inicializar sistema de limpeza automática do localStorage
     initializeStorageCleanup();
-    console.log('🚀 Sistema de persistência robusta inicializado!');
-    
-    const savedAuth = localStorage.getItem('isAuthenticated');
-    const savedUser = localStorage.getItem('user');
-
-    if (savedAuth === 'true' && savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-
-        // Normalizar dados do usuário
-        const normalizedUser = {
-          ...userData,
-          full_name: userData.full_name || userData.fullName || userData.username || 'Usuário'
-        };
-
-        console.log('🔍 Usuário autenticado carregado:', normalizedUser);
-        setIsAuthenticated(true);
-        setUser(normalizedUser);
-
-        // Salvar dados normalizados
-        localStorage.setItem('user', JSON.stringify(normalizedUser));
-      } catch (error) {
-        console.error('Erro ao carregar usuário:', error);
-        setIsAuthenticated(false);
-      }
+    const savedSession = getStoredSession();
+    if (savedSession) {
+      setIsAuthenticated(true);
+      setUser(savedSession.user);
+      setShowQuiz(Boolean(savedSession.needsQuiz));
     }
     setIsLoading(false);
   }, []);
@@ -59,28 +45,31 @@ function AppRouter() {
       setIsAuthenticated(true);
       setUser(userData);
       setShowQuiz(isNewUser); // Mostrar quiz apenas para novos usuários
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('user', JSON.stringify(userData));
     } catch (error) {
-      console.error('Erro durante login success:', error);
-      // Fallback: forçar reload da página
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      setIsAuthenticated(false);
+      setUser(null);
+      setShowQuiz(false);
     }
   };
 
   const handleCompleteQuiz = () => {
     setShowQuiz(false);
-    localStorage.setItem('quizCompleted', 'true');
+    const updatedUser = completeQuiz();
+    if (updatedUser) {
+      setUser(updatedUser);
+    }
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     setUser(null);
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('user');
-    window.location.reload();
+    setShowQuiz(false);
+    logoutLocalSession();
+  };
+
+  const handleUserUpdate = (updatedUser: any) => {
+    const persistedUser = updateAuthenticatedUser(updatedUser) || updatedUser;
+    setUser(persistedUser);
   };
 
   // Se estiver carregando, mostrar tela de carregamento
@@ -124,10 +113,7 @@ function AppRouter() {
             <Route path="/perfil-usuario">
               <PerfilUsuario
                 user={user}
-                onUserUpdate={(updatedUser) => {
-                  console.log('🔄 Atualizando dados do usuário:', updatedUser);
-                  setUser(updatedUser);
-                }}
+                onUserUpdate={handleUserUpdate}
               />
             </Route>
             <Route path="/quiz-personalizacao" component={() => <QuizPersonalizacao user={user} onCompleteQuiz={handleCompleteQuiz} />} />
@@ -151,10 +137,7 @@ function AppRouter() {
         <Route path="/perfil-usuario">
           <PerfilUsuario
             user={user}
-            onUserUpdate={(updatedUser) => {
-              console.log('🔄 Atualizando dados do usuário:', updatedUser);
-              setUser(updatedUser);
-            }}
+            onUserUpdate={handleUserUpdate}
           />
         </Route>
         <Route path="/quiz-personalizacao" component={() => <QuizPersonalizacao user={user} onCompleteQuiz={handleCompleteQuiz} />} />

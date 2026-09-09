@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle, Clock, Mountain, Trees } from "lucide-react";
 import ParticlesBackground from "@/components/particles-background";
+import { isLocalAccountId } from "@/lib/local-auth";
 
 interface QuizPersonalizacaoProps {
   user?: any;
@@ -33,14 +34,16 @@ export default function QuizPersonalizacao({ user, onCompleteQuiz }: QuizPersona
 
   const saveQuizData = async () => {
     if (!user || !user.id) {
-      console.error('❌ Erro: ID do usuário não encontrado');
+      return;
+    }
+
+    // Contas locais não possuem uma linha correspondente na tabela remota.
+    // O App persiste a conclusão no namespace local da autenticação.
+    if (isLocalAccountId(user.id)) {
       return;
     }
 
     try {
-      console.log('📝 Salvando dados do quiz para usuário:', user.id);
-      console.log('📋 Dados do quiz:', quizData);
-
       const response = await fetch(`/api/usuarios/${user.id}/quiz`, {
         method: 'PUT',
         headers: {
@@ -57,14 +60,12 @@ export default function QuizPersonalizacao({ user, onCompleteQuiz }: QuizPersona
       });
 
       if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Quiz salvo com sucesso:', data);
+        await response.json();
       } else {
-        const errorData = await response.json();
-        console.error('❌ Erro ao salvar quiz:', errorData);
+        await response.json();
       }
     } catch (error) {
-      console.error('❌ Erro de conexão ao salvar quiz:', error);
+      // O progresso local continua válido se a sincronização remota falhar.
     }
   };
 
