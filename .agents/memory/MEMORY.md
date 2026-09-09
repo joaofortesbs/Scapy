@@ -1,0 +1,2 @@
+- [Limites da autenticação local](local-first-auth.md) — contas locais são específicas do navegador; tokens remotos ficam somente na sessão ativa e nunca há JWT falso.
+- [Dependências do Node 20](node20-dependency-constraints.md) — no Replit Node 20, prefira a linha 7.x compatível do Google Cloud Storage para evitar bloqueio do parser XML antigo.

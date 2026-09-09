@@ -1,101 +1,48 @@
 /**
- * Utilitário para gerenciar autenticação e requisições com JWT
+ * Compatibilidade para chamadas existentes que ainda usam o nome auth-utils.
+ * A fonte da autenticação agora é o serviço local-first.
  */
 
-import { apiRequest } from './queryClient';
+import {
+  getSessionToken,
+  getStoredSession,
+  logoutLocalSession,
+} from './local-auth';
 
-// Função para verificar se o usuário está autenticado
-export const isAuthenticated = (): boolean => {
-  try {
-    const token = localStorage.getItem('authToken');
-    const user = localStorage.getItem('user');
-    const isAuth = localStorage.getItem('isAuthenticated');
+export const isAuthenticated = (): boolean => getStoredSession() !== null;
 
-    if (!token || !user || isAuth !== 'true') {
-      console.log('🔐 [Auth] Dados de autenticação incompletos');
-      return false;
-    }
+export const authenticatedFetch = async (
+  url: string,
+  options: RequestInit = {},
+): Promise<Response> => {
+  const token = getSessionToken();
+  const headers = new Headers(options.headers);
 
-    // Verificar se o token não expirou (implementação básica)
-    try {
-      const tokenData = JSON.parse(atob(token.split('.')[1]));
-      const currentTime = Math.floor(Date.now() / 1000);
-
-      if (tokenData.exp && tokenData.exp < currentTime) {
-        console.log('🔐 [Auth] Token expirado');
-        logout();
-        return false;
-      }
-    } catch (tokenError) {
-      console.warn('⚠️ [Auth] Erro ao validar token, assumindo válido');
-    }
-
-    return true;
-  } catch (error) {
-    console.error('❌ [Auth] Erro ao verificar autenticação:', error);
-    return false;
+  if (!headers.has('Content-Type') && options.body) {
+    headers.set('Content-Type', 'application/json');
   }
-};
 
-// Função para fazer requisições autenticadas
-export const authenticatedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
-  const token = localStorage.getItem('authToken');
-
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(options.headers || {}),
-  };
-
-  // Adicionar token JWT se disponível
+  // Contas locais não recebem JWT falso. A chamada segue sem Authorization e
+  // o consumidor decide como tratar uma resposta 401/403.
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-    console.log('🔐 [Auth] Token adicionado à requisição');
-  } else {
-    console.warn('⚠️ [Auth] Nenhum token encontrado para a requisição');
+    headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const requestOptions: RequestInit = {
+  const response = await fetch(url, {
     ...options,
     headers,
-  };
+  });
 
-  try {
-    const response = await fetch(url, requestOptions);
-
-    // Se não autorizado, limpar dados de autenticação
-    if (response.status === 401) {
-      console.log('🔐 [Auth] Token inválido (401), limpando dados');
-      logout();
-      return response;
-    }
-
-    return response;
-  } catch (error) {
-    console.error('❌ [Auth] Erro na requisição autenticada:', error);
-    throw error;
+  // Somente uma sessão que possuía token remoto pode ser invalidada por 401.
+  // Uma conta local deve continuar renderizada mesmo quando uma API remota
+  // exigir autenticação.
+  if (response.status === 401 && token) {
+    logoutLocalSession();
   }
+
+  return response;
 };
 
-// Função para logout
 export const logout = (): void => {
-  try {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    localStorage.removeItem('isAuthenticated');
-
-    // Limpar outros dados da sessão se necessário
-    const keysToRemove = Object.keys(localStorage).filter(key => 
-      key.startsWith('scapy_') || 
-      key.startsWith('timer_') ||
-      key.startsWith('mood_')
-    );
-
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-
-    console.log('🚪 [Auth] Logout realizado com sucesso');
-
-    // Não redirecionar automaticamente, deixar o App.tsx lidar com isso
-  } catch (error) {
-    console.error('❌ [Auth] Erro no logout:', error);
-  }
+  logoutLocalSession();
 };

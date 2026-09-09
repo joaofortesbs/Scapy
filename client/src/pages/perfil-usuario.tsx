@@ -7,6 +7,7 @@ import { ObjectUploader } from "@/components/ObjectUploader";
 import { motion } from "framer-motion";
 import ParticlesBackground from "@/components/particles-background";
 import { useProfileImage } from "@/hooks/useProfileImage";
+import { authenticatedFetch } from "@/lib/auth-utils";
 
 interface PerfilUsuarioProps {
   user?: {
@@ -116,14 +117,9 @@ export default function PerfilUsuario({ user, onUserUpdate }: PerfilUsuarioProps
       console.log('📸 Data URL recebido, salvando no banco...');
 
       // Salvar Data URL da imagem no banco Neon através da API
-      const token = localStorage.getItem('authToken');
-      
-      const response = await fetch(`/api/usuarios/${currentUser.id}/avatar`, {
+      const response = await authenticatedFetch(`/api/usuarios/${currentUser.id}/avatar`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imagemAvatar: imageDataURL
         }),
